@@ -1,163 +1,172 @@
 # User Guide
 
-## Start the Service
+This guide shows how to test the main Smart Legal Document Manager features through the API.
 
-1. Install dependencies:
+Before testing document endpoints, create a user because document creation requires `user_id`.
 
-```bash
-pip install -r requirements.txt
+## Prerequisite: Create a User
+
+Endpoint: `POST /users`
+
+Example request:
+
+```json
+{
+  "name": "Alice",
+  "email": "alice@example.com"
+}
 ```
 
-2. Set the PostgreSQL connection string:
+Example curl:
 
 ```bash
-export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/smart_legal_document_manager"
-```
-
-3. Apply migrations:
-
-```bash
-alembic upgrade head
-```
-
-4. Run the API:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-## Start with Docker
-
-If you want the API and PostgreSQL together without local database setup:
-
-```bash
-docker compose up --build
-```
-
-Then open:
-
-- API docs: `http://127.0.0.1:8000/docs`
-- API base URL: `http://127.0.0.1:8000`
-
-## How to Test Features
-
-### 1. Create a User
-
-```bash
-curl -X POST http://127.0.0.1:8000/users \
+curl -X POST http://localhost:8000/users \
   -H "Content-Type: application/json" \
   -d '{"name":"Alice","email":"alice@example.com"}'
 ```
 
-Use the returned `id` as `user_id` in later requests.
+Use the returned `id` value in later requests as `user_id`.
 
-### 2. Create a Document
+## 1. Create Document
+
+Endpoint: `POST /documents`
+
+Example request body:
+
+```json
+{
+  "title": "Employment Agreement",
+  "content": "This contract is valid for 1 year.",
+  "user_id": 1
+}
+```
+
+Example curl:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/documents \
+curl -X POST http://localhost:8000/documents \
   -H "Content-Type: application/json" \
   -d '{"title":"Employment Agreement","content":"This contract is valid for 1 year.","user_id":1}'
 ```
 
-Expected behavior:
+Expected result:
 
 - a new document is created
 - version `1` is stored automatically
 
-### 3. Update the Document
+## 2. Update Document (Create New Version)
 
-```bash
-curl -X POST http://127.0.0.1:8000/documents/1/versions \
-  -H "Content-Type: application/json" \
-  -d '{"content":"This contract is valid for 2 years.","user_id":1}'
-```
+Endpoint: `POST /documents/{id}/versions`
 
-Expected behavior:
-
-- a new version is created
-- previous content remains untouched
-- meaningful changes trigger a background notification log entry
-
-### 4. Verify Identical Content Handling
-
-```bash
-curl -X POST http://127.0.0.1:8000/documents/1/versions \
-  -H "Content-Type: application/json" \
-  -d '{"content":"This contract is valid for 2 years.","user_id":1}'
-```
-
-Expected response:
+Example request body:
 
 ```json
 {
-  "message": "No changes detected",
-  "document_id": 1,
-  "version": null
+  "content": "This contract is valid for 2 years.",
+  "user_id": 1
 }
 ```
 
-### 5. Compare Two Versions
+Example curl:
 
 ```bash
-curl "http://127.0.0.1:8000/documents/1/compare?v1=1&v2=2"
+curl -X POST http://localhost:8000/documents/1/versions \
+  -H "Content-Type: application/json" \
+  -d '{"content":"This contract is valid for 2 years.","user_id":1}'
 ```
 
-The response includes:
+Expected result:
 
-- the full `before` content
-- the full `after` content
-- `changes` as unified diff output
-- a `has_meaningful_changes` flag
+- a new version is created
+- previous versions remain unchanged
+- meaningful changes trigger a background notification
 
-### 6. List Version History
+## 3. Compare Versions
+
+Endpoint: `GET /documents/{id}/compare?v1=1&v2=2`
+
+Example curl:
 
 ```bash
-curl http://127.0.0.1:8000/documents/1/versions
+curl "http://localhost:8000/documents/1/compare?v1=1&v2=2"
 ```
 
-Use this endpoint to feed future frontend history timelines.
+Expected result:
 
-### 7. Update Document Title Without Versioning
+- the response shows `before`
+- the response shows `after`
+- the response includes unified diff lines in `changes`
+
+## 4. Update Document Title
+
+Endpoint: `PATCH /documents/{id}/title`
+
+Example request body:
+
+```json
+{
+  "title": "Updated Employment Agreement"
+}
+```
+
+Example curl:
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/documents/1/title \
+curl -X PATCH http://localhost:8000/documents/1/title \
   -H "Content-Type: application/json" \
   -d '{"title":"Updated Employment Agreement"}'
 ```
 
-Expected behavior:
+Expected result:
 
-- only the document metadata changes
-- no additional content version is created
+- the title changes
+- no new document version is created
 
-### 8. Delete a Specific Version
+## 5. Delete a Version
 
-```bash
-curl -X DELETE http://127.0.0.1:8000/documents/1/versions/2
-```
+Endpoint: `DELETE /documents/{id}/versions/{version}`
 
-Expected behavior:
-
-- version `2` is removed
-- the document record remains available
-
-### 9. Delete an Entire Document
+Example curl:
 
 ```bash
-curl -X DELETE "http://127.0.0.1:8000/documents/1?confirm=true"
+curl -X DELETE http://localhost:8000/documents/1/versions/2
 ```
 
-Expected behavior:
+Expected result:
 
-- the document and its remaining versions are deleted
-- calling the endpoint without `confirm=true` returns an error
+- the specified version is removed
+- the document still exists
 
-## Automated Test Suite
+## 6. Delete Entire Document
 
-Run:
+Endpoint: `DELETE /documents/{id}?confirm=true`
+
+Example curl:
 
 ```bash
-pytest
+curl -X DELETE "http://localhost:8000/documents/1?confirm=true"
 ```
 
-This validates the core PRD flows in an isolated SQLite test database.
+Expected result:
+
+- the document and remaining versions are deleted
+
+## Helpful Follow-Up Checks
+
+List documents:
+
+```bash
+curl http://localhost:8000/documents
+```
+
+List versions:
+
+```bash
+curl http://localhost:8000/documents/1/versions
+```
+
+Open Swagger UI:
+
+```text
+http://localhost:8000/docs
+```
