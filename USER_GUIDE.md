@@ -26,6 +26,19 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+## Start with Docker
+
+If you want the API and PostgreSQL together without local database setup:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- API docs: `http://127.0.0.1:8000/docs`
+- API base URL: `http://127.0.0.1:8000`
+
 ## How to Test Features
 
 ### 1. Create a User

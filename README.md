@@ -82,6 +82,21 @@ uvicorn app.main:app --reload
 
 Swagger UI will be available at `http://127.0.0.1:8000/docs`.
 
+## Docker Setup
+
+For a full local stack with PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- PostgreSQL on `localhost:5432`
+- FastAPI on `http://127.0.0.1:8000`
+
+The API container automatically runs `alembic upgrade head` before starting the server.
+
 ## Data Model
 
 ### `users`
@@ -178,6 +193,8 @@ Run the test suite with:
 pytest
 ```
 
+CI also runs this suite automatically on pushes to `main` and on pull requests through GitHub Actions.
+
 The tests use SQLite for isolation and cover:
 
 - document creation and initial versioning
@@ -189,8 +206,6 @@ The tests use SQLite for isolation and cover:
 
 ## Future Enhancements
 
-- Dockerized deployment
-- GitHub Actions CI
 - full audit event table
 - pagination and search
 - authentication and authorization
