@@ -23,7 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+@app.get("/")
+def root():
+    return {"message": "Smart Legal Document Manager API is running"}
 
 @app.get("/health", tags=["health"])
 def health_check() -> dict[str, str]:
