@@ -259,13 +259,11 @@ def test_safe_filename_removes_control_characters_and_caps_length(raw, expected)
 
 
 def test_declared_oversized_upload_is_refused_before_the_route_runs(client, alice, monkeypatch):
-    monkeypatch.setattr(get_settings(), "max_upload_bytes", 1024)
-
     def route_must_not_run(*_args, **_kwargs):
         raise AssertionError("the body was parsed and the route ran")
 
     monkeypatch.setattr("app.api.routes.uploads._read_and_extract", route_must_not_run)
-    big = b"a" * (200 * 1024)  # well over limit + multipart allowance
+    big = b"a" * (get_settings().max_upload_bytes + 128 * 1024)  # over limit + multipart room
     response = upload(client, alice, "/api/documents/upload", "big.txt", big)
     assert response.status_code == 413
     assert response.json()["error"]["code"] == "payload_too_large"

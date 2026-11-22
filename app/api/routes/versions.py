@@ -1,8 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks, Query, Response, status
 
 from app.api.deps import DbSession, EditorAccess, OwnerAccess, ViewerAccess
+from app.api.version_responses import respond_to_version_result
 from app.db.models import DocumentVersion
-from app.notifications.notification_service import send_notification
 from app.schemas.common import MessageResponse
 from app.schemas.document import (
     DocumentVersionCreate,
@@ -12,34 +12,10 @@ from app.schemas.document import (
     RestoreRequest,
 )
 from app.services import versions as version_service
-from app.services.documents import DocumentAccess
 
 router = APIRouter(prefix="/documents", tags=["versions"])
 
 _UNCHANGED = {200: {"description": "Content was identical to the latest version; nothing saved."}}
-
-
-def respond_to_version_result(
-    result: version_service.VersionCreateResult,
-    access: DocumentAccess,
-    response: Response,
-    background_tasks: BackgroundTasks,
-) -> DocumentVersionCreateResponse:
-    document_id = access.document.id
-    if result.version is None:
-        response.status_code = status.HTTP_200_OK
-    elif result.meaningful:
-        background_tasks.add_task(
-            send_notification,
-            document_id=document_id,
-            user_name=access.user.name,
-            version_number=result.version.version_number,
-        )
-    return DocumentVersionCreateResponse(
-        message=result.message,
-        document_id=document_id,
-        version=result.version.version_number if result.version else None,
-    )
 
 
 @router.post(

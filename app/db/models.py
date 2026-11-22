@@ -84,13 +84,16 @@ class Document(Base):
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
     creator: Mapped["User"] = relationship(back_populates="created_documents")
+    # passive_deletes: the database's ON DELETE CASCADE removes children, so deleting a
+    # document doesn't load every version's content first (review finding R2).
     versions: Mapped[list["DocumentVersion"]] = relationship(
         back_populates="document",
         cascade="all, delete-orphan",
+        passive_deletes=True,
         order_by="DocumentVersion.version_number",
     )
     members: Mapped[list["DocumentMember"]] = relationship(
-        back_populates="document", cascade="all, delete-orphan"
+        back_populates="document", cascade="all, delete-orphan", passive_deletes=True
     )
 
 
@@ -125,7 +128,9 @@ class DocumentVersion(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), nullable=False, index=True)
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)  # sha256 hex

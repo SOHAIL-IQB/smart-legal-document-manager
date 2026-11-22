@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, File, Form, Response, UploadFile, status
 
 from app.api.deps import CurrentUser, DbSession, EditorAccess
-from app.api.routes.versions import respond_to_version_result
+from app.api.version_responses import respond_to_version_result
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.db.models import VersionSource

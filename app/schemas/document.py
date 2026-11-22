@@ -32,9 +32,6 @@ class DocumentResponse(BaseModel):
     word_count: int | None = Field(description="Words in the latest version.")
 
 
-DocumentDetailResponse = DocumentResponse
-
-
 class DocumentListResponse(BaseModel):
     items: list[DocumentResponse]
     total: int
