@@ -408,7 +408,7 @@ Phase 9 React + Vite + TS frontend, Phase 10 verification and launch.
   `docker exec smart-legal-document-manager-db psql -U postgres -c "CREATE DATABASE sldm_test"`.
 - Checks before every commit: `ruff check . && ruff format --check .`, `pytest --cov` (SQLite), and
   `TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5434/sldm_test pytest` (Postgres).
-- Commit rules: authored by the owner only; no co-author or AI mention in commits or files
-  (check with `git log origin/main..HEAD --format=%B | grep -iE "co-authored|claude|anthropic"`).
+- Commit rules: authored by the owner only; no co-author trailers and no mention of AI tools in
+  commit messages or files. Check unpushed messages and tracked files for both before every push.
 
 **Open decisions for the owner:** none pending. Known limits are listed in ADR 0001 and PLAN.md §7.
