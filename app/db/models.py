@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -14,6 +14,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+
+def utcnow() -> datetime:
+    """The one clock for every timestamp the app writes (microsecond precision on any database).
+
+    `server_default=func.now()` stays on the columns only for rows inserted with raw SQL.
+    """
+    return datetime.now(UTC)
 
 
 class Role(enum.StrEnum):
@@ -46,7 +54,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
     )
 
     created_documents: Mapped[list["Document"]] = relationship(back_populates="creator")
@@ -64,10 +72,14 @@ class Document(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        server_default=func.now(),
+        nullable=False,
     )
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
@@ -96,7 +108,7 @@ class DocumentMember(Base):
     )
     role: Mapped[str] = mapped_column(String(16), nullable=False)
     added_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
     )
 
     document: Mapped["Document"] = relationship(back_populates="members")
@@ -123,7 +135,7 @@ class DocumentVersion(Base):
     restored_from: Mapped[int | None] = mapped_column(Integer)  # version number it restores
     edited_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
     )
     # Versions are never hard-deleted (audit trail); "delete" hides them.
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

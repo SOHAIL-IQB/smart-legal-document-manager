@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.db.models import Role, VersionSource
 from app.schemas.common import Content, Title
+from app.utils.diff import DiffRow, DiffStats
 
 ChangeNote = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
 
@@ -24,12 +25,21 @@ class DocumentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     created_by: int
+    created_by_name: str
     my_role: Role
+    latest_version: int | None = Field(description="Newest version that isn't deleted.")
+    version_count: int = Field(description="Number of versions that aren't deleted.")
+    word_count: int | None = Field(description="Words in the latest version.")
 
 
-class DocumentDetailResponse(DocumentResponse):
-    latest_version: int | None
-    version_count: int
+DocumentDetailResponse = DocumentResponse
+
+
+class DocumentListResponse(BaseModel):
+    items: list[DocumentResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 class DocumentCreateResponse(BaseModel):
@@ -80,7 +90,11 @@ class CompareResponse(BaseModel):
     document_id: int
     version_1: int
     version_2: int
+    version_1_meta: DocumentVersionSummary
+    version_2_meta: DocumentVersionSummary
+    has_meaningful_changes: bool
+    stats: DiffStats
+    rows: list[DiffRow] = Field(description="Side-by-side rows with word-level segments.")
     before: str
     after: str
-    changes: list[str]
-    has_meaningful_changes: bool
+    changes: list[str] = Field(description="Unified diff lines, kept for API clients.")

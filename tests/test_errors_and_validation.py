@@ -89,7 +89,7 @@ def test_unexpected_error_returns_generic_500(monkeypatch, alice):
     def boom(*_args, **_kwargs):
         raise RuntimeError("database exploded with secret details")
 
-    monkeypatch.setattr("app.services.documents.list_documents_for_user", boom)
+    monkeypatch.setattr("app.services.documents.search_documents", boom)
     response = TestClient(app, raise_server_exceptions=False).get(
         "/api/documents", headers=alice.headers
     )

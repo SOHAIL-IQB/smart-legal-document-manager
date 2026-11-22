@@ -86,10 +86,12 @@ def test_document_list_only_shows_my_documents_with_my_role(client, team, make_d
     document_id, accounts = team
     make_document(accounts["outsider"], title="Otto's own")
 
-    viewer_docs = client.get("/api/documents", headers=accounts["viewer"].headers).json()
+    viewer_docs = client.get("/api/documents", headers=accounts["viewer"].headers).json()["items"]
     assert [(d["id"], d["my_role"]) for d in viewer_docs] == [(document_id, "viewer")]
 
-    outsider_docs = client.get("/api/documents", headers=accounts["outsider"].headers).json()
+    outsider_docs = client.get("/api/documents", headers=accounts["outsider"].headers).json()[
+        "items"
+    ]
     assert [d["title"] for d in outsider_docs] == ["Otto's own"]
 
 
@@ -209,4 +211,4 @@ def test_editor_versions_are_attributed_to_editor(client, team):
 def test_deleting_document_removes_memberships(client, team):
     document_id, accounts = team
     client.delete(f"/api/documents/{document_id}?confirm=true", headers=accounts["owner"].headers)
-    assert client.get("/api/documents", headers=accounts["viewer"].headers).json() == []
+    assert client.get("/api/documents", headers=accounts["viewer"].headers).json()["items"] == []

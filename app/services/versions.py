@@ -8,15 +8,14 @@ Invariants (audit defects B2, B3, B4):
 
 import hashlib
 from dataclasses import dataclass
-from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.errors import ConflictError, GoneError, NotFoundError
-from app.db.models import Document, DocumentVersion, User, VersionSource
-from app.utils.diff import build_unified_diff, has_meaningful_changes
+from app.db.models import Document, DocumentVersion, User, VersionSource, utcnow
+from app.utils.diff import build_unified_diff, diff_documents, has_meaningful_changes
 
 
 @dataclass(frozen=True)
@@ -147,7 +146,7 @@ def create_version(
         restored_from=restored_from,
     )
     db.add(version)
-    document.updated_at = datetime.now(UTC)
+    document.updated_at = utcnow()
     try:
         db.commit()
     except IntegrityError as exc:  # only reachable without row locks (SQLite)
@@ -185,21 +184,28 @@ def delete_version(db: Session, document: Document, *, version_number: int, user
     if count_live_versions(db, document.id) <= 1:
         raise ConflictError("A document must keep at least one version.")  # B3
 
-    version.deleted_at = datetime.now(UTC)
+    version.deleted_at = utcnow()
     version.deleted_by = user.id
     document.updated_at = version.deleted_at
     db.commit()
 
 
-def compare_versions(db: Session, document: Document, *, v1: int, v2: int) -> dict[str, object]:
-    before = get_version(db, document.id, v1).content
-    after = get_version(db, document.id, v2).content
+def compare_versions(
+    db: Session, document: Document, *, v1: int, v2: int, context: int | None = None
+) -> dict[str, object]:
+    first = get_version(db, document.id, v1)
+    second = get_version(db, document.id, v2)
+    diff = diff_documents(first.content, second.content, context=context)
     return {
         "document_id": document.id,
         "version_1": v1,
         "version_2": v2,
-        "before": before,
-        "after": after,
-        "changes": build_unified_diff(before, after),
-        "has_meaningful_changes": has_meaningful_changes(before, after),
+        "version_1_meta": first,
+        "version_2_meta": second,
+        "has_meaningful_changes": has_meaningful_changes(first.content, second.content),
+        "stats": diff.stats,
+        "rows": diff.rows,
+        "before": first.content,
+        "after": second.content,
+        "changes": build_unified_diff(first.content, second.content),
     }

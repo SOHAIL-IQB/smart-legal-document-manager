@@ -13,5 +13,14 @@ def compare_document_versions(
     db: DbSession,
     v1: int = Query(..., ge=1, description="Version to compare from."),
     v2: int = Query(..., ge=1, description="Version to compare to."),
+    context: int | None = Query(
+        default=None,
+        ge=0,
+        le=50,
+        description="Keep this many unchanged lines around each change and collapse the rest "
+        "into 'skip' rows. Omit to return every line.",
+    ),
 ) -> CompareResponse:
-    return CompareResponse(**compare_versions(db, access.document, v1=v1, v2=v2))
+    return CompareResponse.model_validate(
+        compare_versions(db, access.document, v1=v1, v2=v2, context=context)
+    )
