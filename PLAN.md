@@ -165,10 +165,13 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - **Verify:** 27 diff unit tests incl. 300 seeded random cases; 185 passed on Postgres; 3 SQL statements per list regardless of size; 12/12 mutations caught after strengthening two tests
 - Later: Postgres full-text or `pg_trgm` index if content search gets slow (currently a sequential `ILIKE`).
 
-### Phase 5 — File upload `[ ]`
-- [ ] `pypdf` + `python-docx`; size limit; extension + magic-byte check; empty-text PDFs → clear 422
-- [ ] New-document-from-file and new-version-from-file
-- **Verify:** tests with small fixture PDF/DOCX/TXT files
+### Phase 5 — File upload `[x]` (LOG 008)
+- [x] `pypdf` + `python-docx`; size limit; extension + magic-byte check; empty-text PDFs → clear 422
+- [x] Also: encrypted PDFs, page cap (500), DOCX zip-bomb check (50 MB inflated), non-UTF-8 text, filename sanitizing
+- [x] New-document-from-file and new-version-from-file; `source_filename` column (migration `0004`)
+- [x] Content-Length middleware rejects oversized uploads before parsing
+- **Verify:** 43 upload tests on files generated in code (no binaries in git); 229 passed on Postgres; 10/10 mutations caught; live curl with real PDF/DOCX
+- Later: OCR for scanned PDFs (would need Tesseract); keeping the original file (would need object storage).
 
 ### Phase 6 — Notifications & audit log `[ ]`
 - [ ] `notifications` table; meaningful change → notify every member except actor (B9)

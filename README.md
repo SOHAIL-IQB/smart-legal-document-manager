@@ -101,6 +101,8 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `POST` | `/documents/{id}/versions/{n}/restore` | editor+ |
 | `DELETE` | `/documents/{id}/versions/{n}` (soft delete) | owner |
 | `GET` | `/documents/{id}/compare?v1=&v2=&context=` | viewer+ |
+| `POST` | `/documents/upload` (multipart: `file`, `title`) | signed in |
+| `POST` | `/documents/{id}/versions/upload` (multipart: `file`, `change_note`) | editor+ |
 | `GET` / `POST` | `/documents/{id}/members` | viewer+ / owner |
 | `PATCH` / `DELETE` | `/documents/{id}/members/{user_id}` | owner (any member may remove themselves) |
 | `GET` | `/health` | anyone |
@@ -128,6 +130,21 @@ titles and the latest live version's text (case-insensitive; `%` and `_` match l
 Filter with `role`, sort by `updated_at` (default), `created_at` or `title`, and page with
 `limit` (1–100, default 20) and `offset`. Each item includes the owner's name, your role, the
 latest version, the number of live versions and the latest word count.
+
+## File Upload
+
+Documents and new versions can be created from **PDF, DOCX or TXT** files; only the extracted text
+is stored (as a version with `source: "upload"` and the original `source_filename`).
+
+- The type is detected from the file's bytes and must match the extension; the browser's
+  Content-Type is ignored.
+- Limit: 10 MB (`MAX_UPLOAD_BYTES`). Oversized requests are refused from their `Content-Length`
+  before the body is parsed (`413`).
+- Refused with a clear `422`: password-protected or damaged PDFs, PDFs with no selectable text
+  (scans; OCR isn't supported), PDFs over 500 pages, non-UTF-8 text, DOCX files over 50 MB
+  uncompressed (zip bombs), and files with no text.
+- DOCX paragraphs and tables are extracted in document order (table cells joined with ` | `).
+  python-docx parses XML with entity resolution off (no XXE).
 
 ## Smart Notification System
 

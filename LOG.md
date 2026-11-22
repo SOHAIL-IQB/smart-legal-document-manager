@@ -265,3 +265,50 @@ in `test_permissions.py`; the 500 test patches `search_documents`. Assertions un
 - Final fix: the app is the single clock. `models.utcnow()` is the Python `default` / `onupdate` for all 5
   timestamp columns and is used for edits and soft deletes. `server_default=now()` stays for raw-SQL
   inserts. No schema change (`alembic check` clean on SQLite and Postgres).
+
+## 008 — 2026-11-22 — Phase 5: file upload (PDF, DOCX, TXT)
+
+**CI for Phase 4 push** (`11353b9`, run `44995869184`): `backend` success, `backend-postgres` success.
+
+**Checked before writing code** (the code under test is the parsing of untrusted files)
+- python-docx 1.2.0: `docx/oxml/parser.py:19` builds `etree.XMLParser(remove_blank_text=True, resolve_entities=False)` → no XXE.
+- pypdf 7.1.1: has `is_encrypted`, decompression limits (`ZLIB_MAX_OUTPUT_LENGTH`, …, `LimitReachedError`).
+- AES-encrypted test PDFs need the `cryptography` package; used RC4-128 for the fixture (the server
+  refuses any encrypted PDF without decrypting, so the algorithm doesn't matter).
+
+**Changed**
+- Deps: `python-multipart==0.0.34`, `pypdf==7.1.1`, `python-docx==1.2.0`.
+- `app/utils/extract.py`: type from magic bytes (`%PDF-`, `PK\x03\x04`, NUL ⇒ binary) and must match the
+  extension (else 415); PDF: refuse encrypted / > 500 pages / damaged / no text; DOCX: sum of uncompressed
+  sizes ≤ 50 MB checked before python-docx opens it, paragraphs and tables in body order; TXT: UTF-8 (BOM ok).
+  Text normalized (CRLF → LF, trailing spaces, ≤ 1 blank line in a row). `safe_filename` keeps the base name
+  (POSIX and Windows separators), drops control characters, caps at 255.
+- `app/api/routes/uploads.py`: `POST /documents/upload` (title defaults to the file name),
+  `POST /documents/{id}/versions/upload` (editor+, `change_note`). Plain `def` routes, so DB work and parsing
+  run in FastAPI's threadpool. I first wrote them `async`, which would have blocked the event loop on the
+  synchronous DB calls, and changed it before running anything.
+- `app/main.py`: middleware returns 413 when `Content-Length` > limit + 64 KB, before the body is parsed;
+  the route also caps the bytes it reads (no `Content-Length` case).
+- `max_upload_bytes` setting (10 MB, `.env.example`); `document_versions.source_filename` (migration `0004`).
+- Docs: README "File Upload" + endpoints; USER_GUIDE section 8.
+
+**Tests** (`tests/files.py` builds real PDFs, DOCX, encrypted and blank PDFs and a zip bomb in memory)
+- Written first; red with `ModuleNotFoundError: app.utils.extract`.
+- Wrong assumptions in my tests, fixed:
+  1. Expected message text "does not match"; the code says "do not match".
+  2. A NUL in a multipart filename: httpx percent-encodes it, so the server got `Lease%00.txt`.
+     Control-character stripping is now tested on `safe_filename` directly; the API test covers
+     POSIX, Windows and absolute paths.
+- Coverage gap found myself: the 413 test stayed under the middleware's allowance, so it only exercised the
+  route check. Added a test that fails if the route runs; disabling the middleware check makes it fail.
+
+**Verified**
+| Check | Result |
+|---|---|
+| `pytest --cov` (SQLite) | **228 passed, 1 skipped**, coverage **98%** (`extract.py` 97%) |
+| Full suite on Postgres 16 | **229 passed** |
+| Mutations (mismatch allowed, encrypted accepted, zip-bomb check off, page cap off, binary as txt, paths kept, text cap off, route size check off, blank-line collapse off, middleware off) | **10/10 caught** |
+| Migration 0004 up → down → up → `alembic check`, SQLite and Postgres | clean, no drift |
+| Live server + curl `-F` with generated files | PDF → doc 201; DOCX with table → v2 201 (`source_filename` kept); scan → 422; disguised `.pdf` → 415; 11 MB → 413 in 0.5 ms |
+| Whole USER_GUIDE run against a live server | upload step → version 4 as documented |
+| `ruff check` / `ruff format --check` | clean (S108 on a test filename marked as a false positive) |

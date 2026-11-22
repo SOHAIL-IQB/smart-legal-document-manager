@@ -101,7 +101,20 @@ curl -s -X POST $API/documents/1/versions/1/restore -H "Authorization: Bearer $B
 Restoring never rewrites history: it saves a **new** version with the old content
 (`source: "restore"`, `restored_from: 1`).
 
-## 8. Rename and delete
+## 8. Upload a file
+
+```bash
+printf 'This contract is valid for 3 years.\n' > /tmp/contract-v4.txt
+curl -s -X POST $API/documents/1/versions/upload -H "Authorization: Bearer $BOB" \
+  -F "file=@/tmp/contract-v4.txt" -F "change_note=Signed copy"
+# {"message":"Version created","document_id":1,"version":4}
+```
+
+`POST $API/documents/upload` (fields `file` and optional `title`) creates a new document from a file.
+Accepted: `.pdf`, `.docx`, `.txt` up to 10 MB. Scanned PDFs without selectable text, encrypted PDFs
+and files whose contents don't match the extension are refused with a clear error.
+
+## 9. Rename and delete
 
 ```bash
 curl -s -X PATCH $API/documents/1/title -H "Authorization: Bearer $BOB" \
@@ -124,5 +137,6 @@ Every error has the same shape:
 {"error": {"code": "forbidden", "message": "This action needs the owner role; your role is editor."}}
 ```
 
-Codes: `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `gone`, `validation_error`
+Codes: `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `gone`, `payload_too_large`,
+`unsupported_media_type`, `unreadable_file`, `validation_error`
 (with `details` per field), `rate_limited`, `internal_error`.
