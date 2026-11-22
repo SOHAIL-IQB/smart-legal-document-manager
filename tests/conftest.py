@@ -1,20 +1,18 @@
 import os
-import sys
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 TEST_DB_PATH = Path(__file__).parent / "test.db"
-os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
-from app.main import app
-from app.database.session import Base, engine
+# Must be set before the app (and its engine) is imported.
+os.environ["ENVIRONMENT"] = "test"
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
+os.environ["CORS_ORIGINS"] = '["http://localhost:5173"]'
+
+from app.db.session import Base, engine  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

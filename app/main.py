@@ -3,36 +3,42 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import get_settings
-from app.routers.compare_router import router as compare_router
-from app.routers.document_router import router as document_router
-from app.routers.user_router import router as user_router
-from app.routers.version_router import router as version_router
-
+from app.api.router import api_router
+from app.core.config import get_settings
+from app.core.errors import register_exception_handlers
 
 settings = get_settings()
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title=settings.app_name, version=settings.app_version)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-@app.get("/")
-def root():
-    return {"message": "Smart Legal Document Manager API is running"}
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        docs_url=f"{settings.api_prefix}/docs",
+        openapi_url=f"{settings.api_prefix}/openapi.json",
+        redoc_url=None,
+    )
 
-@app.get("/health", tags=["health"])
-def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+    register_exception_handlers(app)
+    app.include_router(api_router, prefix=settings.api_prefix)
+
+    @app.get("/", include_in_schema=False)
+    def root() -> dict[str, str]:
+        return {
+            "message": f"{settings.app_name} API is running",
+            "docs": f"{settings.api_prefix}/docs",
+        }
+
+    return app
 
 
-app.include_router(document_router)
-app.include_router(version_router)
-app.include_router(compare_router)
-app.include_router(user_router)
+app = create_app()
