@@ -33,3 +33,54 @@ jobs:
 
       - name: Test
         run: pytest --cov --cov-fail-under=85
+
+  backend-postgres:
+    # Same suite on real PostgreSQL: runs the row-lock concurrency test and checks migrations.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sldm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PG_URL: postgresql+psycopg://postgres:postgres@localhost:5432/sldm_test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Migrations apply, roll back, and match the models
+        env:
+          DATABASE_URL: ${{ env.PG_URL }}
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
+
+      - name: Test
+        env:
+          TEST_DATABASE_URL: ${{ env.PG_URL }}
+        run: pytest

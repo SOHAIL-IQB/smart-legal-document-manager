@@ -63,9 +63,12 @@ requirements.txt
 | `users` | `id`, `name`, `email` (unique, lowercase), `password_hash` (Argon2id), `created_at` |
 | `documents` | `id`, `title`, `created_by`, `created_at`, `updated_at` |
 | `document_members` | `document_id`, `user_id`, `role` (`owner` / `editor` / `viewer`), `added_at` |
-| `document_versions` | `id`, `document_id`, `version_number`, `content`, `edited_by`, `created_at` |
+| `document_versions` | `id`, `document_id`, `version_number`, `content`, `content_hash` (SHA-256), `word_count`, `change_note`, `source` (`manual` / `restore` / `upload`), `restored_from`, `edited_by`, `created_at`, `deleted_at`, `deleted_by` |
 
 Each version stores a full content snapshot, so earlier content is never overwritten.
+Versions are never hard-deleted: "deleting" one hides it but keeps it for the audit trail, its
+number is never reused, and a document always keeps at least one live version. Saves to the same
+document are serialized with a row lock, so concurrent edits get distinct version numbers.
 
 ## Authentication and Permissions
 
@@ -75,7 +78,7 @@ the returned token as `Authorization: Bearer <token>`. Every document has member
 | Action | viewer | editor | owner |
 |---|:-:|:-:|:-:|
 | Read document, versions, comparisons, members | ✓ | ✓ | ✓ |
-| Add a version, rename | | ✓ | ✓ |
+| Add or restore a version, rename | | ✓ | ✓ |
 | Delete a version or the document, manage members | | | ✓ |
 
 Users who aren't members get `404`, so document ids can't be probed. Design and threat model:
@@ -93,8 +96,10 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `GET` | `/documents/{id}` | viewer+ |
 | `PATCH` | `/documents/{id}/title` | editor+ |
 | `DELETE` | `/documents/{id}?confirm=true` | owner |
-| `GET` / `POST` | `/documents/{id}/versions` | viewer+ / editor+ |
-| `DELETE` | `/documents/{id}/versions/{n}` | owner |
+| `GET` / `POST` | `/documents/{id}/versions` (`?include_deleted=true`) | viewer+ / editor+ |
+| `GET` | `/documents/{id}/versions/{n}` (full content) | viewer+ |
+| `POST` | `/documents/{id}/versions/{n}/restore` | editor+ |
+| `DELETE` | `/documents/{id}/versions/{n}` (soft delete) | owner |
 | `GET` | `/documents/{id}/compare?v1=&v2=` | viewer+ |
 | `GET` / `POST` | `/documents/{id}/members` | viewer+ / owner |
 | `PATCH` / `DELETE` | `/documents/{id}/members/{user_id}` | owner (any member may remove themselves) |

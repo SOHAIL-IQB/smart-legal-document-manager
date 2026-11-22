@@ -146,15 +146,16 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - Removed `GET/POST /users` (account list was an information leak; registration replaces create).
 - Later options noted in ADR 0001: server-side token revocation; shared-store rate limiter for multi-instance.
 
-### Phase 3 — Versioning correctness `[ ]`
-- [ ] Soft delete; numbers from `MAX(version_number)` incl. deleted; block deleting last live version (B2, B3)
-- [ ] Lock document row (`SELECT … FOR UPDATE`) when creating a version + retry/409 on conflict (B4)
-- [ ] Fetch latest version with one query, not by loading all (B8)
-- [ ] Version metadata: change_note, content_hash, word_count, source
-- [ ] Restore endpoint (creates a new version from an old one)
-- [ ] Migration `0002`
-- [ ] Tests: regression tests for B2, B3, B4 written **first** (must fail on old code)
-- **Verify:** pytest green; regression tests demonstrably failed before fix
+### Phase 3 — Versioning correctness `[x]` (LOG 006)
+- [x] Soft delete; numbers from `MAX(version_number)` incl. deleted; block deleting last live version (B2, B3)
+- [x] Lock document row (`SELECT … FOR UPDATE`) when creating a version; 409 if a unique clash still happens (B4)
+- [x] Fetch latest version with one query, not by loading all (B8) — done during Phase 1/2, confirmed by grep
+- [x] Version metadata: change_note, content_hash, word_count, source, restored_from
+- [x] Restore endpoint (creates a new version from an old one) + `GET /versions/{n}`; history list omits content
+- [x] Migration `0003` (the plan said 0002; 0002 was used by Phase 2)
+- [x] Tests: regression tests for B2, B3, B4 written **first** and shown failing on old code
+- [x] CI: added a Postgres job (migration round-trip + full suite) so B4 runs in CI — *pulled forward from Phase 7*
+- **Verify:** 133 passed on Postgres; 132 + 1 skipped (B4, needs Postgres) on SQLite, 98% cov; 7/7 mutations caught
 
 ### Phase 4 — Diff, search, pagination `[ ]`
 - [ ] Diff engine: line opcodes + word-level segments inside changed lines + stats (added/removed/changed); keep `has_meaningful_changes` (B10)

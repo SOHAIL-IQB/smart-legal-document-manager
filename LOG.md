@@ -143,3 +143,52 @@ Library APIs checked by running them, not from memory: `pwdlib.PasswordHash.reco
 **Known limits (documented in ADR 0001):** logout doesn't revoke copied tokens; rate limiter is per process;
 owners can tell whether an email is registered when sharing.
 **Still open from audit:** B2, B3, B4, B8 (Phase 3). Phase 2 not committed yet.
+
+## 006 — 2026-11-22 — Phase 2 pushed; Phase 3: versioning correctness
+
+**Pushed:** owner asked to push to GitHub at the end of every phase. Phase 1+2 commits pushed
+(`76c18e1..c9d8f3b`). Checked first: no AI attribution in any commit message or tracked file.
+CI run `44993011933` on `c9d8f3b`: **success**.
+
+**Red first (Prove-It).** `tests/test_version_regressions.py` written before any fix, run on the old code:
+
+| Test | SQLite (old) | Postgres (old) |
+|---|---|---|
+| B2 numbers never reused | FAIL `assert 2 == 3` | FAIL |
+| B3 last version can't be deleted | FAIL `assert 200 == 409` | FAIL |
+| B4 8 concurrent saves | skipped (needs row locks) | FAIL `[500, 201, …, 500]` — confirms B4, which was only inferred from code before |
+
+**Changed**
+- `document_versions`: `content_hash` (sha256), `word_count`, `change_note` (≤500, trimmed), `source`
+  (`manual|restore|upload`, CHECK), `restored_from`, `deleted_at`, `deleted_by`. Migration `0003`
+  backfills hash and word count.
+- `app/services/versions.py` rewritten around three invariants: numbers only grow (`MAX` over all
+  versions incl. deleted), soft delete only and ≥1 live version, `SELECT … FOR UPDATE` on the document
+  row for every save/delete. Unique-constraint clash → 409 instead of 500.
+- New `GoneError` (410): fetching, comparing or restoring a deleted version; deleting twice.
+- Endpoints: `GET /documents/{id}/versions/{n}` (full content), `POST …/versions/{n}/restore`,
+  `GET …/versions?include_deleted=true`. History list now returns summaries **without content**
+  (editor name, hash, word count, source, note, deletion info).
+- Detail `version_count` / `latest_version` count live versions only.
+- CI: new `backend-postgres` job (Postgres 16 service): `alembic upgrade → downgrade base → upgrade → check`, then the full suite.
+- Docs: README schema/invariants/endpoints; USER_GUIDE sections 4–7.
+
+**Test changes**
+- `test_content_whitespace_is_preserved_exactly` now reads content from `GET /versions/1` because the
+  list no longer includes content (assertion unchanged).
+- New `tests/test_versioning.py` (16 tests); permission matrix gains "get one version" (viewer+) and
+  "restore version" (editor+).
+
+**Verified**
+| Check | Result |
+|---|---|
+| Regression tests after fix, Postgres | B2, B3, B4 **PASSED**; B4 repeated 3× — passed each time |
+| `pytest --cov` (SQLite) | **132 passed, 1 skipped** (B4), coverage **98%** |
+| Full suite on Postgres 16 | **133 passed** |
+| Mutations, one at a time (row lock removed [on Postgres], hard delete, numbering ignores deleted, last-version guard off, list shows deleted, deleted readable, restore unmarked) | **7/7 made the suite fail**; `versions.py` restored byte-for-byte (shasum) |
+| Migration 0003 with a seeded legacy row, SQLite and Postgres: upgrade → downgrade → upgrade → `alembic check` | backfill `word_count=5`, hash `cf13f4ac…` = `shasum -a 256` of the content; no drift |
+| Every `bash` block in USER_GUIDE.md run against a live server | matches the documented responses |
+| `ruff check` / `ruff format --check` | clean |
+| B8 | `grep -rn "\.versions\b" app/` finds no use of the relationship |
+
+**Note:** the new CI job is validated as YAML locally; its first real run is on this push.

@@ -55,30 +55,51 @@ with `DELETE /documents/1/members/{user_id}`. A document always keeps at least o
 
 ```bash
 curl -s -X POST $API/documents/1/versions -H "Authorization: Bearer $BOB" \
-  -H "Content-Type: application/json" -d '{"content":"This contract is valid for 2 years."}'
+  -H "Content-Type: application/json" \
+  -d '{"content":"This contract is valid for 2 years.","change_note":"Extended the term"}'
 # {"message":"Version created","document_id":1,"version":2}
 ```
 
 - Identical content returns `200` with `"No changes detected"` and creates nothing.
 - The editor is taken from the token, so the history can't be forged.
+- `change_note` is optional (up to 500 characters).
 - If the change is meaningful (not just whitespace), a notification is sent in the background.
 
-## 5. History and comparison
+## 5. History, one version, comparison
 
 ```bash
-curl -s $API/documents/1/versions -H "Authorization: Bearer $ALICE"
+curl -s $API/documents/1/versions -H "Authorization: Bearer $ALICE"     # summaries, no content
+curl -s $API/documents/1/versions/1 -H "Authorization: Bearer $ALICE"   # full content
 curl -s "$API/documents/1/compare?v1=1&v2=2" -H "Authorization: Bearer $ALICE"
 ```
 
-## 6. Rename and delete
+Each summary has the editor's name, word count, SHA-256 `content_hash`, `source`
+(`manual` / `restore` / `upload`) and the change note.
+
+## 6. Restore an earlier version
+
+```bash
+curl -s -X POST $API/documents/1/versions/1/restore -H "Authorization: Bearer $BOB"
+# {"message":"Version created","document_id":1,"version":3}
+```
+
+Restoring never rewrites history: it saves a **new** version with the old content
+(`source: "restore"`, `restored_from: 1`).
+
+## 7. Rename and delete
 
 ```bash
 curl -s -X PATCH $API/documents/1/title -H "Authorization: Bearer $BOB" \
   -H "Content-Type: application/json" -d '{"title":"Master Service Agreement"}'
 
 curl -s -X DELETE $API/documents/1/versions/2 -H "Authorization: Bearer $ALICE"     # owner only
+curl -s "$API/documents/1/versions?include_deleted=true" -H "Authorization: Bearer $ALICE"
 curl -s -X DELETE "$API/documents/1?confirm=true" -H "Authorization: Bearer $ALICE"  # owner only
 ```
+
+Deleting a version hides it but keeps it in the audit trail (`is_deleted`, `deleted_at`,
+`deleted_by`). Its number is never reused. Fetching, comparing or restoring it returns `410`.
+The last remaining version can't be deleted (`409`).
 
 ## Errors
 
@@ -88,5 +109,5 @@ Every error has the same shape:
 {"error": {"code": "forbidden", "message": "This action needs the owner role; your role is editor."}}
 ```
 
-Codes: `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `validation_error`
+Codes: `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `gone`, `validation_error`
 (with `details` per field), `rate_limited`, `internal_error`.
