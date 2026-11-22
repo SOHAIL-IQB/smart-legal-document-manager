@@ -157,11 +157,13 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] CI: added a Postgres job (migration round-trip + full suite) so B4 runs in CI — *pulled forward from Phase 7*
 - **Verify:** 133 passed on Postgres; 132 + 1 skipped (B4, needs Postgres) on SQLite, 98% cov; 7/7 mutations caught
 
-### Phase 4 — Diff, search, pagination `[ ]`
-- [ ] Diff engine: line opcodes + word-level segments inside changed lines + stats (added/removed/changed); keep `has_meaningful_changes` (B10)
-- [ ] `GET /documents` with `q`, `role`, `sort`, `limit`, `offset`, returns `{items, total}` (B6)
-- [ ] Document list items include latest version number, updated_at, my role, word count
-- **Verify:** unit tests for diff engine edge cases (empty, identical, reorder, unicode)
+### Phase 4 — Diff, search, pagination `[x]` (LOG 007)
+- [x] Diff engine: line opcodes + word-level segments inside changed lines + stats (added/removed/changed); keep `has_meaningful_changes` (B10)
+- [x] `context=N` collapses unchanged runs into `skip` rows; `whitespace_only` flag per changed row — *added*
+- [x] `GET /documents` with `q`, `role`, `sort`, `order`, `limit`, `offset`, returns `{items, total, limit, offset}` (B6)
+- [x] List items (and detail, same query) include owner name, my role, latest live version, live count, word count
+- **Verify:** 27 diff unit tests incl. 300 seeded random cases; 185 passed on Postgres; 3 SQL statements per list regardless of size; 12/12 mutations caught after strengthening two tests
+- Later: Postgres full-text or `pg_trgm` index if content search gets slow (currently a sequential `ILIKE`).
 
 ### Phase 5 — File upload `[ ]`
 - [ ] `pypdf` + `python-docx`; size limit; extension + magic-byte check; empty-text PDFs → clear 422

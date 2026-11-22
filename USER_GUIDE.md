@@ -71,12 +71,27 @@ curl -s -X POST $API/documents/1/versions -H "Authorization: Bearer $BOB" \
 curl -s $API/documents/1/versions -H "Authorization: Bearer $ALICE"     # summaries, no content
 curl -s $API/documents/1/versions/1 -H "Authorization: Bearer $ALICE"   # full content
 curl -s "$API/documents/1/compare?v1=1&v2=2" -H "Authorization: Bearer $ALICE"
+curl -s "$API/documents/1/compare?v1=1&v2=2&context=3" -H "Authorization: Bearer $ALICE"
 ```
+
+The comparison returns side-by-side `rows` with word-level `old_segments` / `new_segments`
+(here `"1 year"` → `"2 years"`), and `stats` such as `words_added`. `context=3` keeps three
+unchanged lines around each change and collapses the rest into `skip` rows.
 
 Each summary has the editor's name, word count, SHA-256 `content_hash`, `source`
 (`manual` / `restore` / `upload`) and the change note.
 
-## 6. Restore an earlier version
+## 6. Find documents
+
+```bash
+curl -s "$API/documents?q=contract&limit=10" -H "Authorization: Bearer $BOB"
+curl -s "$API/documents?role=editor&sort=title&order=asc" -H "Authorization: Bearer $BOB"
+```
+
+Returns `{"items": [...], "total": N, "limit": 10, "offset": 0}`. `q` matches titles and the
+latest text.
+
+## 7. Restore an earlier version
 
 ```bash
 curl -s -X POST $API/documents/1/versions/1/restore -H "Authorization: Bearer $BOB"
@@ -86,7 +101,7 @@ curl -s -X POST $API/documents/1/versions/1/restore -H "Authorization: Bearer $B
 Restoring never rewrites history: it saves a **new** version with the old content
 (`source: "restore"`, `restored_from: 1`).
 
-## 7. Rename and delete
+## 8. Rename and delete
 
 ```bash
 curl -s -X PATCH $API/documents/1/title -H "Authorization: Bearer $BOB" \

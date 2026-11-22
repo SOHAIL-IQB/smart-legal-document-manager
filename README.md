@@ -92,7 +92,7 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 |---|---|---|
 | `POST` | `/auth/register`, `/auth/login`, `/auth/logout` | anyone |
 | `GET` | `/auth/me` | signed in |
-| `GET` / `POST` | `/documents` | signed in (lists only your documents) |
+| `GET` / `POST` | `/documents` (`?q=&role=&sort=&order=&limit=&offset=`) | signed in (lists only your documents) |
 | `GET` | `/documents/{id}` | viewer+ |
 | `PATCH` | `/documents/{id}/title` | editor+ |
 | `DELETE` | `/documents/{id}?confirm=true` | owner |
@@ -100,7 +100,7 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `GET` | `/documents/{id}/versions/{n}` (full content) | viewer+ |
 | `POST` | `/documents/{id}/versions/{n}/restore` | editor+ |
 | `DELETE` | `/documents/{id}/versions/{n}` (soft delete) | owner |
-| `GET` | `/documents/{id}/compare?v1=&v2=` | viewer+ |
+| `GET` | `/documents/{id}/compare?v1=&v2=&context=` | viewer+ |
 | `GET` / `POST` | `/documents/{id}/members` | viewer+ / owner |
 | `PATCH` / `DELETE` | `/documents/{id}/members/{user_id}` | owner (any member may remove themselves) |
 | `GET` | `/health` | anyone |
@@ -109,31 +109,25 @@ Errors always have the shape `{"error": {"code": "...", "message": "...", "detai
 
 ## Comparison Logic
 
-The comparison feature uses Python's `difflib` library. The system splits document versions into lines and uses `unified_diff` to detect added, removed, and modified lines. The output is formatted to clearly show before and after changes so lawyers can easily review modifications.
+`GET /documents/{id}/compare` aligns the two versions line by line with Python's `difflib`
+(auto-junk off, so documents that repeat headings or signature lines still align), then compares
+each changed line word by word. The response contains:
 
-Implementation approach:
+- `rows`: side-by-side rows of type `equal`, `insert`, `delete`, `replace` or `skip`, with line
+  numbers for each side. `replace` rows carry `old_segments` / `new_segments`
+  (`{"op": "equal" | "delete" | "insert", "text": ...}`) that rebuild each line exactly, and a
+  `whitespace_only` flag.
+- `stats`: lines added / removed / changed and words added / removed.
+- `context=N` keeps N unchanged lines around each change and collapses the rest into `skip` rows.
+- `has_meaningful_changes`, plus `before`, `after` and a unified diff in `changes`.
 
-```python
-old_lines = old_text.splitlines()
-new_lines = new_text.splitlines()
+## Searching and Listing
 
-diff = difflib.unified_diff(
-    old_lines,
-    new_lines,
-    fromfile="Before",
-    tofile="After",
-    lineterm="",
-)
-```
-
-The response includes:
-
-- `before`
-- `after`
-- `changes`
-- `has_meaningful_changes`
-
-This makes the comparison readable for legal review while preserving the exact text history for auditing.
+`GET /documents` returns `{items, total, limit, offset}` for documents you belong to. `q` searches
+titles and the latest live version's text (case-insensitive; `%` and `_` match literally).
+Filter with `role`, sort by `updated_at` (default), `created_at` or `title`, and page with
+`limit` (1–100, default 20) and `offset`. Each item includes the owner's name, your role, the
+latest version, the number of live versions and the latest word count.
 
 ## Smart Notification System
 

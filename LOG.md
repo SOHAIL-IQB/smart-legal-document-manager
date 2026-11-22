@@ -192,3 +192,76 @@ CI run `44993011933` on `c9d8f3b`: **success**.
 | B8 | `grep -rn "\.versions\b" app/` finds no use of the relationship |
 
 **Note:** the new CI job is validated as YAML locally; its first real run is on this push.
+
+## 007 — 2026-11-22 — Phase 4: structured diff, search and pagination
+
+**CI for Phase 3 push** (`ef73400`, run `44993754153`): `backend` success, `backend-postgres` success —
+the B4 concurrency test now runs in CI.
+
+**Changed**
+- `app/utils/diff.py`: `diff_documents()` → side-by-side `rows` (`equal|insert|delete|replace|skip`, 1-based
+  line numbers per side), word-level `old_segments`/`new_segments` for `replace` rows, `whitespace_only`,
+  `stats` (lines added/removed/changed, words added/removed), optional `context` collapsing.
+  Tokenizer: `\w+|\s+|[^\w\s]` (Unicode), so segments rebuild each line exactly.
+  Line and word matching use `autojunk=False`. A whitespace-only match between two changes is
+  absorbed so "1 year" → "2 years" is one change. `build_unified_diff` / `has_meaningful_changes` kept.
+- `GET /documents/{id}/compare`: adds `rows`, `stats`, `version_1_meta`, `version_2_meta`, `context` (0–50).
+  `before`, `after`, `changes`, `has_meaningful_changes` unchanged.
+- `app/services/documents.py`: one query (`_summaries_for`) for list and detail: membership join,
+  live-version stats subquery, latest version join, creator join. `search_documents()` adds `ILIKE` on
+  title + latest live content with `%`, `_`, `\` escaped; role filter; sort `updated_at|created_at|title`
+  (title via `lower()`); `limit` 1–100, `offset` ≥ 0; total counted from the filtered query.
+- **Breaking:** `GET /documents` returns `{items, total, limit, offset}` instead of a list. Document responses
+  gain `created_by_name`, `latest_version`, `version_count`, `word_count`.
+- `pyproject.toml`: tests may use seeded `random` (ruff S311).
+- Docs: README comparison + search sections and endpoint table; USER_GUIDE sections 5–6.
+
+**Tests:** written before the engine and run red (`ImportError: cannot import name 'diff_documents'`).
+First green run: 4 failures.
+- 2 were wrong expectations in my tests: the blank-line fixture already ended in a newline, so
+  appending `"\nNew…"` really inserts two lines; and 10 unchanged lines with 2 lines of context
+  collapse to 8, not 10. Fixed the tests.
+- 2 were a real engine gap: words split around a matched space ("1", " ", "year"). Fixed in the
+  engine (whitespace absorption).
+New files: `tests/test_diff_engine.py` (27, incl. a 300-case seeded invariant test: rows rebuild both
+documents, line numbers are contiguous, segments rebuild each line, stats equal row counts) and
+`tests/test_document_list.py` (22). Adjusted for the new list shape: three `.json()` → `.json()["items"]`
+in `test_permissions.py`; the 500 test patches `search_documents`. Assertions unchanged.
+
+**Mutation testing found two weak tests**
+- Turning line autojunk on survived: my blank-line example doesn't trigger difflib's junk heuristic.
+  A random search (400 trials) found autojunk adding up to 393 wrong changed lines. Added a
+  deterministic case: 400 lines over 20 repeated headings, one edit → 1 changed row
+  (autojunk: 200). Now caught.
+- Dropping `lower()` from title sort survived: the titles sorted the same either way. Added
+  "Delta" (byte order: Apple, Delta, banana). Now caught on SQLite. On Postgres (`en_US.utf8`
+  collation) the result is identical with or without `lower()`, so nothing can catch it there.
+  `lower()` stays for SQLite and `C`-collation databases.
+
+**Verified**
+| Check | Result |
+|---|---|
+| `pytest` (SQLite) | **185 passed, 1 skipped** (B4), 5 runs in a row; coverage **98%** |
+| Full suite on Postgres 16 | **186 passed**, 5 runs in a row (after the timestamp fix below) |
+| Mutations (wildcard escaping [Postgres], stats incl. deleted, content not searched, total=0, no space absorption, autojunk on, whitespace flag off, context ignored, title sort case-sensitive [SQLite]) | **all caught** (2 only after strengthening the tests, above) |
+| SQL statements per `GET /documents` (SQLAlchemy event counter) | **3** with 1 document and with 25 (no N+1); versions list: 4 |
+| USER_GUIDE run against a live server | compare shows insert segment `"2 years"`; search `q=contract` finds the document by its text |
+| `ruff check` / `ruff format --check` | clean |
+
+**Flaky failure — investigated, original not reproduced, two latent defects fixed**
+- A final Postgres run reported `1 failed, 185 passed`. The rerun was green; 6 more full runs and
+  40 runs of the timing-sensitive tests were green too. I didn't capture which test failed (no `-rf`),
+  so **the root cause is not proven**. From here on, suite runs use `-rf`.
+- Found while investigating:
+  1. `documents.updated_at` came from two clocks: the database `now()` on insert, Python's clock on edit
+     and delete. Measured skew host↔container: about −0.6 ms.
+  2. `test_new_version_bumps_document_updated_at` compared ISO strings. Pydantic drops the fraction when
+     microseconds are 0, and `"…59Z"` sorts after `"…59.5Z"`. Now compares parsed datetimes.
+- First fix: use the database `now()` everywhere. Checked my Phase 2 assumption first: SQLAlchemy
+  **does** expire an attribute set to a SQL expression after commit and reloads a real datetime, so my
+  Phase 2 note ("leaves a SQL expression on the object") was wrong. This fix then failed
+  `test_default_sort_is_most_recently_updated_first` on SQLite, because `CURRENT_TIMESTAMP` has
+  one-second resolution and the three writes tied.
+- Final fix: the app is the single clock. `models.utcnow()` is the Python `default` / `onupdate` for all 5
+  timestamp columns and is used for edits and soft deletes. `server_default=now()` stays for raw-SQL
+  inserts. No schema change (`alembic check` clean on SQLite and Postgres).
