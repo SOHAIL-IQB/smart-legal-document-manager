@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     login_max_failures: int = 10
     login_window_seconds: int = 15 * 60
 
+    # Uploads (PDF / DOCX / TXT). Also set the same limit on any reverse proxy in front of the API.
+    max_upload_bytes: int = 10 * 1024 * 1024
+
     @property
     def cookie_secure(self) -> bool:
         return self.environment == "production"

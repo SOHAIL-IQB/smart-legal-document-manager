@@ -133,6 +133,7 @@ class DocumentVersion(Base):
     change_note: Mapped[str | None] = mapped_column(String(500))
     source: Mapped[str] = mapped_column(String(16), nullable=False, default=VersionSource.MANUAL)
     restored_from: Mapped[int | None] = mapped_column(Integer)  # version number it restores
+    source_filename: Mapped[str | None] = mapped_column(String(255))  # uploads only
     edited_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False

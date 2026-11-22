@@ -19,7 +19,7 @@ router = APIRouter(prefix="/documents", tags=["versions"])
 _UNCHANGED = {200: {"description": "Content was identical to the latest version; nothing saved."}}
 
 
-def _respond(
+def respond_to_version_result(
     result: version_service.VersionCreateResult,
     access: DocumentAccess,
     response: Response,
@@ -62,7 +62,7 @@ def create_version(
         user=access.user,
         change_note=payload.change_note,
     )
-    return _respond(result, access, response, background_tasks)
+    return respond_to_version_result(result, access, response, background_tasks)
 
 
 @router.get("/{document_id}/versions", response_model=list[DocumentVersionSummary])
@@ -106,7 +106,7 @@ def restore_version(
         user=access.user,
         change_note=payload.change_note if payload else None,
     )
-    return _respond(result, access, response, background_tasks)
+    return respond_to_version_result(result, access, response, background_tasks)
 
 
 @router.delete("/{document_id}/versions/{version_number}", response_model=MessageResponse)

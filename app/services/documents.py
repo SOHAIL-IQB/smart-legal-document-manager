@@ -5,7 +5,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
 from app.core.errors import NotFoundError, PermissionDeniedError
-from app.db.models import Document, DocumentMember, DocumentVersion, Role, User
+from app.db.models import Document, DocumentMember, DocumentVersion, Role, User, VersionSource
 from app.services.versions import build_version
 
 
@@ -155,14 +155,27 @@ def get_document_summary(db: Session, access: DocumentAccess) -> DocumentSummary
 
 
 def create_document(
-    db: Session, *, title: str, content: str, user: User
+    db: Session,
+    *,
+    title: str,
+    content: str,
+    user: User,
+    source: VersionSource = VersionSource.MANUAL,
+    source_filename: str | None = None,
 ) -> tuple[Document, DocumentVersion]:
     document = Document(title=title, created_by=user.id)
     db.add(document)
     db.flush()  # assigns document.id
 
     db.add(DocumentMember(document_id=document.id, user_id=user.id, role=Role.OWNER.value))
-    version = build_version(document_id=document.id, number=1, content=content, user=user)
+    version = build_version(
+        document_id=document.id,
+        number=1,
+        content=content,
+        user=user,
+        source=source,
+        source_filename=source_filename,
+    )
     db.add(version)
     db.commit()
     db.refresh(document)

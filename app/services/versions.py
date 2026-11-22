@@ -37,6 +37,7 @@ def build_version(
     change_note: str | None = None,
     source: VersionSource = VersionSource.MANUAL,
     restored_from: int | None = None,
+    source_filename: str | None = None,
 ) -> DocumentVersion:
     return DocumentVersion(
         document_id=document_id,
@@ -47,6 +48,7 @@ def build_version(
         change_note=change_note or None,
         source=source.value,
         restored_from=restored_from,
+        source_filename=source_filename,
         edited_by=user.id,
     )
 
@@ -128,6 +130,7 @@ def create_version(
     change_note: str | None = None,
     source: VersionSource = VersionSource.MANUAL,
     restored_from: int | None = None,
+    source_filename: str | None = None,
 ) -> VersionCreateResult:
     _lock_document(db, document.id)  # held until commit; concurrent writers queue here (B4)
 
@@ -144,6 +147,7 @@ def create_version(
         change_note=change_note,
         source=source,
         restored_from=restored_from,
+        source_filename=source_filename,
     )
     db.add(version)
     document.updated_at = utcnow()

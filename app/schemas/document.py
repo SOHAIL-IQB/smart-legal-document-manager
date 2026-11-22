@@ -69,6 +69,7 @@ class DocumentVersionSummary(BaseModel):
     change_note: str | None
     source: VersionSource
     restored_from: int | None
+    source_filename: str | None
     word_count: int
     content_hash: str
     is_deleted: bool
