@@ -1,8 +1,10 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEV_SECRET_KEY = "dev-only-insecure-secret-key-change-me"  # noqa: S105 (placeholder, rejected in prod)
 
 
 class Settings(BaseSettings):
@@ -22,6 +24,25 @@ class Settings(BaseSettings):
 
     # Explicit origins only: the API uses cookies, and browsers reject "*" with credentials.
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+
+    # Auth. The default key is for local development only; production refuses to start with it.
+    secret_key: str = DEV_SECRET_KEY
+    access_token_minutes: int = Field(default=12 * 60, ge=5, le=7 * 24 * 60)
+    auth_cookie_name: str = "sldm_session"
+    login_max_failures: int = 10
+    login_window_seconds: int = 15 * 60
+
+    @property
+    def cookie_secure(self) -> bool:
+        return self.environment == "production"
+
+    @model_validator(mode="after")
+    def require_real_secret_in_production(self) -> "Settings":
+        if self.environment == "production" and (
+            self.secret_key == DEV_SECRET_KEY or len(self.secret_key) < 32
+        ):
+            raise ValueError("SECRET_KEY must be set to a random value of 32+ characters.")
+        return self
 
     @field_validator("cors_origins")
     @classmethod

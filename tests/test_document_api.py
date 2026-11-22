@@ -1,51 +1,36 @@
+"""The original six behaviour tests, ported to authenticated requests.
+
+Each test keeps its original assertions; only the way the actor is identified changed
+(a bearer token instead of a `user_id` in the body).
+"""
+
 import logging
 
 
-def create_user(client, *, name="Alice", email="alice@example.com") -> int:
-    response = client.post("/api/users", json={"name": name, "email": email})
-    assert response.status_code == 201
-    return response.json()["id"]
-
-
-def create_document(
-    client, user_id: int, *, title="Service Agreement", content="Term is one year."
-) -> int:
+def test_document_creation_creates_initial_version(client, alice):
     response = client.post(
         "/api/documents",
-        json={"title": title, "content": content, "user_id": user_id},
-    )
-    assert response.status_code == 201
-    return response.json()["document_id"]
-
-
-def test_document_creation_creates_initial_version(client):
-    user_id = create_user(client)
-
-    response = client.post(
-        "/api/documents",
-        json={
-            "title": "Master Services Agreement",
-            "content": "Initial clause.",
-            "user_id": user_id,
-        },
+        json={"title": "Master Services Agreement", "content": "Initial clause."},
+        headers=alice.headers,
     )
 
     assert response.status_code == 201
     assert response.json() == {"document_id": 1, "version": 1}
 
-    detail_response = client.get("/api/documents/1")
+    detail_response = client.get("/api/documents/1", headers=alice.headers)
     assert detail_response.status_code == 200
     assert detail_response.json()["version_count"] == 1
     assert detail_response.json()["latest_version"] == 1
+    assert detail_response.json()["my_role"] == "owner"
 
 
-def test_identical_content_does_not_create_new_version(client):
-    user_id = create_user(client)
-    document_id = create_document(client, user_id, content="This contract is valid for 1 year.")
+def test_identical_content_does_not_create_new_version(client, alice, make_document):
+    document_id = make_document(alice, content="This contract is valid for 1 year.")
 
     response = client.post(
         f"/api/documents/{document_id}/versions",
-        json={"content": "This contract is valid for 1 year.", "user_id": user_id},
+        json={"content": "This contract is valid for 1 year."},
+        headers=alice.headers,
     )
 
     assert response.status_code == 200
@@ -55,22 +40,24 @@ def test_identical_content_does_not_create_new_version(client):
         "version": None,
     }
 
-    versions_response = client.get(f"/api/documents/{document_id}/versions")
+    versions_response = client.get(f"/api/documents/{document_id}/versions", headers=alice.headers)
     assert versions_response.status_code == 200
     assert len(versions_response.json()) == 1
 
 
-def test_comparison_returns_unified_diff(client):
-    user_id = create_user(client)
-    document_id = create_document(client, user_id, content="This contract is valid for 1 year.")
+def test_comparison_returns_unified_diff(client, alice, make_document):
+    document_id = make_document(alice, content="This contract is valid for 1 year.")
 
     update_response = client.post(
         f"/api/documents/{document_id}/versions",
-        json={"content": "This contract is valid for 2 years.", "user_id": user_id},
+        json={"content": "This contract is valid for 2 years."},
+        headers=alice.headers,
     )
     assert update_response.status_code == 201
 
-    compare_response = client.get(f"/api/documents/{document_id}/compare?v1=1&v2=2")
+    compare_response = client.get(
+        f"/api/documents/{document_id}/compare?v1=1&v2=2", headers=alice.headers
+    )
     assert compare_response.status_code == 200
 
     payload = compare_response.json()
@@ -81,56 +68,87 @@ def test_comparison_returns_unified_diff(client):
     assert any(line == "+This contract is valid for 2 years." for line in payload["changes"])
 
 
-def test_title_update_does_not_create_version(client):
-    user_id = create_user(client)
-    document_id = create_document(client, user_id)
+def test_title_update_does_not_create_version(client, alice, make_document):
+    document_id = make_document(alice)
 
     patch_response = client.patch(
-        f"/api/documents/{document_id}/title", json={"title": "Updated Title"}
+        f"/api/documents/{document_id}/title",
+        json={"title": "Updated Title"},
+        headers=alice.headers,
     )
     assert patch_response.status_code == 200
     assert patch_response.json()["title"] == "Updated Title"
 
-    versions_response = client.get(f"/api/documents/{document_id}/versions")
+    versions_response = client.get(f"/api/documents/{document_id}/versions", headers=alice.headers)
     assert versions_response.status_code == 200
     assert len(versions_response.json()) == 1
 
 
-def test_trivial_change_creates_version_without_notification(client, caplog):
+def test_trivial_change_creates_version_without_notification(client, alice, make_document, caplog):
     caplog.set_level(logging.INFO)
-    user_id = create_user(client)
-    document_id = create_document(client, user_id, content="Clause A\nClause B")
+    document_id = make_document(alice, content="Clause A\nClause B")
 
     response = client.post(
         f"/api/documents/{document_id}/versions",
-        json={"content": "Clause A \nClause B", "user_id": user_id},
+        json={"content": "Clause A \nClause B"},
+        headers=alice.headers,
     )
 
     assert response.status_code == 201
     assert "updated by" not in caplog.text
 
 
-def test_delete_version_and_document(client):
-    user_id = create_user(client)
-    document_id = create_document(client, user_id)
+def test_meaningful_change_sends_notification(client, alice, make_document, caplog):
+    """Counterpart to the trivial-change test: proves the notification path actually fires."""
+    caplog.set_level(logging.INFO)
+    document_id = make_document(alice, content="Clause A")
+
+    response = client.post(
+        f"/api/documents/{document_id}/versions",
+        json={"content": "Clause A, amended"},
+        headers=alice.headers,
+    )
+
+    assert response.status_code == 201
+    assert f"Document {document_id} updated by Alice" in caplog.text
+
+
+def test_delete_version_and_document(client, alice, make_document):
+    document_id = make_document(alice)
 
     second_version = client.post(
         f"/api/documents/{document_id}/versions",
-        json={"content": "Term is two years.", "user_id": user_id},
+        json={"content": "Term is two years."},
+        headers=alice.headers,
     )
     assert second_version.status_code == 201
 
-    delete_version_response = client.delete(f"/api/documents/{document_id}/versions/2")
+    delete_version_response = client.delete(
+        f"/api/documents/{document_id}/versions/2", headers=alice.headers
+    )
     assert delete_version_response.status_code == 200
 
-    versions_response = client.get(f"/api/documents/{document_id}/versions")
+    versions_response = client.get(f"/api/documents/{document_id}/versions", headers=alice.headers)
     assert len(versions_response.json()) == 1
 
-    delete_without_confirm = client.delete(f"/api/documents/{document_id}")
+    delete_without_confirm = client.delete(f"/api/documents/{document_id}", headers=alice.headers)
     assert delete_without_confirm.status_code == 400
 
-    delete_document_response = client.delete(f"/api/documents/{document_id}?confirm=true")
+    delete_document_response = client.delete(
+        f"/api/documents/{document_id}?confirm=true", headers=alice.headers
+    )
     assert delete_document_response.status_code == 200
 
-    missing_response = client.get(f"/api/documents/{document_id}")
+    missing_response = client.get(f"/api/documents/{document_id}", headers=alice.headers)
     assert missing_response.status_code == 404
+
+
+def test_version_records_the_authenticated_editor(client, alice, make_document):
+    document_id = make_document(alice)
+    client.post(
+        f"/api/documents/{document_id}/versions",
+        json={"content": "Term: 2 years."},
+        headers=alice.headers,
+    )
+    versions = client.get(f"/api/documents/{document_id}/versions", headers=alice.headers).json()
+    assert {v["edited_by"] for v in versions} == {alice.id}

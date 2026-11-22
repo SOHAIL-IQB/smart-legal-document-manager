@@ -2,13 +2,13 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.db.models import Role
 from app.schemas.common import Content, Title
 
 
 class DocumentCreate(BaseModel):
     title: Title
     content: Content
-    user_id: int
 
 
 class DocumentTitleUpdate(BaseModel):
@@ -16,12 +16,12 @@ class DocumentTitleUpdate(BaseModel):
 
 
 class DocumentResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: int
     title: str
     created_at: datetime
+    updated_at: datetime
     created_by: int
+    my_role: Role
 
 
 class DocumentDetailResponse(DocumentResponse):
@@ -36,7 +36,6 @@ class DocumentCreateResponse(BaseModel):
 
 class DocumentVersionCreate(BaseModel):
     content: Content
-    user_id: int
 
 
 class DocumentVersionResponse(BaseModel):
