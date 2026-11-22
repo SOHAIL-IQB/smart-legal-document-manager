@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError, PermissionDeniedError
 from app.db.models import Document, DocumentMember, DocumentVersion, Role, User
+from app.services.versions import build_version
 
 
 @dataclass(frozen=True)
@@ -61,9 +62,7 @@ def create_document(
     db.flush()  # assigns document.id
 
     db.add(DocumentMember(document_id=document.id, user_id=user.id, role=Role.OWNER.value))
-    version = DocumentVersion(
-        document_id=document.id, version_number=1, content=content, edited_by=user.id
-    )
+    version = build_version(document_id=document.id, number=1, content=content, user=user)
     db.add(version)
     db.commit()
     db.refresh(document)
@@ -80,8 +79,3 @@ def rename_document(db: Session, document: Document, *, title: str) -> Document:
 def delete_document(db: Session, document: Document) -> None:
     db.delete(document)
     db.commit()
-
-
-def count_versions(db: Session, document_id: int) -> int:
-    stmt = select(func.count(DocumentVersion.id)).where(DocumentVersion.document_id == document_id)
-    return db.scalar(stmt) or 0

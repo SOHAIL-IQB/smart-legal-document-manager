@@ -36,6 +36,11 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class GoneError(AppError):
+    status_code = status.HTTP_410_GONE
+    code = "gone"
+
+
 class PermissionDeniedError(AppError):
     status_code = status.HTTP_403_FORBIDDEN
     code = "forbidden"
@@ -60,6 +65,7 @@ _HTTP_CODES = {
     404: "not_found",
     405: "method_not_allowed",
     409: "conflict",
+    410: "gone",
     413: "payload_too_large",
     415: "unsupported_media_type",
     422: "validation_error",

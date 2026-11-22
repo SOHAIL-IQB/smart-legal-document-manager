@@ -12,7 +12,7 @@ from app.schemas.document import (
     DocumentTitleUpdate,
 )
 from app.services import documents as document_service
-from app.services.versions import get_latest_version
+from app.services.versions import count_live_versions, get_latest_version
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -54,7 +54,7 @@ def get_document(access: ViewerAccess, db: DbSession) -> DocumentDetailResponse:
     return DocumentDetailResponse(
         **_to_response(document, access.role).model_dump(),
         latest_version=latest.version_number if latest else None,
-        version_count=document_service.count_versions(db, document.id),
+        version_count=count_live_versions(db, document.id),
     )
 
 

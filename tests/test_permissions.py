@@ -12,6 +12,13 @@ ACTIONS = {
     "list versions": ("GET", "/api/documents/{id}/versions", None, READ),
     "compare": ("GET", "/api/documents/{id}/compare?v1=1&v2=1", None, READ),
     "list members": ("GET", "/api/documents/{id}/members", None, READ),
+    "get one version": ("GET", "/api/documents/{id}/versions/1", None, READ),
+    "restore version": (
+        "POST",
+        "/api/documents/{id}/versions/1/restore",
+        None,
+        {**EDIT, "owner": 201, "editor": 201},
+    ),
     "rename": ("PATCH", "/api/documents/{id}/title", {"title": "Renamed"}, EDIT),
     "add version": (
         "POST",

@@ -1,9 +1,12 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
-from app.db.models import Role
+from app.db.models import Role, VersionSource
 from app.schemas.common import Content, Title
+
+ChangeNote = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
 
 
 class DocumentCreate(BaseModel):
@@ -36,16 +39,35 @@ class DocumentCreateResponse(BaseModel):
 
 class DocumentVersionCreate(BaseModel):
     content: Content
+    change_note: ChangeNote | None = None
 
 
-class DocumentVersionResponse(BaseModel):
+class RestoreRequest(BaseModel):
+    change_note: ChangeNote | None = None
+
+
+class DocumentVersionSummary(BaseModel):
+    """A version without its content, for history lists."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     version_number: int
-    content: str
     edited_by: int
+    edited_by_name: str
     created_at: datetime
+    change_note: str | None
+    source: VersionSource
+    restored_from: int | None
+    word_count: int
+    content_hash: str
+    is_deleted: bool
+    deleted_at: datetime | None
+    deleted_by: int | None
+
+
+class DocumentVersionResponse(DocumentVersionSummary):
+    content: str
 
 
 class DocumentVersionCreateResponse(BaseModel):

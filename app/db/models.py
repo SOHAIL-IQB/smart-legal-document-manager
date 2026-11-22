@@ -32,6 +32,12 @@ class Role(enum.StrEnum):
 _ROLE_RANK = {Role.VIEWER: 1, Role.EDITOR: 2, Role.OWNER: 3}
 
 
+class VersionSource(enum.StrEnum):
+    MANUAL = "manual"  # typed or pasted
+    RESTORE = "restore"  # copied from an earlier version
+    UPLOAD = "upload"  # extracted from a file (Phase 5)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -44,7 +50,9 @@ class User(Base):
     )
 
     created_documents: Mapped[list["Document"]] = relationship(back_populates="creator")
-    edited_versions: Mapped[list["DocumentVersion"]] = relationship(back_populates="editor")
+    edited_versions: Mapped[list["DocumentVersion"]] = relationship(
+        back_populates="editor", foreign_keys="DocumentVersion.edited_by"
+    )
     memberships: Mapped[list["DocumentMember"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
@@ -99,16 +107,37 @@ class DocumentVersion(Base):
     __tablename__ = "document_versions"
     __table_args__ = (
         UniqueConstraint("document_id", "version_number", name="uq_document_version_number"),
+        CheckConstraint(
+            "source IN ('manual', 'restore', 'upload')", name="ck_document_version_source"
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), nullable=False, index=True)
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)  # sha256 hex
+    word_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    change_note: Mapped[str | None] = mapped_column(String(500))
+    source: Mapped[str] = mapped_column(String(16), nullable=False, default=VersionSource.MANUAL)
+    restored_from: Mapped[int | None] = mapped_column(Integer)  # version number it restores
     edited_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    # Versions are never hard-deleted (audit trail); "delete" hides them.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
 
     document: Mapped["Document"] = relationship(back_populates="versions")
-    editor: Mapped["User"] = relationship(back_populates="edited_versions")
+    editor: Mapped["User"] = relationship(
+        back_populates="edited_versions", foreign_keys=[edited_by]
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None
+
+    @property
+    def edited_by_name(self) -> str:
+        return self.editor.name

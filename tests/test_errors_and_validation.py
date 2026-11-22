@@ -44,8 +44,8 @@ def test_title_is_trimmed(client, alice, make_document):
 def test_content_whitespace_is_preserved_exactly(client, alice, make_document):
     content = "  Indented clause.\n\nSecond clause.  \n"
     document_id = make_document(alice, content=content)
-    versions = client.get(f"/api/documents/{document_id}/versions", headers=alice.headers).json()
-    assert versions[0]["content"] == content
+    version = client.get(f"/api/documents/{document_id}/versions/1", headers=alice.headers).json()
+    assert version["content"] == content
 
 
 def test_compare_rejects_non_positive_versions(client, alice, make_document):
