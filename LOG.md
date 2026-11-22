@@ -378,3 +378,37 @@ without the header, allowed with it).
 | Migration 0005, SQLite and Postgres, with rows | after upgrade a raw `DELETE FROM documents` cascades (2 → 0 versions); after downgrade it's refused again (FK error); `alembic check` clean |
 | `ruff check` / `ruff format --check` | clean |
 | Final runs after all edits | SQLite **241 passed, 1 skipped**; Postgres **242 passed** |
+
+## 011 — 2026-11-22 — End of session: where to resume
+
+**State:** Phases 0–5 and the review fixes are done, committed and pushed. `main` = `origin/main` = `71e1ff4`
+(15 commits since the original `76c18e1`). CI run `44998908950` green on both jobs. Working tree clean.
+Tests: SQLite 241 passed + 1 skipped (Postgres-only concurrency test); Postgres 242 passed.
+
+**Start here next session → Phase 6: notifications + audit log** (PLAN.md §7)
+1. `notifications` table (user_id, document_id, kind, message, read_at, created_at); a meaningful new
+   version notifies every member except the editor. Also notify on "shared with you" and "role changed".
+   Replace the log-only `app/notifications/notification_service.py` (still uses naive local time).
+2. `activity_events` table, append-only (document_id, actor_id, action, details JSON, created_at), written
+   in the **same transaction** as the action: create, version, restore, upload, rename, delete version,
+   member add/change/remove.
+3. Endpoints: `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/{id}/read`,
+   `POST /notifications/read-all`, `GET /documents/{id}/activity` (viewer+). Paginate both lists.
+4. Migration `0006`; tests written first; mutation checks; run on SQLite and Postgres; update README,
+   USER_GUIDE, PLAN, LOG; commit and push (owner wants a push at the end of every phase).
+
+**Then:** Phase 7 (now includes review items R4 proxy IPs for the rate limit, R5 parse time limit,
+R8 security headers), Phase 8 design direction with impeccable + 21st MCP (owner reviews the look),
+Phase 9 React + Vite + TS frontend, Phase 10 verification and launch.
+
+**How to pick up the environment**
+- Python 3.12 venv in `.venv` (the Mac's default Python 3.15 isn't used): `source .venv/bin/activate`.
+- Postgres: `docker compose up -d db` (host port **5434**). The test DB `sldm_test` already exists inside
+  that container; if the volume was removed, recreate it with
+  `docker exec smart-legal-document-manager-db psql -U postgres -c "CREATE DATABASE sldm_test"`.
+- Checks before every commit: `ruff check . && ruff format --check .`, `pytest --cov` (SQLite), and
+  `TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5434/sldm_test pytest` (Postgres).
+- Commit rules: authored by the owner only; no co-author or AI mention in commits or files
+  (check with `git log origin/main..HEAD --format=%B | grep -iE "co-authored|claude|anthropic"`).
+
+**Open decisions for the owner:** none pending. Known limits are listed in ADR 0001 and PLAN.md §7.

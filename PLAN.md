@@ -4,6 +4,8 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
+> **Resume point (2026-11-22):** Phases 0–5 + review fixes done and pushed (`71e1ff4`). **Next: Phase 6.** Details: LOG.md entry 011.
+
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
 ---
