@@ -133,14 +133,18 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - **Verify:** 23 passed · 97% coverage · ruff clean · uvicorn boots and serves `/api/docs`
 - Note: README / USER_GUIDE / `examples/` still show the old paths without `/api` and `user_id` bodies. They are rewritten once the API settles (Phase 2 for the auth flow, Phase 10 for everything).
 
-### Phase 2 — Auth & roles `[ ]`
-- [ ] `password_hash` on users; register/login/logout/me; JWT cookie + bearer (B1)
-- [ ] `document_members` + `require_role()` dependency; creator becomes owner
-- [ ] Remove `user_id` from request bodies — actor always comes from the token
-- [ ] Sharing endpoints; IntegrityError → 409 on duplicate email (B14)
-- [ ] Login rate limit (simple in-memory per IP)
-- [ ] Tests: auth flows, every cell of the permission matrix, non-member gets 404
-- **Verify:** pytest green; manual curl flow in LOG
+### Phase 2 — Auth & roles `[x]` (LOG 005, ADR 0001)
+- [x] `password_hash` on users; register/login/logout/me; JWT cookie + bearer (B1)
+- [x] `document_members` + `require_role()` dependency; creator becomes owner
+- [x] Remove `user_id` from request bodies — actor always comes from the token
+- [x] Sharing endpoints; IntegrityError → 409 on duplicate email (B14)
+- [x] Login rate limit (in-memory, per IP + email, 10 failures / 15 min)
+- [x] CSRF guard for cookie-authenticated writes (`X-Requested-With`) — *added; not in original plan*
+- [x] Tests: auth flows, every cell of the permission matrix, non-member gets 404
+- [x] Migration `0002` with owner backfill
+- **Verify:** 108 passed on SQLite (98% cov) **and on Postgres 16**; 6/6 security mutations caught; curl flow + USER_GUIDE executed live
+- Removed `GET/POST /users` (account list was an information leak; registration replaces create).
+- Later options noted in ADR 0001: server-side token revocation; shared-store rate limiter for multi-instance.
 
 ### Phase 3 — Versioning correctness `[ ]`
 - [ ] Soft delete; numbers from `MAX(version_number)` incl. deleted; block deleting last live version (B2, B3)
@@ -209,4 +213,5 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 
 ## 9. Open items / blockers
 
-- `[!]` Docker daemon is not running on this Mac. Needed from Phase 3 (Postgres row-lock test) and Phase 7. Please start Docker Desktop when convenient.
+- ~~`[!]` Docker daemon not running~~ — resolved 2026-11-22 (Docker 29.2.0); Postgres container `smart-legal-document-manager-db` is up on port 5434.
+- Account deletion / data export (privacy) is not planned yet. Candidate for Phase 7.

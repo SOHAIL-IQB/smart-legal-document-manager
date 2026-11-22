@@ -58,64 +58,49 @@ requirements.txt
 
 ## Database Schema
 
-The system uses three main tables:
+| Table | Purpose |
+|---|---|
+| `users` | `id`, `name`, `email` (unique, lowercase), `password_hash` (Argon2id), `created_at` |
+| `documents` | `id`, `title`, `created_by`, `created_at`, `updated_at` |
+| `document_members` | `document_id`, `user_id`, `role` (`owner` / `editor` / `viewer`), `added_at` |
+| `document_versions` | `id`, `document_id`, `version_number`, `content`, `edited_by`, `created_at` |
 
-### `users`
+Each version stores a full content snapshot, so earlier content is never overwritten.
 
-- `id`
-- `name`
-- `email`
+## Authentication and Permissions
 
-### `documents`
+Sign up or log in to get a session. Browsers receive an `httpOnly` cookie; API clients can use
+the returned token as `Authorization: Bearer <token>`. Every document has members with a role:
 
-- `id`
-- `title`
-- `created_at`
-- `created_by`
+| Action | viewer | editor | owner |
+|---|:-:|:-:|:-:|
+| Read document, versions, comparisons, members | ✓ | ✓ | ✓ |
+| Add a version, rename | | ✓ | ✓ |
+| Delete a version or the document, manage members | | | ✓ |
 
-### `document_versions`
-
-- `id`
-- `document_id`
-- `version_number`
-- `content`
-- `edited_by`
-- `created_at`
-
-Relationships:
-
-- One user can create many documents.
-- One user can edit many document versions.
-- One document can have many versions.
-- Each document version stores the full content snapshot, so no previous content is overwritten.
+Users who aren't members get `404`, so document ids can't be probed. Design and threat model:
+[`docs/adr/0001-authentication-and-authorization.md`](docs/adr/0001-authentication-and-authorization.md).
 
 ## API Endpoints
 
-### Core Document APIs
+All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/docs`.
 
-- `POST /documents`  
-  Creates a new document and stores version `1`.
-- `GET /documents`  
-  Lists documents for frontend or reviewer access.
-- `POST /documents/{id}/versions`  
-  Creates a new document version if the content changed.
-- `GET /documents/{id}/versions`  
-  Returns version history for a document.
-- `GET /documents/{id}/compare?v1=1&v2=2`  
-  Compares any two versions of the same document.
-- `PATCH /documents/{id}/title`  
-  Updates document title without creating a new content version.
-- `DELETE /documents/{id}/versions/{version}`  
-  Deletes one specific version.
-- `DELETE /documents/{id}?confirm=true`  
-  Deletes the entire document after explicit confirmation.
+| Method | Path | Who |
+|---|---|---|
+| `POST` | `/auth/register`, `/auth/login`, `/auth/logout` | anyone |
+| `GET` | `/auth/me` | signed in |
+| `GET` / `POST` | `/documents` | signed in (lists only your documents) |
+| `GET` | `/documents/{id}` | viewer+ |
+| `PATCH` | `/documents/{id}/title` | editor+ |
+| `DELETE` | `/documents/{id}?confirm=true` | owner |
+| `GET` / `POST` | `/documents/{id}/versions` | viewer+ / editor+ |
+| `DELETE` | `/documents/{id}/versions/{n}` | owner |
+| `GET` | `/documents/{id}/compare?v1=&v2=` | viewer+ |
+| `GET` / `POST` | `/documents/{id}/members` | viewer+ / owner |
+| `PATCH` / `DELETE` | `/documents/{id}/members/{user_id}` | owner (any member may remove themselves) |
+| `GET` | `/health` | anyone |
 
-Additional helper endpoints:
-
-- `POST /users`
-- `GET /users`
-- `GET /documents/{id}`
-- `GET /health`
+Errors always have the shape `{"error": {"code": "...", "message": "...", "details": ...}}`.
 
 ## Comparison Logic
 
@@ -151,53 +136,39 @@ When a new version is uploaded, the backend compares it with the latest saved ve
 
 ## Running the Project
 
-### Local Setup
+Requires Python 3.12+ and Docker.
 
-1. Create and activate a virtual environment.
-2. Install dependencies:
+### Docker (API + PostgreSQL)
 
 ```bash
-pip install -r requirements.txt
+docker compose up --build
 ```
 
-3. Set the database connection:
+The API runs at `http://localhost:8000` and applies migrations on start. PostgreSQL is published
+on host port `5434`.
+
+### Local development
 
 ```bash
-export DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/smart_legal_document_manager"
-```
-
-4. Run migrations:
-
-```bash
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env
+docker compose up -d db
 alembic upgrade head
-```
-
-5. Start the API:
-
-```bash
 uvicorn app.main:app --reload
 ```
 
-### Docker Setup
-
-```bash
-docker-compose up --build
-```
-
-This starts PostgreSQL and the FastAPI service together for local evaluation.
-
-Additional API usage examples are available in `examples/curl_requests.md`.
+Walkthrough of every feature with curl: [`USER_GUIDE.md`](USER_GUIDE.md).
 
 ## Running Tests
 
 ```bash
-pytest
+pytest --cov                # fast, on SQLite
+ruff check . && ruff format --check .
 ```
 
-The automated test suite verifies the main required flows, including creation, versioning, comparison, metadata updates, identical-content handling, and deletion.
+To run the same suite against PostgreSQL:
 
-## API Documentation
-
-Swagger UI is available at:
-
-`http://localhost:8000/docs`
+```bash
+TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5434/sldm_test pytest
+```

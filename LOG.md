@@ -89,3 +89,57 @@ a gitignored test artifact) and deleted it.
 **Not verified yet:** Postgres + `alembic upgrade head` (Docker daemon not running); Docker image build.
 **Still open from audit:** B2, B3, B4, B8 (Phase 3) reproduce as before — expected.
 Nothing committed.
+
+## 005 — 2026-11-22 — Phase 1 committed; Phase 2: authentication and roles
+
+**Commits (Phase 1):** `c066166` docs: plan + log · `2947ca3` chore: dependencies · `0a3e640` refactor: layers, errors, validation, CORS.
+
+**Design:** threat model + decisions in `docs/adr/0001-authentication-and-authorization.md`.
+Library APIs checked by running them, not from memory: `pwdlib.PasswordHash.recommended()` →
+`$argon2id$v=19$m=65536,t=3,p=4`; `jwt.decode(..., options={"require": [...]})` (PyJWT 2.15.1).
+
+**Changed**
+- Deps: `pyjwt==2.15.1`, `pwdlib[argon2]==0.4.2`.
+- `app/core/config.py`: `SECRET_KEY` (production refuses the default or anything < 32 chars), 12 h token
+  lifetime, cookie name, rate-limit settings, `cookie_secure` in production.
+- `app/core/security.py`: Argon2id hashing, dummy-hash verify for unknown emails (timing), JWT create/decode
+  (`sub`, `typ=access`, `iat`, `exp` required; HS256 only), in-memory `LoginRateLimiter`
+  (prunes empty keys so memory can't grow without bound).
+- `app/db/models.py`: `Role` enum with ranks; `users.password_hash`, `users.created_at`;
+  `documents.updated_at`; new `DocumentMember` (composite PK, role CHECK, cascade delete).
+- `migrations/versions/20261122_0002_auth_and_members.py`: adds the columns/table and backfills each
+  document's creator as owner; legacy users get an unusable hash.
+- `app/api/deps.py`: `get_current_user` (bearer first, else cookie; cookie writes need
+  `X-Requested-With`), `require_role()` → `ViewerAccess` / `EditorAccess` / `OwnerAccess`.
+- `app/api/routes/auth.py` (register/login/logout/me), `app/api/routes/members.py` (sharing),
+  `app/services/members.py` (last-owner guard locks owner rows `FOR UPDATE`).
+- Documents/versions/compare routes take the authorized document from the dependency; `user_id`
+  removed from every request body; list shows only the caller's documents with `my_role`.
+- Removed `app/api/routes/users.py` (`GET /users` listed every account).
+- Tests: `conftest.py` gains `signup`/`alice`/`make_document` fixtures and `TEST_DATABASE_URL`;
+  original 6 tests ported to bearer auth with assertions kept, plus `test_meaningful_change_sends_notification`
+  (the old suite only proved the *negative* case) and edited-by attribution; new `test_auth.py`,
+  `test_permissions.py` (40-cell matrix + sharing rules).
+- Docs: README sections for schema/auth/endpoints/running/tests rewritten; `USER_GUIDE.md` rewritten
+  for the auth flow; `examples/curl_requests.md` removed (duplicated the guide).
+
+**Bugs I introduced and caught during this phase**
+- `document.updated_at = func.now()` would leave a SQL expression on the object after commit
+  (`expire_on_commit=False`) → replaced with `datetime.now(UTC)`.
+- 403 message read "you are a editor" → "your role is editor".
+
+**Verified**
+| Check | Result |
+|---|---|
+| `pytest --cov --cov-fail-under=85` (SQLite) | **108 passed**, coverage **98.07%** |
+| same suite with `TEST_DATABASE_URL` → Postgres 16 | **108 passed** |
+| Mutation check: 6 security checks broken one at a time (role rank, membership scoping, CSRF, token type, last-owner guard, rate limit) | **6/6 made the suite fail**; files restored, suite green after |
+| `alembic upgrade` → seed legacy rows → `upgrade head` → `downgrade base` → `upgrade head` → `alembic check` (SQLite and Postgres) | backfill `owner|old@x.com|!unusable`; no server default left on `password_hash`; no model drift |
+| `docker compose up --build api` | image builds, migrations run, `/api/health` ok, process runs as `appuser` |
+| curl flow on live server | cookie write w/o header → 403; with header → 201; outsider → 404; viewer edit → 403 |
+| Every `bash` block in `USER_GUIDE.md` executed in order against a live server | all responses match the guide |
+| `ruff check .` / `ruff format --check .` | clean |
+
+**Known limits (documented in ADR 0001):** logout doesn't revoke copied tokens; rate limiter is per process;
+owners can tell whether an email is registered when sharing.
+**Still open from audit:** B2, B3, B4, B8 (Phase 3). Phase 2 not committed yet.
