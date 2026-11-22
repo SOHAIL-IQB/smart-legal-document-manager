@@ -173,6 +173,9 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - **Verify:** 43 upload tests on files generated in code (no binaries in git); 229 passed on Postgres; 10/10 mutations caught; live curl with real PDF/DOCX
 - Later: OCR for scanned PDFs (would need Tesseract); keeping the original file (would need object storage).
 
+### Review fixes after Phase 5 `[x]` (LOG 009, 010)
+- [x] R1 streaming body-size limit · R2 database cascade on document delete · R3 CSRF tests for every write method · R6 dead alias removed · R7 shared helper moved
+
 ### Phase 6 — Notifications & audit log `[ ]`
 - [ ] `notifications` table; meaningful change → notify every member except actor (B9)
 - [ ] Also notify on: shared with you, role changed
@@ -181,6 +184,9 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - **Verify:** pytest green
 
 ### Phase 7 — Hardening & ops `[ ]`
+- [ ] R4: set `FORWARDED_ALLOW_IPS` / `--proxy-headers` for the host's proxy so the login rate limit sees real client IPs (LOG 009)
+- [ ] R5: run PDF/DOCX extraction with a CPU time limit (subprocess + timeout) (LOG 009)
+- [ ] R8: security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, CSP for the API docs) (LOG 009)
 - [ ] Security review (security-and-hardening skill + security-auditor agent): OWASP pass, headers, secrets
 - [ ] Request-ID middleware, JSON logs, `/health` checks DB (B15)
 - [ ] Seed script with demo users + realistic contracts (for portfolio demo)

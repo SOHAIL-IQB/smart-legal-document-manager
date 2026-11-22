@@ -312,3 +312,69 @@ in `test_permissions.py`; the 500 test patches `search_documents`. Assertions un
 | Live server + curl `-F` with generated files | PDF → doc 201; DOCX with table → v2 201 (`source_filename` kept); scan → 422; disguised `.pdf` → 415; 11 MB → 413 in 0.5 ms |
 | Whole USER_GUIDE run against a live server | upload step → version 4 as documented |
 | `ruff check` / `ruff format --check` | clean (S108 on a test filename marked as a false positive) |
+
+## 009 — 2026-11-22 — Review of the backend (Phases 1–5) before Phase 6
+
+Reviewed ref `f617336` (clean tree, equals `origin/main`; CI run `44997621191` green on both jobs).
+Scope `76c18e1..f617336`: 46 files under `app/` and `migrations/`, +2385 / −672. Every source file read in full.
+Each finding below was confirmed by an experiment, not only by reading.
+
+| # | Severity | Finding | Evidence |
+|---|---|---|---|
+| R1 | **Critical** (also in the original code) | Request bodies have no size limit before parsing. FastAPI reads the body before auth dependencies run, and the upload guard only checks a declared `Content-Length`. Unauthenticated chunked requests are read in full. | 300 MB chunked JSON to `/api/auth/login`, no auth: server RSS 149 → **1094 MB**, then 422. 60 MB chunked multipart to `/api/documents/upload`, no auth: fully read, then 401. |
+| R2 | Required | Deleting a document loads every version (full `content`) and deletes them one row at a time (ORM cascade, no `ON DELETE CASCADE`). | SQL trace for a 30-version document (100 KB each): `SELECT document_versions.id, …, content, …` then per-row `DELETE … WHERE id =`. |
+| R3 | Required (test gap) | CSRF check is only tested on POST. | Mutations exempting DELETE or PATCH from the check: **228 passed** (survived). |
+| R4 | Consider → Phase 7 | Behind a proxy that isn't on localhost, `request.client.host` is the proxy's IP. All users then share one login rate-limit bucket, and 10 bad passwords lock an email out for everyone for 15 min. | uvicorn `--forwarded-allow-ips` defaults to `$FORWARDED_ALLOW_IPS` / 127.0.0.1; Dockerfile sets neither. |
+| R5 | Consider → Phase 7 | PDF/DOCX parsing has no CPU time limit; a crafted file can occupy a worker thread. pypdf only caps decompression. | Code reading (`app/utils/extract.py`); not reproduced. |
+| R6 | Nit | `DocumentDetailResponse = DocumentResponse` alias has no users (dead code). | `grep -rn DocumentDetailResponse app tests` → only its definition. |
+| R7 | Nit | `uploads.py` imports `respond_to_version_result` from another route module. | `app/api/routes/uploads.py:9`. |
+| R8 | FYI → Phase 7 | No security headers (`X-Content-Type-Options`, `Referrer-Policy`, …). | Already planned. |
+
+**Checked and fine:** authorization on every document route (outsider → 404; 17 tests fail if it becomes 403);
+last-owner guards; password check; token expiry; `alg=none`; LIKE escaping; N+1 (3 statements per list);
+no secrets in code; `pip-audit -r requirements.txt` → **No known vulnerabilities found**; `ruff` S-rules clean.
+Mutations run in this review: 7 (5 caught, 2 survived → R3).
+
+**Status:** findings only; nothing changed in code yet.
+
+## 010 — 2026-11-22 — Review fixes R1, R2, R3, R6, R7
+
+Owner said "Fix them now". Regression tests written first (`tests/test_review_fixes.py`): R1 and R2 tests
+**failed** on the old code. The R3 tests passed, because the CSRF code was correct; they exist to catch the
+two mutations that survived the review, and now do.
+
+**R1 — request body cap (Critical)**
+- First approach: FastAPI 0.165's built-in `max_body_size`, which I found in its source (`fastapi/_body_limit.py`).
+  Rejected after testing: its middleware sits outside all user middleware (`build_middleware_stack`) and
+  answers a *declared* oversized body with Starlette's plain-text `Content Too Large`, breaking the API's
+  error format (test failed with `JSONDecodeError`).
+- Also checked: FastAPI turns any exception raised while it parses the body into `400 "There was an error
+  parsing the body"` but re-raises `HTTPException` (`fastapi/routing.py`). So the custom middleware raises
+  Starlette's `HTTPException(413)`.
+- Final: `app/core/limits.py` `BodySizeLimitMiddleware` (pure ASGI). It refuses a declared `Content-Length`
+  over the limit without reading anything, and counts streamed bytes (chunked) and stops at the limit.
+  Limits: uploads `MAX_UPLOAD_BYTES` + 64 KB multipart room; everything else `MAX_JSON_BYTES` = 9 MB
+  (≥ 2,000,000 × 4-byte UTF-8 + framing; test sends 2,000,000 emoji → 201).
+  It runs inside CORS, so a 413 carries CORS headers (tested). It replaces the Phase 5 Content-Length-only middleware.
+- My test mistake: a "9.5 MB upload" of `"word "` extracts to 9.5 M characters, over the 2 M content limit,
+  so 422 was correct. Replaced with a file that's mostly blank lines (normalized away).
+
+**R2 — cascade delete:** `document_versions.document_id` → `ON DELETE CASCADE`; `passive_deletes=True` on
+`Document.versions` / `.members`. Migration `0005` replaces the FK (Postgres name `document_versions_document_id_fkey`,
+read from `pg_constraint`; SQLite via a batch naming convention).
+**R3:** CSRF test for POST version, PATCH title, DELETE version, DELETE document, POST restore (refused
+without the header, allowed with it).
+**R6:** removed unused `DocumentDetailResponse`. **R7:** `respond_to_version_result` → `app/api/version_responses.py`.
+**R4, R5, R8** → added to Phase 7 in PLAN.md.
+
+**Verified**
+| Check | Result |
+|---|---|
+| `pytest --cov` (SQLite) | **240 passed, 1 skipped**, coverage **98%** (`limits.py` 98%), before the last no-read test (+1) |
+| Full suite on Postgres 16 | **241 passed** |
+| Mutations: DELETE/PATCH exempt from CSRF (survived in the review), streaming count off, declared check off, uploads get JSON limit, `passive_deletes` off, limiter removed | **7/7 caught**. The declared-check mutation survived at first (the streaming count still produced a 413); added an ASGI-level test that fails if the body is read. |
+| Live uvicorn, no auth: 60 MB chunked multipart, 300 MB chunked JSON | both **413 immediately**; server RSS **146 → 155 MB** (review: 149 → 1094 MB) |
+| Live: declared 50 MB JSON | 413; normal register still 201 |
+| Migration 0005, SQLite and Postgres, with rows | after upgrade a raw `DELETE FROM documents` cascades (2 → 0 versions); after downgrade it's refused again (FK error); `alembic check` clean |
+| `ruff check` / `ruff format --check` | clean |
+| Final runs after all edits | SQLite **241 passed, 1 skipped**; Postgres **242 passed** |

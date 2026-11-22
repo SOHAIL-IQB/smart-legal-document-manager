@@ -138,8 +138,9 @@ is stored (as a version with `source: "upload"` and the original `source_filenam
 
 - The type is detected from the file's bytes and must match the extension; the browser's
   Content-Type is ignored.
-- Limit: 10 MB (`MAX_UPLOAD_BYTES`). Oversized requests are refused from their `Content-Length`
-  before the body is parsed (`413`).
+- Limit: 10 MB (`MAX_UPLOAD_BYTES`); every other request body: 9 MB (`MAX_JSON_BYTES`, enough for
+  the 2,000,000-character content limit). Bodies are counted while they stream in, with or without a
+  `Content-Length`, and refused with `413` before anything parses them, even for signed-out clients.
 - Refused with a clear `422`: password-protected or damaged PDFs, PDFs with no selectable text
   (scans; OCR isn't supported), PDFs over 500 pages, non-UTF-8 text, DOCX files over 50 MB
   uncompressed (zip bombs), and files with no text.
