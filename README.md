@@ -110,9 +110,11 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `GET` | `/documents/{id}/activity` | viewer+ |
 | `GET` | `/notifications` (`?unread_only=&limit=&offset=`), `/notifications/unread-count` | signed in |
 | `POST` | `/notifications/{id}/read`, `/notifications/read-all` | signed in (own notifications only) |
-| `GET` | `/health` | anyone |
+| `GET` | `/health/live` (process up), `/health/ready` and `/health` (database reachable) | anyone |
 
-Errors always have the shape `{"error": {"code": "...", "message": "...", "details": ...}}`.
+Errors always have the shape `{"error": {"code": "...", "message": "...", "details": ..., "request_id": "..."}}`;
+`request_id` matches the `X-Request-ID` response header and the server logs. Naming, pagination,
+status codes and which writes are safe to retry: [ADR 0002](docs/adr/0002-api-contract.md).
 
 ## Comparison Logic
 
