@@ -1,19 +1,47 @@
 import enum
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import (
+    JSON,
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    event,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from app.db.session import Base
+
+
+class UTCDateTime(TypeDecorator[datetime]):
+    """Timestamps are always timezone-aware UTC when they leave the database.
+
+    Postgres `timestamptz` already does this; SQLite returns naive values, which the API would
+    serialize without a zone and browsers would read as local time. Found in Phase 6 (LOG 012).
+    """
+
+    impl = DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            raise ValueError("Store timezone-aware datetimes only (use utcnow()).")
+        return value.astimezone(UTC) if value is not None else None
+
+    def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
 def utcnow() -> datetime:
@@ -46,6 +74,18 @@ class VersionSource(enum.StrEnum):
     UPLOAD = "upload"  # extracted from a file (Phase 5)
 
 
+class NotificationKind(enum.StrEnum):
+    VERSION_CREATED = "version_created"
+    DOCUMENT_SHARED = "document_shared"
+    ROLE_CHANGED = "role_changed"
+    REMOVED_FROM_DOCUMENT = "removed_from_document"
+    DOCUMENT_DELETED = "document_deleted"
+
+
+def _in_list(column: str, values: type[enum.StrEnum]) -> str:
+    return f"{column} IN ({', '.join(repr(v.value) for v in values)})"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -54,7 +94,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
     )
 
     created_documents: Mapped[list["Document"]] = relationship(back_populates="creator")
@@ -72,10 +112,10 @@ class Document(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        UTCDateTime(),
         default=utcnow,
         onupdate=utcnow,
         server_default=func.now(),
@@ -111,7 +151,7 @@ class DocumentMember(Base):
     )
     role: Mapped[str] = mapped_column(String(16), nullable=False)
     added_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
     )
 
     document: Mapped["Document"] = relationship(back_populates="members")
@@ -141,10 +181,10 @@ class DocumentVersion(Base):
     source_filename: Mapped[str | None] = mapped_column(String(255))  # uploads only
     edited_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
     )
     # Versions are never hard-deleted (audit trail); "delete" hides them.
-    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
 
     document: Mapped["Document"] = relationship(back_populates="versions")
@@ -159,3 +199,60 @@ class DocumentVersion(Base):
     @property
     def edited_by_name(self) -> str:
         return self.editor.name
+
+
+_JSON = JSON().with_variant(JSONB(), "postgresql")
+
+
+class ActivityEvent(Base):
+    """Append-only audit trail of everything that happened to a document.
+
+    Written in the same transaction as the action it describes. Rows can't be updated or
+    deleted through the ORM (see the listeners below); they go only when their document does.
+    """
+
+    __tablename__ = "activity_events"
+    __table_args__ = (Index("ix_activity_events_document_created", "document_id", "created_at"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    )
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    action: Mapped[str] = mapped_column(String(40), nullable=False)
+    details: Mapped[dict[str, Any]] = mapped_column(_JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
+    )
+
+    actor: Mapped["User"] = relationship()
+
+
+@event.listens_for(ActivityEvent, "before_update")
+@event.listens_for(ActivityEvent, "before_delete")
+def _activity_is_append_only(*_args: object) -> None:
+    raise PermissionError("Activity events are append-only.")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (
+        CheckConstraint(_in_list("kind", NotificationKind), name="ck_notification_kind"),
+        Index("ix_notifications_user_created", "user_id", "created_at"),
+        Index("ix_notifications_user_unread", "user_id", "read_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # SET NULL: "Alice deleted “NDA”" must outlive the document it talks about.
+    document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id", ondelete="SET NULL"))
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    message: Mapped[str] = mapped_column(String(500), nullable=False)
+    version_number: Mapped[int | None] = mapped_column(Integer)
+    read_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
+    )
+
+    actor: Mapped["User | None"] = relationship(foreign_keys=[actor_id])

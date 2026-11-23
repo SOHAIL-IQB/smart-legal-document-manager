@@ -3,7 +3,7 @@
 from pathlib import PurePosixPath
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, Response, UploadFile, status
+from fastapi import APIRouter, File, Form, Response, UploadFile, status
 
 from app.api.deps import CurrentUser, DbSession, EditorAccess
 from app.api.version_responses import respond_to_version_result
@@ -85,7 +85,6 @@ def create_document_from_file(
 def create_version_from_file(
     access: EditorAccess,
     db: DbSession,
-    background_tasks: BackgroundTasks,
     response: Response,
     file: Annotated[UploadFile, File(description=_FILE_HELP)],
     change_note: Annotated[str | None, Form(max_length=500)] = None,
@@ -100,4 +99,4 @@ def create_version_from_file(
         source=VersionSource.UPLOAD,
         source_filename=filename,
     )
-    return respond_to_version_result(result, access, response, background_tasks)
+    return respond_to_version_result(result, access, response)

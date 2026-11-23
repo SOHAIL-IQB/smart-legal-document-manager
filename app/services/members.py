@@ -5,8 +5,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, NotFoundError, PermissionDeniedError
-from app.db.models import DocumentMember, Role, User
+from app.db.models import DocumentMember, NotificationKind, Role, User
+from app.services.activity import record
 from app.services.documents import DocumentAccess
+from app.services.notifications import notify
 from app.services.users import find_user_by_email
 
 
@@ -54,6 +56,23 @@ def add_member(
 
     member = DocumentMember(document_id=access.document.id, user_id=user.id, role=role.value)
     db.add(member)
+    record(
+        db,
+        document_id=access.document.id,
+        actor=access.user,
+        action="member.added",
+        user_id=user.id,
+        name=user.name,
+        role=role.value,
+    )
+    notify(
+        db,
+        user_ids=[user.id],
+        kind=NotificationKind.DOCUMENT_SHARED,
+        message=f"{access.user.name} shared “{access.document.title}” with you as {role.value}.",
+        actor=access.user,
+        document=access.document,
+    )
     try:
         db.commit()
     except IntegrityError as exc:
@@ -67,9 +86,31 @@ def change_role(
     db: Session, access: DocumentAccess, *, user_id: int, role: Role
 ) -> tuple[DocumentMember, User]:
     member = _get_member(db, access.document.id, user_id)
+    previous = member.role
+    if previous == role.value:
+        return member, member.user
     if role != Role.OWNER:
         _ensure_not_last_owner(db, member)
     member.role = role.value
+    record(
+        db,
+        document_id=access.document.id,
+        actor=access.user,
+        action="member.role_changed",
+        user_id=user_id,
+        name=member.user.name,
+        **{"from": previous, "to": role.value},
+    )
+    if user_id != access.user.id:
+        notify(
+            db,
+            user_ids=[user_id],
+            kind=NotificationKind.ROLE_CHANGED,
+            message=f"{access.user.name} changed your role on “{access.document.title}” "
+            f"to {role.value}.",
+            actor=access.user,
+            document=access.document,
+        )
     db.commit()
     return member, member.user
 
@@ -80,5 +121,24 @@ def remove_member(db: Session, access: DocumentAccess, *, user_id: int) -> None:
         raise PermissionDeniedError("Only an owner can remove other members.")
     member = _get_member(db, access.document.id, user_id)
     _ensure_not_last_owner(db, member)
+    left = access.user.id == user_id
+    record(
+        db,
+        document_id=access.document.id,
+        actor=access.user,
+        action="member.removed",
+        user_id=user_id,
+        name=member.user.name,
+        left=left,
+    )
+    if not left:
+        notify(
+            db,
+            user_ids=[user_id],
+            kind=NotificationKind.REMOVED_FROM_DOCUMENT,
+            message=f"{access.user.name} removed you from “{access.document.title}”.",
+            actor=access.user,
+            document=access.document,
+        )
     db.delete(member)
     db.commit()

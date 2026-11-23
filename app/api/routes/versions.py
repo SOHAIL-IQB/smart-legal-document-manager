@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Query, Response, status
+from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import DbSession, EditorAccess, OwnerAccess, ViewerAccess
 from app.api.version_responses import respond_to_version_result
@@ -27,7 +27,6 @@ _UNCHANGED = {200: {"description": "Content was identical to the latest version;
 def create_version(
     payload: DocumentVersionCreate,
     access: EditorAccess,
-    background_tasks: BackgroundTasks,
     response: Response,
     db: DbSession,
 ) -> DocumentVersionCreateResponse:
@@ -38,7 +37,7 @@ def create_version(
         user=access.user,
         change_note=payload.change_note,
     )
-    return respond_to_version_result(result, access, response, background_tasks)
+    return respond_to_version_result(result, access, response)
 
 
 @router.get("/{document_id}/versions", response_model=list[DocumentVersionSummary])
@@ -69,7 +68,6 @@ def get_version(version_number: int, access: ViewerAccess, db: DbSession) -> Doc
 def restore_version(
     version_number: int,
     access: EditorAccess,
-    background_tasks: BackgroundTasks,
     response: Response,
     db: DbSession,
     payload: RestoreRequest | None = None,
@@ -82,7 +80,7 @@ def restore_version(
         user=access.user,
         change_note=payload.change_note if payload else None,
     )
-    return respond_to_version_result(result, access, response, background_tasks)
+    return respond_to_version_result(result, access, response)
 
 
 @router.delete("/{document_id}/versions/{version_number}", response_model=MessageResponse)

@@ -4,8 +4,6 @@ Each test keeps its original assertions; only the way the actor is identified ch
 (a bearer token instead of a `user_id` in the body).
 """
 
-import logging
-
 
 def test_document_creation_creates_initial_version(client, alice):
     response = client.post(
@@ -84,9 +82,26 @@ def test_title_update_does_not_create_version(client, alice, make_document):
     assert len(versions_response.json()) == 1
 
 
-def test_trivial_change_creates_version_without_notification(client, alice, make_document, caplog):
-    caplog.set_level(logging.INFO)
+def _bob_on(client, signup, owner, document_id):
+    bob = signup("Bob", "bob@example.com")
+    client.post(
+        f"/api/documents/{document_id}/members",
+        json={"email": bob.email, "role": "viewer"},
+        headers=owner.headers,
+    )
+    return bob
+
+
+def _version_notifications(client, account):
+    items = client.get("/api/notifications", headers=account.headers).json()["items"]
+    return [n for n in items if n["kind"] == "version_created"]
+
+
+# Phase 6: these two used to read the server log. Notifications now go to members' inboxes,
+# so they check another member's inbox instead. Intent unchanged: trivial edits stay quiet.
+def test_trivial_change_creates_version_without_notification(client, alice, make_document, signup):
     document_id = make_document(alice, content="Clause A\nClause B")
+    bob = _bob_on(client, signup, alice, document_id)
 
     response = client.post(
         f"/api/documents/{document_id}/versions",
@@ -95,13 +110,13 @@ def test_trivial_change_creates_version_without_notification(client, alice, make
     )
 
     assert response.status_code == 201
-    assert "updated by" not in caplog.text
+    assert _version_notifications(client, bob) == []
 
 
-def test_meaningful_change_sends_notification(client, alice, make_document, caplog):
+def test_meaningful_change_sends_notification(client, alice, make_document, signup):
     """Counterpart to the trivial-change test: proves the notification path actually fires."""
-    caplog.set_level(logging.INFO)
     document_id = make_document(alice, content="Clause A")
+    bob = _bob_on(client, signup, alice, document_id)
 
     response = client.post(
         f"/api/documents/{document_id}/versions",
@@ -110,7 +125,9 @@ def test_meaningful_change_sends_notification(client, alice, make_document, capl
     )
 
     assert response.status_code == 201
-    assert f"Document {document_id} updated by Alice" in caplog.text
+    [notification] = _version_notifications(client, bob)
+    assert notification["actor_name"] == "Alice"
+    assert notification["document_id"] == document_id
 
 
 def test_delete_version_and_document(client, alice, make_document):

@@ -79,7 +79,7 @@ def get_document(access: ViewerAccess, db: DbSession) -> DocumentResponse:
 def rename_document(
     payload: DocumentTitleUpdate, access: EditorAccess, db: DbSession
 ) -> DocumentResponse:
-    document_service.rename_document(db, access.document, title=payload.title)
+    document_service.rename_document(db, access.document, title=payload.title, actor=access.user)
     return _to_response(document_service.get_document_summary(db, access))
 
 
@@ -92,5 +92,5 @@ def delete_document(
     if not confirm:
         raise AppError("Document deletion requires confirm=true.")
     document_id = access.document.id
-    document_service.delete_document(db, access.document)
+    document_service.delete_document(db, access.document, actor=access.user)
     return MessageResponse(message=f"Document {document_id} deleted successfully.")

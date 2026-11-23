@@ -14,7 +14,16 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.errors import ConflictError, GoneError, NotFoundError
-from app.db.models import Document, DocumentVersion, User, VersionSource, utcnow
+from app.db.models import (
+    Document,
+    DocumentVersion,
+    NotificationKind,
+    User,
+    VersionSource,
+    utcnow,
+)
+from app.services.activity import record
+from app.services.notifications import notify, other_member_ids
 from app.utils.diff import build_unified_diff, diff_documents, has_meaningful_changes
 
 
@@ -149,17 +158,38 @@ def create_version(
         restored_from=restored_from,
         source_filename=source_filename,
     )
+    meaningful = latest is None or has_meaningful_changes(latest.content, content)
     db.add(version)
     document.updated_at = utcnow()
+    record(
+        db,
+        document_id=document.id,
+        actor=user,
+        action="version.restored" if source == VersionSource.RESTORE else "version.created",
+        version=version.version_number,
+        source=source.value,
+        change_note=version.change_note,
+        restored_from=restored_from,
+        source_filename=source_filename,
+        meaningful=meaningful,
+    )
+    if meaningful:  # whitespace-only edits don't notify anyone
+        notify(
+            db,
+            user_ids=other_member_ids(db, document.id, user),
+            kind=NotificationKind.VERSION_CREATED,
+            message=f"{user.name} saved version {version.version_number} of “{document.title}”.",
+            actor=user,
+            document=document,
+            version_number=version.version_number,
+        )
     try:
-        db.commit()
+        db.commit()  # the version, its activity event and notifications together
     except IntegrityError as exc:  # only reachable without row locks (SQLite)
         db.rollback()
         raise ConflictError(
             "Another edit to this document was saved at the same moment. Reload and try again."
         ) from exc
-
-    meaningful = latest is None or has_meaningful_changes(latest.content, content)
     return VersionCreateResult(version=version, meaningful=meaningful)
 
 
@@ -191,6 +221,9 @@ def delete_version(db: Session, document: Document, *, version_number: int, user
     version.deleted_at = utcnow()
     version.deleted_by = user.id
     document.updated_at = version.deleted_at
+    record(
+        db, document_id=document.id, actor=user, action="version.deleted", version=version_number
+    )
     db.commit()
 
 

@@ -5,7 +5,17 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
 from app.core.errors import NotFoundError, PermissionDeniedError
-from app.db.models import Document, DocumentMember, DocumentVersion, Role, User, VersionSource
+from app.db.models import (
+    Document,
+    DocumentMember,
+    DocumentVersion,
+    NotificationKind,
+    Role,
+    User,
+    VersionSource,
+)
+from app.services.activity import record
+from app.services.notifications import notify, other_member_ids
 from app.services.versions import build_version
 
 
@@ -177,18 +187,47 @@ def create_document(
         source_filename=source_filename,
     )
     db.add(version)
+    record(
+        db,
+        document_id=document.id,
+        actor=user,
+        action="document.created",
+        title=title,
+        version=1,
+        source=source.value,
+        source_filename=source_filename,
+    )
     db.commit()
     db.refresh(document)
     return document, version
 
 
-def rename_document(db: Session, document: Document, *, title: str) -> Document:
+def rename_document(db: Session, document: Document, *, title: str, actor: User) -> Document:
+    if title == document.title:
+        return document
+    record(
+        db,
+        document_id=document.id,
+        actor=actor,
+        action="document.renamed",
+        **{"from": document.title, "to": title},
+    )
     document.title = title
     db.commit()
     db.refresh(document)
     return document
 
 
-def delete_document(db: Session, document: Document) -> None:
+def delete_document(db: Session, document: Document, *, actor: User) -> None:
+    """Hard delete (owner, confirmed). Versions and activity go with it (database cascade);
+    the other members are told, and their notifications outlive the document."""
+    notify(
+        db,
+        user_ids=other_member_ids(db, document.id, actor),
+        kind=NotificationKind.DOCUMENT_DELETED,
+        message=f"{actor.name} deleted “{document.title}”.",
+        actor=actor,
+        document=document,
+    )
     db.delete(document)
     db.commit()
