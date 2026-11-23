@@ -1,6 +1,7 @@
 """Create documents and versions from uploaded files. Extraction rules: app/utils/extract.py."""
 
-from pathlib import PurePosixPath
+import logging
+from pathlib import Path, PurePosixPath
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Response, UploadFile, status
@@ -9,6 +10,7 @@ from app.api.deps import CurrentUser, DbSession, EditorAccess
 from app.api.version_responses import respond_to_version_result
 from app.core.config import get_settings
 from app.core.errors import AppError
+from app.core.logging import log_event
 from app.db.models import VersionSource
 from app.schemas.document import DocumentCreateResponse, DocumentVersionCreateResponse
 from app.services import documents as document_service
@@ -42,7 +44,11 @@ def _read_and_extract(file: UploadFile) -> tuple[ExtractedText, str]:
     if len(data) > limit:
         raise _too_large()
     name = safe_filename(file.filename)
-    return extract_text(name, data), name
+    try:
+        return extract_text(name, data), name
+    except AppError as exc:
+        log_event("upload_rejected", logging.WARNING, reason=exc.code, kind=Path(name).suffix)
+        raise
 
 
 def _title(explicit: str | None, filename: str) -> str:

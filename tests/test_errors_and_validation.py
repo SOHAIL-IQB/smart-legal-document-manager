@@ -61,7 +61,11 @@ def test_missing_document_returns_not_found_shape(client, alice):
     response = client.get("/api/documents/999", headers=alice.headers)
     assert response.status_code == 404
     assert response.json() == {
-        "error": {"code": "not_found", "message": "Document 999 was not found."}
+        "error": {
+            "code": "not_found",
+            "message": "Document 999 was not found.",
+            "request_id": response.headers["x-request-id"],
+        }
     }
 
 
@@ -95,7 +99,11 @@ def test_unexpected_error_returns_generic_500(monkeypatch, alice):
     )
     assert response.status_code == 500
     assert response.json() == {
-        "error": {"code": "internal_error", "message": "An unexpected error occurred."}
+        "error": {
+            "code": "internal_error",
+            "message": "An unexpected error occurred.",
+            "request_id": response.headers["x-request-id"],
+        }
     }  # internal details are not leaked
 
 

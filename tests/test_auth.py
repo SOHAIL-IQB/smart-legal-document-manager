@@ -91,7 +91,10 @@ def test_wrong_password_and_unknown_email_give_identical_errors(client):
     wrong_password = login(client, password="not the password")
     unknown_email = login(client, email="nobody@example.com")
     assert wrong_password.status_code == unknown_email.status_code == 401
-    assert wrong_password.json() == unknown_email.json()
+    # Identical apart from the per-request ID (added in Phase 7), which differs by design.
+    first, second = wrong_password.json()["error"], unknown_email.json()["error"]
+    assert first.pop("request_id") != second.pop("request_id")
+    assert first == second
 
 
 def test_login_is_rate_limited_after_repeated_failures(client):

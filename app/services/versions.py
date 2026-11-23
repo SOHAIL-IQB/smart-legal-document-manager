@@ -7,6 +7,7 @@ Invariants (audit defects B2, B3, B4):
 """
 
 import hashlib
+import logging
 from dataclasses import dataclass
 
 from sqlalchemy import func, select
@@ -14,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.errors import ConflictError, GoneError, NotFoundError
+from app.core.logging import log_event
 from app.db.models import (
     Document,
     DocumentVersion,
@@ -187,6 +189,7 @@ def create_version(
         db.commit()  # the version, its activity event and notifications together
     except IntegrityError as exc:  # only reachable without row locks (SQLite)
         db.rollback()
+        log_event("version_conflict", logging.WARNING, document_id=document.id)
         raise ConflictError(
             "Another edit to this document was saved at the same moment. Reload and try again."
         ) from exc

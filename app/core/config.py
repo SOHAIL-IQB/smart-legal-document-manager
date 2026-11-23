@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     app_version: str = "0.2.0"
     environment: Literal["development", "test", "production"] = "development"
     api_prefix: str = "/api"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     # Default matches docker-compose, which publishes Postgres on host port 5434.
     database_url: str = (

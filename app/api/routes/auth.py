@@ -1,8 +1,11 @@
+import logging
+
 from fastapi import APIRouter, Request, Response, status
 
 from app.api.deps import CurrentUser, DbSession
 from app.core.config import get_settings
 from app.core.errors import AppError
+from app.core.logging import log_event
 from app.core.security import create_access_token, login_rate_limiter
 from app.db.models import User
 from app.schemas.user import AuthResponse, LoginRequest, RegisterRequest, UserResponse
@@ -55,6 +58,7 @@ def login(
 
     retry_after = login_rate_limiter.retry_after(key)
     if retry_after is not None:
+        log_event("login_rate_limited", logging.WARNING, retry_after=retry_after)
         raise RateLimitedError(
             f"Too many failed sign-in attempts. Try again in {retry_after} seconds.",
             details={"retry_after": retry_after},
@@ -63,6 +67,7 @@ def login(
         user = user_service.authenticate(db, email=payload.email, password=payload.password)
     except AppError:
         login_rate_limiter.record_failure(key)
+        log_event("login_failed", logging.WARNING, reason="invalid_credentials")
         raise
     login_rate_limiter.reset(key)
     return _start_session(response, user)

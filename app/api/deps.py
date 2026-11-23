@@ -42,6 +42,7 @@ def get_current_user(
     user = db.get(User, user_id) if user_id is not None else None
     if user is None:
         raise AuthenticationError("Your session is invalid or has expired. Please sign in again.")
+    request.state.user_id = user.id  # for the access log line
     return user
 
 

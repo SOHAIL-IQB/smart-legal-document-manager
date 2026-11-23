@@ -13,6 +13,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.context import request_id_var
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,6 +57,9 @@ def error_body(code: str, message: str, details: Any = None) -> dict[str, Any]:
     error: dict[str, Any] = {"code": code, "message": message}
     if details is not None:
         error["details"] = details
+    request_id = request_id_var.get()
+    if request_id is not None:  # lets a user's error be found in the logs
+        error["request_id"] = request_id
     return {"error": error}
 
 

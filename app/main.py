@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,10 +6,11 @@ from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.headers import SecurityHeadersMiddleware
 from app.core.limits import BodySizeLimitMiddleware
+from app.core.logging import RequestContextMiddleware, configure_logging
 
 settings = get_settings()
 
-logging.basicConfig(level=logging.INFO)
+configure_logging(settings.log_level)
 
 
 def create_app() -> FastAPI:
@@ -34,6 +33,9 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
     )
     register_exception_handlers(app)
+    # Request IDs and access logs wrap CORS and the body limit, so even 413s and preflights get
+    # an ID; the security headers wrap everything (added last = outermost).
+    app.add_middleware(RequestContextMiddleware)
     # Added last, so it is outermost: every response, including CORS preflights and 413s,
     # gets the security headers (review finding R8).
     app.add_middleware(SecurityHeadersMiddleware)
