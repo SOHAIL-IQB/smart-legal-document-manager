@@ -471,3 +471,55 @@ member's inbox instead; same intent (trivial edits are quiet, real ones notify).
 **Next: Phase 7 — hardening & ops** (PLAN.md §7): R4 proxy IPs for the login rate limit, R5 CPU time limit
 for file parsing, R8 security headers, request IDs + JSON logs, `/health` checks the DB, seed script with
 demo data, docker-compose with the frontend later, CI additions, code review pass.
+
+## 013 — 2026-11-23 — Agent skills studied; record corrected; Phase 7 spec drafted
+
+**Owner asked:** go through the agent skills carefully, use the correct ones for this project, then
+start Phase 7.
+
+**Read in full:**
+- All 26 `SKILL.md` files of the agent-skills plugin (v0.6.17).
+- The reference checklists `definition-of-done`, `orchestration-patterns`, `security-checklist` and
+  `observability-checklist`.
+- The 5 agent definitions (`code-reviewer`, `security-auditor`, `test-engineer`,
+  `accessibility-auditor`, `web-performance-auditor`).
+
+**Correction to the record:** `PLAN.md` §8 listed skills as used in Phases 0–6 that were never
+loaded. Only five were loaded and followed: `using-agent-skills`, `git-workflow-and-versioning`,
+`security-and-hardening`, `test-driven-development` and `code-review-and-quality`. §8 now has the
+accurate table and a forward map of which skill governs which remaining work. Specific gaps it names:
+- `interview-me`: Phase 0 asked 4 questions in one batch.
+- No spec or approval gate per phase.
+- Library behavior was verified from installed source rather than cited official docs.
+- The evidence of the Phase 4 flaky failure was not preserved.
+- No doubt-driven fresh-context reviews were run.
+
+**How Phase 7 starts as a result:** spec-driven-development requires a written spec approved by the
+owner before any code, and says to stop after writing it. Drafted
+`docs/specs/phase-7-hardening.md` (delta spec). It contains:
+- Objective, current behavior, assumptions.
+- 14 tasks in 5 slices, each with acceptance criteria, a verification step and files.
+- Checkpoints, proposed `CONSTRAINTS.md`, an out-of-scope list and 3 open questions.
+
+Gaps the skills exposed that are now Phase 7 tasks:
+- No rules file and no written quality bar (context-engineering, constraint-driven-development).
+- No external CI checks (pip-audit, gitleaks).
+- JWT without `iss`/`aud` (security checklist).
+- No on-call questions, request IDs or RED metrics (observability).
+- API naming and retry-safety never decided (api-and-interface-design).
+- No changelog (documentation-and-adrs).
+- No performance baseline (performance-optimization).
+
+**Environment facts checked:** `gemini`, `codex`, `gitleaks`, `osv-scanner`, `semgrep`, `mypy` are not
+installed. So cross-model doubt reviews can only be manual, and the scanners will run in CI.
+
+**Slip caught before it shipped:** while writing the coverage ratchet I typed "97.92%" before reading
+the measurement. The measured value is **98.07%** (`coverage json`, 265 passed + 1 skipped). Corrected
+in the spec before saving this entry.
+
+**Status:** spec awaiting owner approval. No code changed. Docs changes (PLAN §8, spec, this entry) uncommitted.
+
+**Approved:** owner approved the Phase 7 spec on 2026-11-23. The spec already holds the plan and task
+list (14 tasks with acceptance criteria, verification and files, plus checkpoints), so it serves as the
+planning-and-task-breakdown output. Open questions 1 (CI DB password stays) and 3 (`prometheus-client`)
+follow the spec's proposals; question 2 (account deletion/export) will be asked at the Slice A+B checkpoint.

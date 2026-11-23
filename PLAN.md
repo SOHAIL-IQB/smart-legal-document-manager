@@ -218,13 +218,43 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 
 ## 8. Skill map
 
-| Phase | Skills / agents |
-|---|---|
-| 0 | using-agent-skills, interview (questions), spec-driven-development, planning-and-task-breakdown |
-| 1–6 | incremental-implementation, api-and-interface-design, test-driven-development, source-driven-development, debugging-and-error-recovery, doubt-driven-development (auth + concurrency) |
-| 7 | security-and-hardening, observability-and-instrumentation, ci-cd-and-automation, code-review-and-quality, code-simplification |
-| 8–9 | impeccable, 21st-ui (21st MCP), frontend-ui-engineering |
-| 10 | browser-testing, accessibility-engineering, performance-optimization, documentation-and-adrs, shipping-and-launch, git-workflow-and-versioning |
+All 26 skills, 7 reference checklists and 5 agents were read on 2026-11-23 (LOG 013).
+
+### What was actually used in Phases 0–6 (corrected 2026-11-23)
+
+The earlier version of this table listed skills as used that were never loaded. This is the
+accurate record.
+
+| Skill | Loaded and followed | Notes |
+|---|---|---|
+| using-agent-skills | Phase 0 | |
+| git-workflow-and-versioning | every commit since Phase 1 | |
+| security-and-hardening | Phase 2 (ADR 0001 threat model) | |
+| test-driven-development | Phases 3–6 (failing test first) | |
+| code-review-and-quality | review after Phase 5 (LOG 009) | |
+| interview-me | **no** | Phase 0 asked 4 questions in one batch; the skill asks one at a time with a guess |
+| spec-driven-development, planning-and-task-breakdown | **no** | PLAN.md was written without them; no per-phase spec or approval gate |
+| api-and-interface-design | **no** | error shape and pagination happen to match it; naming and retry-safety never decided |
+| source-driven-development | **no** | library behavior was checked by reading installed source, not official docs with citations |
+| documentation-and-adrs | **no** | ADR 0001 written without it; only one ADR exists |
+| debugging-and-error-recovery | **no** | Phase 4 flaky failure: evidence (failing test name) was not preserved |
+| incremental-implementation, doubt-driven-development | **no** | no fresh-context reviews of non-trivial decisions |
+
+### Which skill governs which remaining work
+
+| Work | Skills | Agents |
+|---|---|---|
+| Every phase, before code | spec-driven-development → planning-and-task-breakdown (approval gate each) | |
+| Every task | incremental-implementation, test-driven-development, source-driven-development (cite official docs), git-workflow-and-versioning | |
+| Non-trivial decisions | doubt-driven-development (cross-model offered each cycle; no Gemini/Codex CLI installed) | fresh-context reviewer |
+| Quality bar | constraint-driven-development (`CONSTRAINTS.md`) | |
+| Project rules file | context-engineering (`AGENTS.md`) | |
+| Phase 7 | security-and-hardening, observability-and-instrumentation, ci-cd-and-automation, api-and-interface-design, documentation-and-adrs, performance-optimization (baseline only), code-simplification | security-auditor, code-reviewer, test-engineer |
+| Phase 8 | interview-me (design intent), frontend-ui-engineering + impeccable + 21st | |
+| Phase 9 | frontend-ui-engineering, browser-testing-with-devtools (built-in browser pane), test-driven-development | |
+| Phase 10 | accessibility-engineering, performance-optimization, shipping-and-launch, documentation-and-adrs | accessibility-auditor, web-performance-auditor, code-reviewer, security-auditor |
+| Anything breaks | debugging-and-error-recovery (stop the line, preserve evidence) | |
+| Not applicable | idea-refine (scope already decided), deprecation-and-migration (no consumers yet; its expand/contract rules still apply to every migration) | |
 
 ## 9. Open items / blockers
 
