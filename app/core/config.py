@@ -38,6 +38,9 @@ class Settings(BaseSettings):
 
     # Uploads (PDF / DOCX / TXT). Also set the same limit on any reverse proxy in front of the API.
     max_upload_bytes: int = 10 * 1024 * 1024
+
+    # When set, /metrics requires `Authorization: Bearer <token>` (Phase 7 T8).
+    metrics_token: str | None = None
     # Every other request body. Must fit the largest allowed content: 2,000,000 characters of
     # up-to-4-byte UTF-8 plus JSON framing (review finding R1, LOG 009).
     max_json_bytes: int = 9 * 1024 * 1024

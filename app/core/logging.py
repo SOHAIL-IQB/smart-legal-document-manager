@@ -19,6 +19,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.context import request_id_var
 from app.core.errors import error_body
+from app.core.metrics import observe
 
 logger = logging.getLogger("sldm")
 
@@ -135,11 +136,14 @@ class RequestContextMiddleware:
             )
             await send({"type": "http.response.body", "body": body})
         finally:
+            elapsed = time.perf_counter() - started
+            route = route_template(scope)
+            observe(scope["method"], route, status, elapsed)
             fields: dict[str, Any] = {
                 "method": scope["method"],
-                "route": route_template(scope),
+                "route": route,
                 "status": status,
-                "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                "duration_ms": round(elapsed * 1000, 2),
             }
             user_id = scope.get("state", {}).get("user_id")
             if user_id is not None:

@@ -137,4 +137,5 @@ def test_cors_rejects_unknown_origin(client):
 
 
 def test_health(client):
-    assert client.get("/api/health").json() == {"status": "ok"}
+    # Since Phase 7 the health check is a readiness check that also reports the database.
+    assert client.get("/api/health").json() == {"status": "ok", "database": "ok"}

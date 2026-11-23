@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.router import api_router
+from app.core import metrics
 from app.core.config import get_settings
-from app.core.errors import register_exception_handlers
+from app.core.errors import error_body, register_exception_handlers
 from app.core.headers import SecurityHeadersMiddleware
 from app.core.limits import BodySizeLimitMiddleware
 from app.core.logging import RequestContextMiddleware, configure_logging
@@ -41,6 +43,15 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
 
     app.include_router(api_router, prefix=settings.api_prefix)
+
+    @app.get(metrics.METRICS_PATH, include_in_schema=False)
+    def prometheus_metrics(request: Request) -> Response:
+        if not metrics.authorized(request.headers.get("authorization")):
+            return JSONResponse(
+                status_code=401, content=error_body("unauthorized", "Metrics need a valid token.")
+            )
+        body, content_type = metrics.exposition()
+        return Response(content=body, media_type=content_type)
 
     @app.get("/", include_in_schema=False)
     def root() -> dict[str, str]:
