@@ -183,3 +183,20 @@ def test_docs_that_describe_the_patterns_are_not_flagged(repo):
 def test_the_same_text_in_code_is_flagged(repo):
     (repo / "notes.py").write_text("x = 1  # noqa\n")
     assert guard(repo).returncode == 1
+
+
+def test_editing_an_assertion_is_not_a_removal(repo):
+    edit(repo, "test_app.py", "assert add(1, 2) == 3", "assert add(1, 2) == 3, 'sum'")
+    assert guard(repo).returncode == 0
+
+
+def test_replacing_two_assertions_with_one_is_a_removal(repo):
+    edit(
+        repo,
+        "test_app.py",
+        "    assert add(1, 2) == 3\n    assert add(0, 0) == 0\n",
+        "    assert add(1, 2) == 3 and add(0, 0) == 0\n",
+    )
+    result = guard(repo)
+    assert result.returncode == 1
+    assert "[assertion-removed]" in result.stderr

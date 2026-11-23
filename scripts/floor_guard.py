@@ -210,9 +210,17 @@ def find_violations(
     for path in deleted:
         if is_test(path):
             flag("test-deleted", path, "file deleted")
-    for line in removed:
-        if is_test(line.file) and line.file not in deleted and ASSERTION.search(line.text):
-            flag("assertion-removed", line.file, line.text)
+    # An edited assertion appears as one removed and one added line, so count per file: the bar
+    # drops only when a test file that stays has fewer assertion lines than before.
+    for path in {line.file for line in removed if is_test(line.file) and line.file not in deleted}:
+        gone = [r.text for r in removed if r.file == path and ASSERTION.search(r.text)]
+        new = [a.text for a in added if a.file == path and ASSERTION.search(a.text)]
+        if len(gone) > len(new):
+            flag(
+                "assertion-removed",
+                path,
+                f"{len(gone)} assertion line(s) removed, {len(new)} added",
+            )
 
     removed_rules = [r for r in removed if is_constraints(r.file) and rule_key(r.text) is not None]
     added_rules = [a for a in added if is_constraints(a.file) and rule_key(a.text) is not None]
