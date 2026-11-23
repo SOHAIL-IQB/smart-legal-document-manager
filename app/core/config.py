@@ -38,6 +38,19 @@ class Settings(BaseSettings):
     # up-to-4-byte UTF-8 plus JSON framing (review finding R1, LOG 009).
     max_json_bytes: int = 9 * 1024 * 1024
 
+    # Read by uvicorn itself (same variable). Listed here so production can refuse "*": with it,
+    # uvicorn takes the left-most X-Forwarded-For entry, which any client can forge (R4).
+    forwarded_allow_ips: str = "127.0.0.1,::1"
+
+    @model_validator(mode="after")
+    def refuse_trusting_every_proxy_in_production(self) -> "Settings":
+        if self.environment == "production" and self.forwarded_allow_ips.strip() == "*":
+            raise ValueError(
+                "FORWARDED_ALLOW_IPS='*' lets any client forge its IP. Set it to the proxy's "
+                "address or network instead."
+            )
+        return self
+
     @property
     def cookie_secure(self) -> bool:
         return self.environment == "production"

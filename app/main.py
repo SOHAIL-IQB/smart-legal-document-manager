@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
+from app.core.headers import SecurityHeadersMiddleware
 from app.core.limits import BodySizeLimitMiddleware
 
 settings = get_settings()
@@ -33,6 +34,9 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
     )
     register_exception_handlers(app)
+    # Added last, so it is outermost: every response, including CORS preflights and 413s,
+    # gets the security headers (review finding R8).
+    app.add_middleware(SecurityHeadersMiddleware)
 
     app.include_router(api_router, prefix=settings.api_prefix)
 
