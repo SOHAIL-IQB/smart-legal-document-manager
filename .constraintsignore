@@ -1,0 +1,3 @@
+# Paths exempt from scripts/floor_guard.py. Each needs a row in CONSTRAINTS.md -> Exceptions.
+scripts/floor_guard.py
+tests/test_floor_guard.py
