@@ -32,7 +32,8 @@ jobs:
           ruff format --check .
 
       - name: Test
-        run: pytest --cov --cov-fail-under=85
+        # Ratchet from CONSTRAINTS.md: measured 98.07% on 2026-11-23, 0.5% tolerance.
+        run: pytest --cov --cov-fail-under=97.5
 
   backend-postgres:
     # Same suite on real PostgreSQL: runs the row-lock concurrency test and checks migrations.
@@ -84,3 +85,44 @@ jobs:
         env:
           TEST_DATABASE_URL: ${{ env.PG_URL }}
         run: pytest
+
+  security:
+    # External checks (CONSTRAINTS.md): they judge the code against outside data, not our own tests.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (full history for the secret scan and the floor guard)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependency audit (pip-audit, exits 1 on any known vulnerability)
+        run: |
+          python -m pip install pip-audit==2.10.1
+          pip-audit -r requirements.txt
+
+      - name: Secret scan of the full history (gitleaks, output redacted)
+        run: >-
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/repo"
+          ghcr.io/gitleaks/gitleaks:v8.28.0 git /repo --redact -v
+
+      - name: Floor guard on the pushed commits
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base="origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -qE '^0+$' && git cat-file -e "$BEFORE^{commit}"; then
+            base="$BEFORE"
+          else
+            base="HEAD~1"
+          fi
+          echo "Comparing against $base"
+          python scripts/floor_guard.py --base "$base"
+
