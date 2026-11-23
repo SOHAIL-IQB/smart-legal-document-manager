@@ -114,7 +114,19 @@ curl -s -X POST $API/documents/1/versions/upload -H "Authorization: Bearer $BOB"
 Accepted: `.pdf`, `.docx`, `.txt` up to 10 MB. Scanned PDFs without selectable text, encrypted PDFs
 and files whose contents don't match the extension are refused with a clear error.
 
-## 9. Rename and delete
+## 9. Notifications and activity
+
+```bash
+curl -s "$API/notifications/unread-count" -H "Authorization: Bearer $ALICE"
+curl -s "$API/notifications?unread_only=true" -H "Authorization: Bearer $ALICE"
+curl -s -X POST "$API/notifications/read-all" -H "Authorization: Bearer $ALICE"
+curl -s "$API/documents/1/activity?limit=5" -H "Authorization: Bearer $ALICE"
+```
+
+Bob's edit, restore and upload above (versions 2–4) each notified Alice; nobody is notified about
+their own change. The activity log lists every change with who made it, newest first.
+
+## 10. Rename and delete
 
 ```bash
 curl -s -X PATCH $API/documents/1/title -H "Authorization: Bearer $BOB" \

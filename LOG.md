@@ -412,3 +412,62 @@ Phase 9 React + Vite + TS frontend, Phase 10 verification and launch.
   commit messages or files. Check unpushed messages and tracked files for both before every push.
 
 **Open decisions for the owner:** none pending. Known limits are listed in ADR 0001 and PLAN.md §7.
+
+## 012 — 2026-11-23 — Phase 6: notification inbox and activity log
+
+**Resumed from LOG 011.** Checked first: `main` = `origin/main` = `8842701`, CI green, Docker 29.2.0 up,
+Postgres container running, `sldm_test` exists, `.venv` Python 3.12.16, baseline 241 passed + 1 skipped.
+
+**Changed**
+- Models: `ActivityEvent` (document_id ON DELETE CASCADE, actor_id, action, `details` JSON/JSONB, created_at;
+  index `(document_id, created_at)`; `before_update` / `before_delete` listeners raise `PermissionError`,
+  so it's append-only) and `Notification` (user_id CASCADE, document_id **SET NULL**, actor_id, kind CHECK,
+  message, version_number, read_at; indexes `(user_id, created_at)`, `(user_id, read_at)`).
+- `app/services/activity.py` (`record`, `list_activity`) and `app/services/notifications.py` (`notify`,
+  `other_member_ids`, list / unread count / mark read / mark all). Both only *add* rows; the action's own
+  commit saves them, so failed actions leave nothing behind.
+- Recorded in: create (incl. upload source and file name), new version / restore (`meaningful`, note,
+  source, restored_from), soft delete, rename (from → to; no-op renames aren't recorded), member
+  added / role changed (no-op changes aren't recorded) / removed (`left` when self).
+- Notifications: meaningful version → other members; shared / role changed / removed (not on leaving) →
+  that member; document deleted → other members (survives via SET NULL).
+- Removed `app/notifications/notification_service.py` (log-only) and the `BackgroundTasks` plumbing;
+  `respond_to_version_result` is now just the 200/201 decision.
+- Endpoints: `GET /documents/{id}/activity` (viewer+, paginated), `GET /notifications` (`unread_only`,
+  paginated, with `unread`), `GET /notifications/unread-count`, `POST /notifications/{id}/read` (idempotent;
+  someone else's → 404), `POST /notifications/read-all`.
+- Migration `0006`: both tables + backfill of `document.created`, `version.created` / `version.restored`
+  and `version.deleted` from existing rows (`"backfilled": true`). Membership history before this phase
+  wasn't recorded and can't be reconstructed.
+- **Bug found by a new test:** SQLite returned naive timestamps (`…798459`, no `Z`) while freshly written
+  values serialized as `…798459Z`. Browsers read naive ISO times as local time. New `UTCDateTime` column
+  type (all 9 timestamp columns) always returns aware UTC and refuses naive input; test checks every
+  timestamp the API returns carries a zone. No schema change (`alembic check` clean).
+- Docs: README "Notifications and Activity Log", schema rows, endpoint rows; USER_GUIDE section 9.
+
+**Tests:** written first and run red (`ImportError: cannot import name 'ActivityEvent'`). The two original
+tests that read the server log (`test_trivial_change_…`, `test_meaningful_change_…`) now check another
+member's inbox instead; same intent (trivial edits are quiet, real ones notify). New file
+`tests/test_activity_and_notifications.py` (25 tests).
+
+**Mutation testing (13)** — all caught in the end:
+- "leaving notifies" survived at first: my test looked at the owner's inbox, but a leave notification would
+  go to the person leaving. Fixed the test to check the leaver's inbox.
+- "no flush before delete" survived on SQLite **and** Postgres: the flush I added was unnecessary (the unit
+  of work already inserts notifications before deleting the document). Removed the line.
+- Caught: editor notifies themselves, whitespace edits notify, restore logged as create, append-only guard
+  off, marking others' notifications, unread filter ignored, re-read overwrites `read_at`, naive timestamps
+  returned, version delete not logged, document delete notifies nobody.
+
+**Verified**
+| Check | Result |
+|---|---|
+| `pytest --cov` (SQLite) | **265 passed, 1 skipped**, coverage **98%** |
+| Full suite on Postgres 16 | **266 passed** |
+| Migration 0006 with a seeded legacy document (v2 by another user and soft-deleted, v3 restored), SQLite and Postgres | 4 backfilled events with the right actors: `document.created` Ann, `version.created` Ben, `version.deleted` Ann, `version.restored` Ann (restored_from 1); downgrade → upgrade → `alembic check` clean. (My first Postgres seed failed on an untyped `NULL` in a `UNION`; re-seeded with separate inserts.) |
+| Whole USER_GUIDE on a live server | Alice: 3 unread ("Bob saved version 2/3/4 of “Service Agreement”."), read-all → `{"updated": 3}`, activity 5 events. Running it showed my guide text named the wrong person for the restore; corrected. |
+| `ruff check` / `ruff format --check` | clean |
+
+**Next: Phase 7 — hardening & ops** (PLAN.md §7): R4 proxy IPs for the login rate limit, R5 CPU time limit
+for file parsing, R8 security headers, request IDs + JSON logs, `/health` checks the DB, seed script with
+demo data, docker-compose with the frontend later, CI additions, code review pass.

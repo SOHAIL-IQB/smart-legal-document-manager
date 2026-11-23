@@ -64,6 +64,8 @@ requirements.txt
 | `documents` | `id`, `title`, `created_by`, `created_at`, `updated_at` |
 | `document_members` | `document_id`, `user_id`, `role` (`owner` / `editor` / `viewer`), `added_at` |
 | `document_versions` | `id`, `document_id`, `version_number`, `content`, `content_hash` (SHA-256), `word_count`, `change_note`, `source` (`manual` / `restore` / `upload`), `restored_from`, `edited_by`, `created_at`, `deleted_at`, `deleted_by` |
+| `activity_events` | `id`, `document_id`, `actor_id`, `action`, `details` (JSON), `created_at`; append-only |
+| `notifications` | `id`, `user_id`, `document_id` (set to NULL when the document is deleted), `actor_id`, `kind`, `message`, `version_number`, `read_at`, `created_at` |
 
 Each version stores a full content snapshot, so earlier content is never overwritten.
 Versions are never hard-deleted: "deleting" one hides it but keeps it for the audit trail, its
@@ -105,6 +107,9 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `POST` | `/documents/{id}/versions/upload` (multipart: `file`, `change_note`) | editor+ |
 | `GET` / `POST` | `/documents/{id}/members` | viewer+ / owner |
 | `PATCH` / `DELETE` | `/documents/{id}/members/{user_id}` | owner (any member may remove themselves) |
+| `GET` | `/documents/{id}/activity` | viewer+ |
+| `GET` | `/notifications` (`?unread_only=&limit=&offset=`), `/notifications/unread-count` | signed in |
+| `POST` | `/notifications/{id}/read`, `/notifications/read-all` | signed in (own notifications only) |
 | `GET` | `/health` | anyone |
 
 Errors always have the shape `{"error": {"code": "...", "message": "...", "details": ...}}`.
@@ -147,9 +152,27 @@ is stored (as a version with `source: "upload"` and the original `source_filenam
 - DOCX paragraphs and tables are extracted in document order (table cells joined with ` | `).
   python-docx parses XML with entity resolution off (no XXE).
 
-## Smart Notification System
+## Notifications and Activity Log
 
-When a new version is uploaded, the backend compares it with the latest saved version. Notifications run through FastAPI `BackgroundTasks`, so the API returns immediately. A notification is triggered only when the change is meaningful. Pure whitespace or formatting changes do not trigger notifications, which helps reduce noise for legal users.
+Both are written **in the same database transaction** as the action that causes them, so a
+failed action never leaves a half-recorded event or a notification about something that didn't
+happen.
+
+**Activity log** (`GET /documents/{id}/activity`, any member): an append-only timeline of
+`document.created`, `version.created`, `version.restored`, `version.deleted`, `document.renamed`,
+`member.added`, `member.role_changed` and `member.removed`, each with the actor and details
+(version number, source, file name, change note, old and new title or role). The ORM refuses to
+update or delete events, and there is no API to change them. History from before this feature
+was backfilled from the versions table (`"backfilled": true`).
+
+**Notification inbox** (`GET /notifications`, `/notifications/unread-count`,
+`POST /notifications/{id}/read`, `POST /notifications/read-all`):
+
+| Event | Who is notified |
+|---|---|
+| A meaningful new version (typed, uploaded or restored) | every other member; whitespace-only edits notify nobody |
+| Document shared with you / your role changed / you were removed | that member (not when you leave yourself) |
+| Document deleted | every other member; the notification outlives the document |
 
 ## Running the Project
 

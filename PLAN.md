@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-22):** Phases 0–5 + review fixes done and pushed (`71e1ff4`). **Next: Phase 6.** Details: LOG.md entry 011.
+> **Resume point (2026-11-23):** Phases 0–6 + review fixes done and pushed. **Next: Phase 7 (hardening & ops).** Details: LOG.md entry 012.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -178,12 +178,13 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 ### Review fixes after Phase 5 `[x]` (LOG 009, 010)
 - [x] R1 streaming body-size limit · R2 database cascade on document delete · R3 CSRF tests for every write method · R6 dead alias removed · R7 shared helper moved
 
-### Phase 6 — Notifications & audit log `[ ]`
-- [ ] `notifications` table; meaningful change → notify every member except actor (B9)
-- [ ] Also notify on: shared with you, role changed
-- [ ] `activity_events` append-only; recorded inside the same transaction as the action
-- [ ] Endpoints + tests
-- **Verify:** pytest green
+### Phase 6 — Notifications & audit log `[x]` (LOG 012)
+- [x] `notifications` table; meaningful change → notify every member except actor (B9)
+- [x] Also notify on: shared with you, role changed, removed, document deleted (notification outlives the document)
+- [x] `activity_events` append-only (ORM refuses update/delete); recorded inside the same transaction as the action; history backfilled
+- [x] Endpoints + tests; migration `0006`
+- [x] Found and fixed: SQLite returned timestamps without a timezone → `UTCDateTime` column type
+- **Verify:** 266 passed on Postgres; 13/13 mutations caught after fixing one test; migration backfill checked on both databases; USER_GUIDE run live
 
 ### Phase 7 — Hardening & ops `[ ]`
 - [ ] R4: set `FORWARDED_ALLOW_IPS` / `--proxy-headers` for the host's proxy so the login rate limit sees real client IPs (LOG 009)
