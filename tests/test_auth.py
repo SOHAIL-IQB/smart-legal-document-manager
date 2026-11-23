@@ -150,8 +150,18 @@ def test_protected_route_without_credentials_is_401(client):
 
 
 def _token(user_id, *, minutes=5, key=DEV_SECRET_KEY, typ="access", **extra):
+    # Valid in every way except the one thing each test changes, so each case is rejected for
+    # its own reason (since Phase 7 a token without iss/aud fails on that alone).
     now = datetime.now(UTC)
-    claims = {"sub": str(user_id), "typ": typ, "iat": now, "exp": now + timedelta(minutes=minutes)}
+    settings = get_settings()
+    claims = {
+        "sub": str(user_id),
+        "typ": typ,
+        "iat": now,
+        "exp": now + timedelta(minutes=minutes),
+        "iss": settings.jwt_issuer,
+        "aud": settings.jwt_audience,
+    }
     claims.update(extra)
     return jwt.encode(claims, key, algorithm="HS256")
 
@@ -178,7 +188,14 @@ def test_invalid_tokens_are_rejected(client, alice, make_token):
 
 def test_alg_none_token_is_rejected(client, alice):
     unsigned = jwt.encode(
-        {"sub": str(alice.id), "typ": "access", "iat": 0, "exp": 9_999_999_999},
+        {
+            "sub": str(alice.id),
+            "typ": "access",
+            "iat": 0,
+            "exp": 9_999_999_999,
+            "iss": get_settings().jwt_issuer,
+            "aud": get_settings().jwt_audience,
+        },
         key=None,
         algorithm="none",
     )
@@ -230,3 +247,50 @@ def test_production_refuses_short_secret():
 def test_production_accepts_strong_secret_and_marks_cookie_secure():
     settings = Settings(environment="production", secret_key="s" * 48)
     assert settings.cookie_secure is True
+
+
+# --- Phase 7 T5: issuer and audience --------------------------------------------------------
+
+
+def _claims_token(user_id, **overrides):
+    settings = get_settings()
+    now = datetime.now(UTC)
+    claims = {
+        "sub": str(user_id),
+        "typ": "access",
+        "iat": now,
+        "exp": now + timedelta(minutes=5),
+        "iss": settings.jwt_issuer,
+        "aud": settings.jwt_audience,
+    }
+    claims.update(overrides)
+    return jwt.encode({k: v for k, v in claims.items() if v is not None}, DEV_SECRET_KEY, "HS256")
+
+
+def test_issued_tokens_carry_issuer_and_audience(alice):
+    settings = get_settings()
+    claims = jwt.decode(alice.token, options={"verify_signature": False})
+    assert (claims["iss"], claims["aud"]) == (settings.jwt_issuer, settings.jwt_audience)
+
+
+def test_correct_issuer_and_audience_are_accepted(client, alice):
+    response = client.get(
+        "/api/auth/me", headers={"Authorization": f"Bearer {_claims_token(alice.id)}"}
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"iss": "someone-else"},
+        {"aud": "another-app"},
+        {"iss": None},
+        {"aud": None},
+    ],
+    ids=["wrong-issuer", "wrong-audience", "missing-issuer", "missing-audience"],
+)
+def test_tokens_for_another_issuer_or_audience_are_rejected(client, alice, overrides):
+    token = _claims_token(alice.id, **overrides)
+    response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401

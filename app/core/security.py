@@ -37,6 +37,8 @@ def create_access_token(user_id: int) -> str:
     payload = {
         "sub": str(user_id),
         "typ": "access",
+        "iss": settings.jwt_issuer,
+        "aud": settings.jwt_audience,
         "iat": now,
         "exp": now + timedelta(minutes=settings.access_token_minutes),
     }
@@ -45,12 +47,15 @@ def create_access_token(user_id: int) -> str:
 
 def decode_access_token(token: str) -> int | None:
     """Return the user id inside a valid token, or None for any invalid/expired token."""
+    settings = get_settings()
     try:
         payload = jwt.decode(
             token,
-            get_settings().secret_key,
+            settings.secret_key,
             algorithms=[_ALGORITHM],
-            options={"require": ["sub", "exp", "iat"]},
+            issuer=settings.jwt_issuer,
+            audience=settings.jwt_audience,
+            options={"require": ["sub", "exp", "iat", "iss", "aud"]},
         )
     except jwt.PyJWTError:
         return None

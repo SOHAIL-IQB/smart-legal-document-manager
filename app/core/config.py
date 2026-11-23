@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     secret_key: str = DEV_SECRET_KEY
     access_token_minutes: int = Field(default=12 * 60, ge=5, le=7 * 24 * 60)
     auth_cookie_name: str = "sldm_session"
+    # Tokens name who issued them and who they are for; decode rejects anything else.
+    jwt_issuer: str = "smart-legal-document-manager"
+    jwt_audience: str = "smart-legal-document-manager-web"
     login_max_failures: int = 10
     login_window_seconds: int = 15 * 60
 
