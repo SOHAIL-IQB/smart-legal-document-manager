@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-24):** Phase 7 T1–T13 and T15 done and pushed. **Next: T14 (simplification), then the owner reviews the backend.** Details: LOG.md entries 014–017; tasks in `docs/specs/phase-7-hardening.md`.
+> **Resume point (2026-11-24):** Phase 7 tasks T1–T15 done and pushed. **Next: the owner reviews the finished backend, then Phase 8 (design direction).** Details: LOG.md entries 014–018; tasks in `docs/specs/phase-7-hardening.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -186,19 +186,19 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] Found and fixed: SQLite returned timestamps without a timezone → `UTCDateTime` column type
 - **Verify:** 266 passed on Postgres; 13/13 mutations caught after fixing one test; migration backfill checked on both databases; USER_GUIDE run live
 
-### Phase 7 — Hardening & ops `[~]` (spec: `docs/specs/phase-7-hardening.md`, LOG 013–014)
+### Phase 7 — Hardening & ops `[~]` all tasks done, awaiting owner review (spec: `docs/specs/phase-7-hardening.md`, LOG 013–018)
 - [x] R4 (T4): set `FORWARDED_ALLOW_IPS` / `--proxy-headers` for the host's proxy so the login rate limit sees real client IPs (LOG 009)
 - [x] R5 (T6): run PDF/DOCX extraction with a CPU time limit (subprocess + timeout) (LOG 009)
 - [x] R8 (T3): security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, CSP for the API docs) (LOG 009)
 - [x] Security review: OWASP pass, headers, secrets (T2, T3, T13; done without agents at the owner's request)
 - [x] Request-ID middleware, JSON logs, `/health` checks DB, RED metrics (B15; T7, T8)
 - [x] Seed script with demo users + realistic contracts (T10)
-- [ ] docker-compose: db + api + frontend; CI: ruff, pytest (SQLite + Postgres service), alembic check, frontend build (B16)
+- [x] docker-compose: db + api; CI: ruff, pytest (SQLite + Postgres service), alembic round trip and check (B16). The frontend container and frontend build join when the frontend exists (Phases 9–10).
 - [x] Rules file + written quality bar + floor guard (T1); CI dependency audit, secret scan, floor guard (T2); JWT `iss`/`aud` (T5); ADR 0002 API contract (T9); performance baseline in `PERF.md` (T11)
 - [x] Account deletion (anonymized) and data export (T15; owner answered open question 2)
 - [x] Changelog + README structure, every README command run on a clean clone (T12)
 - [x] Backend review (T13): 1 High + 4 Medium found and fixed, trade-offs recorded (LOG 017)
-- [ ] Simplification pass (T14)
+- [x] Simplification pass (T14): 3 behavior-neutral changes, 2 missing floor guard tests added (LOG 018)
 - ⏸ **Owner reviews finished backend**
 
 ### Phase 8 — Design direction `[ ]`

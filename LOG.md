@@ -894,3 +894,45 @@ My own test mistakes, corrected before committing:
 ADR 0001 (the per-IP limit in the threat model; the corrected enumeration trade-off).
 
 **Status:** T13 done. Next: T14 (simplification), then the owner reviews the finished backend.
+
+## 018 — 2026-11-24 — Phase 7 T14: simplification pass
+
+**How the candidates were chosen:**
+- One ruff run over `app/` and `scripts/` with complexity, dead-code and simplification rules
+  (`C901`, `PLR09xx`, `SIM`, `RET`, `PIE`, `ERA`, `ARG`, `PERF`, `FURB`, `C4`). The project's
+  configuration was not changed.
+- A search for suppressions.
+- The T13 review notes.
+
+Most signals were noise and were left alone:
+- "Too many arguments": keyword-only service parameters with clear names.
+- The unused `dialect` argument: required by SQLAlchemy's `TypeDecorator`.
+- One `list.extend` suggestion: no clearer.
+- Splitting `extract.py`: it would relocate complexity, not reduce it.
+
+**Changes (one commit each; both full suites run after each; no existing test edited):**
+
+| Commit | Change | Why |
+|---|---|---|
+| `704aa51` | Five `# type: ignore[no-untyped-def]` replaced with real annotations (`Select`, `Row`, `ColumnElement`, `AliasedClass` from `sqlalchemy.orm.util`, the DB-API connection) | No type checker is installed or configured and ruff doesn't check annotations, so the comments suppressed nothing. They stood in for return types (Phases 1, 3, 4). |
+| `117b587` | The floor guard's threshold comparison moved to `threshold_verdict()`, which returns early | It replaces two nested loops sharing a `verdict` flag set in one place and checked with `break` in another. `find_violations` complexity: 26 → 19. |
+| `343d063` | 2 new floor guard tests: a rule's number dropped (`threshold-removed`); a number with no direction changed (`threshold-changed`) | Breaking either rule had gone unnoticed, before and after the refactor. |
+| `6e7b097` | `app/core/errors.py` module docstring shows `request_id` | It showed the error shape from before T7. |
+
+**Behavior kept:**
+- The refactor's equivalence was argued first: the old loop also kept the first verdict, and
+  every later iteration broke at once.
+- All 29 existing floor guard tests passed unchanged.
+- The 2 new tests pass against both the old and the new guard.
+- Breaks of the extracted helper, in the throwaway copy: removed threshold ignored; directionless
+  change ignored; min loosening read as fine; max loosening read as fine. 4 of 4 caught (the first
+  two only with the new tests).
+
+**Verification (final tree):**
+- `ruff check . && ruff format --check .`: clean.
+- `pytest`: 460 passed, 1 skipped.
+- Postgres: 461 passed.
+- Floor guard: clean.
+
+**Status:** Phase 7 tasks T1–T15 are done. Next: the owner reviews the finished backend
+(PLAN.md gate), then Phase 8 (design direction).
