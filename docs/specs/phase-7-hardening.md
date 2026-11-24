@@ -188,6 +188,80 @@ where behavior changes (test-driven-development). Framework-specific code cites 
   One change per commit.
 - Verify: full suite on SQLite and Postgres after each change.
 
+### Addendum — T15 (owner answered open question 2 on 2026-11-24: add now)
+
+Status: approved by owner 2026-11-24 as written (including migration `0007`).
+
+**T15. Account deletion and data export** · security-and-hardening, api-and-interface-design,
+test-driven-development
+
+Why: security-and-hardening asks for a working path to delete and export personal data.
+
+Constraint found in the code: documents, versions and activity events point at `users.id` with no
+cascade, and the activity log is append-only by design (legal audit trail). So deleting an account
+means **anonymizing** it: the row stays as a placeholder so history still resolves, and everything
+that identifies the person is removed from it.
+
+`GET /api/auth/me/export` (signed in)
+- 200 JSON, sent as a download (`Content-Disposition: attachment`), `Cache-Control: no-store`.
+- Contains:
+  - `profile`: id, name, email, created_at.
+  - `memberships`: document id, title, role, added_at.
+  - `versions_authored`: every version you wrote, with its content.
+  - `activity`: events you performed.
+  - `notifications`: your inbox.
+- Scope: only documents you can still access. A document you were removed from belongs to its
+  owners; your profile and notifications are always included.
+
+`DELETE /api/auth/me` with body `{"password": "..."}`
+- The password is checked again. A stolen session alone can't delete the account.
+  - Wrong password: 403 `forbidden` (the project's existing code for refused actions).
+  - Repeated failures: 429 `rate_limited`, using the existing login limiter.
+- Refused with 409 `conflict` if you are the **last owner** of a document that other members still
+  use. Nothing changes; the response lists those documents, so you can make someone else an owner
+  or delete them first.
+- Otherwise, in one transaction:
+  1. Documents where you are the only member are deleted (as `DELETE /documents/{id}` does).
+  2. You leave every other document. A `member.removed` event is recorded with `left: true`.
+  3. Your notifications are deleted.
+  4. The account is anonymized:
+     - name becomes "Deleted user";
+     - email becomes `deleted-user-<id>@deleted.example`, so the address can sign up again
+       (`.example` is reserved by RFC 2606; `.invalid` fails pydantic's `EmailStr`, found while
+       implementing);
+     - the password hash becomes unusable;
+     - `deleted_at` is set.
+  5. 204, the auth cookie is cleared, and an `account_deleted` log event is written.
+- Afterwards every existing token for the account gets 401, and sign-in fails.
+
+Schema change (needs owner approval per `AGENTS.md`):
+- Migration `0007` adds a nullable `users.deleted_at` column (additive, with a tested downgrade).
+- Without it, an unexpired token of a deleted account would keep working.
+
+Kept on purpose (trade-off, written down):
+- Names already written into the past are left as they are:
+  - activity `details` (member events store the affected member's name);
+  - the text of other people's notifications (e.g. "Asha shared X with you").
+- Rewriting them would mean editing the append-only audit trail and other people's inboxes.
+- Everywhere a name is looked up live (version authors, activity actors, owner names), the
+  placeholder shows "Deleted user".
+
+Acceptance:
+- Export contains exactly the listed sections for the signed-in user and nothing from other users'
+  inboxes or from documents the user can no longer access.
+- Deletion: each step above, the 403/409/429 cases, tokens refused afterwards, the same email can
+  register again, other members' documents and history intact.
+
+Verify:
+- Tests first for every rule above, on SQLite and Postgres.
+- Migration upgrade, downgrade and upgrade with no drift.
+- Deliberate breaks of each guard, run in a throwaway copy.
+- README endpoint table (checked against OpenAPI) and ADR 0002 retry table updated.
+
+Files: `app/api/routes/auth.py`, `app/services/users.py` (or a new `app/services/account.py`),
+`app/api/deps.py`, `app/db/models.py`, `migrations/versions/20261124_0007_user_deleted_at.py`,
+`app/schemas/user.py`, tests, `README.md`, `USER_GUIDE.md`, `docs/adr/0002-api-contract.md`.
+
 ### Checkpoints
 
 - After Slice A+B: full suite on both databases, CI green, commit and push.
@@ -225,7 +299,7 @@ Defaults from constraint-driven-development; "measure and hold" where no number 
 1. CI's Postgres service uses `postgres/postgres` in the workflow file. The ci-cd skill prefers
    GitHub Secrets even for CI. It's a throwaway container, so I propose leaving it unless you'd like
    a secret set.
-2. Account deletion and export: security-and-hardening asks for a working deletion path for personal
+2. **Answered 2026-11-24: add now (T15 above).** Account deletion and export: security-and-hardening asks for a working deletion path for personal
    data. Add it in Phase 7 (`DELETE /auth/me`, `GET /auth/me/export`; deletion refused while you are
    the sole owner of a shared document), or defer?
 3. Adding `prometheus-client` (T8) is a new dependency. OK?
