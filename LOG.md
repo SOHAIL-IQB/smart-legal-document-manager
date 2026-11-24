@@ -523,3 +523,141 @@ in the spec before saving this entry.
 list (14 tasks with acceptance criteria, verification and files, plus checkpoints), so it serves as the
 planning-and-task-breakdown output. Open questions 1 (CI DB password stays) and 3 (`prometheus-client`)
 follow the spec's proposals; question 2 (account deletion/export) will be asked at the Slice A+B checkpoint.
+
+## 014 — 2026-11-24 — Phase 7 Slices A–D (T1–T11)
+
+Spec: `docs/specs/phase-7-hardening.md` (approved 2026-11-23). This entry records what was done,
+what was measured and where the work differed from the spec.
+
+**Commits:**
+
+| Task | Commit | What |
+|---|---|---|
+| T1 | `d02e183` | `AGENTS.md`, `CONSTRAINTS.md`, `.constraintsignore`, `scripts/floor_guard.py` and its tests |
+| T2 | `2f459d5` | CI `security` job: pip-audit 2.10.1, gitleaks v8.28.0 (redacted), floor guard; Dependabot |
+| T3, T4 | `bf1c4da` | Security headers (R8); `FORWARDED_ALLOW_IPS`, `--proxy-headers`, no `Server` header (R4) |
+| T5 | `6478e67` | JWT `iss` and `aud` required and checked |
+| T1 fix | `2987d0c` | Floor guard: an edited assertion is not a removed one (count-based) |
+| T7 | `51320a6` | Request IDs, one JSON access line per request, named events, `request_id` in error bodies |
+| T8 | `3af903c` | `/health/live`, `/health/ready` (`SELECT 1`, 503), `/metrics` (RED, bounded labels) |
+| T9 | `c6cd9de` | ADR 0002 (API contract, retry safety); README endpoint table checked against OpenAPI |
+| T1 fix | `2bc0823` | Floor guard: one suppression line may cite an exception row (`[W3]`) |
+| T6 | `217001f` | PDF/DOCX parsing in a confined worker process (R5) |
+| T10 | `7a31e86` | `scripts/seed.py` demo data, README section |
+| T11 | `df64fa3` | `scripts/bench.py`, `PERF.md` baseline |
+
+**Deviations from the spec, and why:**
+- T2: the CI failure cases (a vulnerable pin, a planted secret, a removed assertion) were proven
+  locally with the same commands, not on a throwaway branch, so no planted secret was ever pushed.
+- T2: the official gitleaks action (v3) has no redaction setting, so CI runs the pinned CLI
+  container with `--redact`.
+- T4: the uvicorn docs were unreachable (DNS failure, then 503). Proxy-header behavior was read in
+  the installed uvicorn 0.54 source instead.
+- T5: breaking "alg=none allowed" survived. It is an equivalent mutant: PyJWT refuses `alg=none`
+  whenever a key is supplied. The test stays, as documentation of the rule.
+- T6: the spec says "a timeout returns 422". Added: `503 busy` when all 4 parse slots stay taken
+  for 5 s (the server, not the file, is the problem). Three adversarial review cycles instead of one.
+- T6: the page-limit upload test uses a real 501-page PDF; patching the limit in the test process
+  can't reach the worker.
+- T1: the floor guard flagged documentation and its own `noqa` lines. Pattern rules now apply to
+  code files only, and a suppression line may cite an exception row; rows W3–W5 were added.
+- T6 coverage: moving the parsers into a subprocess dropped measured coverage to 92%, because
+  coverage can't see a process that may not write files and exits with `os._exit`. The floor was
+  not lowered: `tests/test_parse_worker.py` tests the worker's functions in-process, and five more
+  tests cover the new runner branches. Coverage is back to 97.92% (floor 97.5%).
+
+**Deliberate breaks (each guard broken once; the suite must fail):**
+
+| Task | Breaks | Result |
+|---|---|---|
+| T1 | skips not detected; min direction inverted; cannot-run reads as clean; any exception row accepted | 4/4 caught |
+| T3, T4 | HSTS outside production; API gets the docs CSP; no `no-store`; production trusts every proxy; middleware removed | 5/5 caught |
+| T5 | expiry, token type, issuer, audience unchecked | 4/4 caught; `alg=none` equivalent (above) |
+| T7 | incoming ID not validated; incoming ID ignored; ID not echoed; unhandled error not answered; raw paths as routes; user id missing from access line; ID missing from error body | 7/7 caught |
+| T8 | unknown methods as labels (**survived**; test added, then caught); raw status codes; scrapes counted; token ignored; readiness skips the DB; metrics never recorded | 6/6 after the new test |
+| T6 | no concurrency cap; reply size uncapped (**survived**, see below); no deadline; truncated reply accepted; server env leaks; worker runs in server cwd; worker's children survive; pages unchecked; worker text reaches users; worker imports from its cwd; oversized header accepted; reply decoded outside the slot; waiting reply dropped at deadline; worker may fork; worker may write files; surrogates crash the reply | 16/16 after the fix |
+| T10 | seed runs in production; seed not idempotent | 2/2 caught |
+
+- "Reply size uncapped" survived because the test matched `"too long"`, which the deadline's
+  message ("took too long") also contains. Both tests now match their exact message, and the flood
+  test has a 3 s deadline: uncapped, it first ran the test process out of memory (exit 137).
+- From this entry on, breaks run in a throwaway copy of the repository in the scratchpad. A script
+  applies each break to the copy, runs the tests there and hashes the real files before and after.
+  The reason: an in-place run interrupted on 2026-11-24 left one break (`cwd="/"` removed) in
+  `extract.py`. It was found by comparing with the backup, restored, and the tests rerun.
+
+**T6 review cycles (doubt-driven-development).** Each cycle gave a fresh-context reviewer only the
+code and the contract. The owner skipped the cross-model option in cycles 1 and 2. After cycle 3
+the owner asked to stop the review cycle, and I triaged cycle 3 myself.
+
+Cycle 1 (first design used `multiprocessing`):
+
+| # | Finding | Class |
+|---|---|---|
+| 1 | Unbounded reply can exhaust server memory; no memory limit on macOS | Actionable |
+| 2 | A crash mid-reply raises `OSError`; start-up failures escape as 500 | Actionable |
+| 3 | A failed start can leak file descriptors and a zombie | Actionable |
+| 4 | multiprocessing's resource-tracker process stays | Contract misread (no *per-request* child was meant) |
+| 5 | Threads reaping each other's children could kill a reused PID | Actionable |
+| 6 | `exc.message` might not exist | Noise (`AppError` sets it) |
+| 7 | Start-up time not counted against the timeout | Actionable |
+| 8 | Server unpickles the child's reply; child inherits `SECRET_KEY` and `DATABASE_URL` | Actionable, security |
+| 9 | Child imports FastAPI and the app, using its memory allowance | Actionable |
+| 10 | No cap on concurrent parsers | Actionable |
+| 11 | Spawn re-runs `__main__`; daemon callers fail | Actionable (removed by the redesign) |
+
+Response: a plain subprocess (file on stdin; JSON header and text on stdout; no pickle), a scrubbed
+environment, a worker module that imports nothing from the app, reason codes mapped to the server's
+own messages, a byte-capped read with one deadline, `with Popen`, and a 4-slot semaphore.
+
+Cycle 2:
+
+| # | Finding | Class and response |
+|---|---|---|
+| 1 | Waiting for a slot eats the parse deadline | Actionable: separate 5 s slot wait (503); the deadline starts after it |
+| 2a | No framing, so a truncated reply counts as success | Actionable: the header carries the body `length` |
+| 2b | A worker that can't start looks like a bad file | Trade-off: indistinguishable from outside; start-up is proven by tests on every platform we run |
+| 3 | Malformed replies cause 500s | Actionable |
+| 4 | Thread, selector and subprocess failures escape as 500 | Actionable: all map to 503 |
+| 5 | Cap counted in characters, not bytes | Actionable: bytes on both sides |
+| 6 | Slot waiters hold Starlette's shared thread pool | Partly fixed (short wait); trade-off recorded |
+| 7 | A compromised parser has the server's privileges | Actionable parts: own process group, NPROC 0, FSIZE 0, CORE 0, NOFILE 64, `cwd="/"`. Trade-off: same uid, so the parent's `/proc` entry is readable. Partly a contract misread: the container runs as non-root `appuser` |
+| 8 | Package `__init__` files might load secrets | Noise: both are empty |
+| 9 | Four 1 GiB workers can trigger the OOM killer | Actionable: `oom_score_adj` 1000. Trade-off: no memory limit on macOS |
+| 10 | Slow interpreter exit can lose a complete reply | Actionable: stop reading once complete; the worker calls `os._exit` |
+| 11 | Float `cpu_seconds`, `ValueError` in the writer, lone surrogates | Actionable (small) |
+
+Cycle 3:
+
+| # | Finding | Class and response |
+|---|---|---|
+| 1 | Server memory pressure or CPU contention shows as 422 "damaged" | Trade-off: an OOM kill and the CPU-limit kill look the same from outside. Container sizing (about 4 GiB plus the API) documented in the README |
+| 2 | Reply decoded after the slot is released, so 4 slots don't bound memory | Actionable: decoded inside the slot |
+| 3 | A malformed header is re-parsed on every chunk while holding the GIL | Actionable: header capped at 4 KB and rejected at once |
+| 4 | `BrokenPipeError` from `Popen.__exit__` replaces the result | Actionable: the writer is joined before stdin is closed. The race did not reproduce on macOS in 5 tries, so its test passed before the fix too; kept as a guard |
+| 5 | A reply already waiting at the deadline is dropped | Actionable: one last non-blocking read, capped at 1 MiB |
+| 6 | `MemoryError` while decoding is a 500; bad internal arguments | `MemoryError` actionable (now 503); arguments noise (internal constants) |
+| 7 | `python -m` puts `/` first on the import path; `__init__` files run first | Path actionable (`-P`); `__init__` noise (both empty) |
+
+Cycle-3 fixes were written test-first: 5 of the 6 new tests failed before the fix (#4 above is the
+exception).
+
+**Known trade-offs carried forward:**
+- The worker runs as the server's uid.
+- No memory limit on macOS (development only).
+- Parse waits share Starlette's thread pool.
+- The slot limit is per server process (N uvicorn workers = N×4 parsers).
+- Upload p95 is over budget because worker start-up plus a 1-page parse takes about 0.215 s in the
+  Linux container (`PERF.md`).
+
+**Verification (2026-11-24, final tree):**
+- `ruff check . && ruff format --check .`: clean.
+- `pytest --cov`: 415 passed, 1 skipped; coverage 97.92%.
+- Postgres (`TEST_DATABASE_URL=… pytest`): 416 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean (W3–W5 reported for review).
+- Linux, `python:3.12-slim` as uid 10001 (real 1 GiB address-space limit), parse, worker and
+  upload tests: 104 passed.
+- `seed.run()` twice: counts unchanged on the second run (`tests/test_seed.py`).
+
+**Status:** Slices A–D done (T1–T11). Next: checkpoint (push, CI green, owner question 2), then T12
+(changelog and README structure), T13 (reviews) and T14 (simplification).

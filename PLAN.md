@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-23):** Phases 0–6 + review fixes done and pushed. **Next: Phase 7 (hardening & ops).** Details: LOG.md entry 012.
+> **Resume point (2026-11-24):** Phase 7 Slices A–D (T1–T11) done. **Next: Slice A–D checkpoint (push, CI green, owner question 2), then T12–T14.** Details: LOG.md entry 014; tasks in `docs/specs/phase-7-hardening.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -186,15 +186,17 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] Found and fixed: SQLite returned timestamps without a timezone → `UTCDateTime` column type
 - **Verify:** 266 passed on Postgres; 13/13 mutations caught after fixing one test; migration backfill checked on both databases; USER_GUIDE run live
 
-### Phase 7 — Hardening & ops `[ ]`
-- [ ] R4: set `FORWARDED_ALLOW_IPS` / `--proxy-headers` for the host's proxy so the login rate limit sees real client IPs (LOG 009)
-- [ ] R5: run PDF/DOCX extraction with a CPU time limit (subprocess + timeout) (LOG 009)
-- [ ] R8: security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, CSP for the API docs) (LOG 009)
+### Phase 7 — Hardening & ops `[~]` (spec: `docs/specs/phase-7-hardening.md`, LOG 013–014)
+- [x] R4 (T4): set `FORWARDED_ALLOW_IPS` / `--proxy-headers` for the host's proxy so the login rate limit sees real client IPs (LOG 009)
+- [x] R5 (T6): run PDF/DOCX extraction with a CPU time limit (subprocess + timeout) (LOG 009)
+- [x] R8 (T3): security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, CSP for the API docs) (LOG 009)
 - [ ] Security review (security-and-hardening skill + security-auditor agent): OWASP pass, headers, secrets
-- [ ] Request-ID middleware, JSON logs, `/health` checks DB (B15)
-- [ ] Seed script with demo users + realistic contracts (for portfolio demo)
+- [x] Request-ID middleware, JSON logs, `/health` checks DB, RED metrics (B15; T7, T8)
+- [x] Seed script with demo users + realistic contracts (T10)
 - [ ] docker-compose: db + api + frontend; CI: ruff, pytest (SQLite + Postgres service), alembic check, frontend build (B16)
-- [ ] Code review pass (code-reviewer agent) + simplification
+- [x] Rules file + written quality bar + floor guard (T1); CI dependency audit, secret scan, floor guard (T2); JWT `iss`/`aud` (T5); ADR 0002 API contract (T9); performance baseline in `PERF.md` (T11)
+- [ ] Changelog + README structure (T12)
+- [ ] Code review pass (T13) + simplification (T14)
 - ⏸ **Owner reviews finished backend**
 
 ### Phase 8 — Design direction `[ ]`
