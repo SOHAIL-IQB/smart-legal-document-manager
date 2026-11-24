@@ -64,6 +64,7 @@ def test_comparison_returns_unified_diff(client, alice, make_document):
     assert payload["has_meaningful_changes"] is True
     assert any(line == "-This contract is valid for 1 year." for line in payload["changes"])
     assert any(line == "+This contract is valid for 2 years." for line in payload["changes"])
+    assert payload["approximate"] is False  # true only when a comparison had to be shortened
 
 
 def test_title_update_does_not_create_version(client, alice, make_document):
@@ -169,3 +170,24 @@ def test_version_records_the_authenticated_editor(client, alice, make_document):
     )
     versions = client.get(f"/api/documents/{document_id}/versions", headers=alice.headers).json()
     assert {v["edited_by"] for v in versions} == {alice.id}
+
+
+def test_compare_says_when_it_had_to_be_approximate(client, alice, make_document):
+    # Review finding H1: a region too costly to match exactly is shown as one replaced block.
+    old_lines = ["ABC"[i % 3] for i in range(600)]
+    new_lines = [line + ("x" if i % 3 == 0 else "") for i, line in enumerate(old_lines)]
+    document_id = make_document(alice, content="\n".join(old_lines))
+    saved = client.post(
+        f"/api/documents/{document_id}/versions",
+        json={"content": "\n".join(new_lines)},
+        headers=alice.headers,
+    )
+    assert saved.status_code == 201
+
+    payload = client.get(
+        f"/api/documents/{document_id}/compare?v1=1&v2=2", headers=alice.headers
+    ).json()
+
+    assert payload["approximate"] is True
+    assert [r["old_text"] for r in payload["rows"] if r["old_line"]] == old_lines
+    assert [r["new_text"] for r in payload["rows"] if r["new_line"]] == new_lines

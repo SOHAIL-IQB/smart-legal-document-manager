@@ -93,6 +93,10 @@ class CompareResponse(BaseModel):
     has_meaningful_changes: bool
     stats: DiffStats
     rows: list[DiffRow] = Field(description="Side-by-side rows with word-level segments.")
+    approximate: bool = Field(
+        description="True when the versions differ in a way too costly to compare exactly; "
+        "the hardest region is then shown as one replaced block."
+    )
     before: str
     after: str
     changes: list[str] = Field(description="Unified diff lines, kept for API clients.")

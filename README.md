@@ -160,9 +160,19 @@ status codes and which writes are safe to retry: [ADR 0002](docs/adr/0002-api-co
 
 ## Comparison Logic
 
-`GET /documents/{id}/compare` aligns the two versions line by line with Python's `difflib`
-(auto-junk off, so documents that repeat headings or signature lines still align), then compares
-each changed line word by word. The response contains:
+`GET /documents/{id}/compare` aligns the two versions line by line, then compares each changed
+line word by word:
+1. Lines that occur exactly once in each version anchor the alignment, the idea behind
+   patience diff. Real contracts are mostly unique paragraphs, so a 2 MB document with
+   scattered edits compares in a few hundredths of a second.
+2. The gaps between anchors are matched exactly with Python's `difflib`, with auto-junk off, so
+   repeated headings and signature lines still align.
+
+Matching has a fixed budget per request. A version made to be slow to compare (many repeated
+lines with dense edits) can't tie up the server: once the budget is spent, the remaining region is
+shown as one replaced block and the response says `"approximate": true`.
+
+The response contains:
 
 - `rows`: side-by-side rows of type `equal`, `insert`, `delete`, `replace` or `skip`, with line
   numbers for each side. `replace` rows carry `old_segments` / `new_segments`
@@ -170,7 +180,7 @@ each changed line word by word. The response contains:
   `whitespace_only` flag.
 - `stats`: lines added / removed / changed and words added / removed.
 - `context=N` keeps N unchanged lines around each change and collapses the rest into `skip` rows.
-- `has_meaningful_changes`, plus `before`, `after` and a unified diff in `changes`.
+- `has_meaningful_changes`, `approximate`, plus `before`, `after` and a unified diff in `changes`.
 
 ## Searching and Listing
 

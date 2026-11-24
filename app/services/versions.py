@@ -26,7 +26,7 @@ from app.db.models import (
 )
 from app.services.activity import record
 from app.services.notifications import notify, other_member_ids
-from app.utils.diff import build_unified_diff, diff_documents, has_meaningful_changes
+from app.utils.diff import diff_documents, has_meaningful_changes
 
 
 @dataclass(frozen=True)
@@ -245,7 +245,8 @@ def compare_versions(
         "has_meaningful_changes": has_meaningful_changes(first.content, second.content),
         "stats": diff.stats,
         "rows": diff.rows,
+        "approximate": diff.approximate,
         "before": first.content,
         "after": second.content,
-        "changes": build_unified_diff(first.content, second.content),
+        "changes": diff.changes,
     }

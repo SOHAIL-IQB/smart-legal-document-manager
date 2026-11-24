@@ -4,8 +4,11 @@
 is compared word by word so the UI can highlight exactly which words changed.
 """
 
+import bisect
 import difflib
 import re
+from collections import Counter
+from collections.abc import Hashable, Sequence
 from typing import Literal
 
 from pydantic import BaseModel
@@ -17,6 +20,14 @@ _WORD = re.compile(r"\w", re.UNICODE)
 
 RowType = Literal["equal", "insert", "delete", "replace", "skip"]
 SegmentOp = Literal["equal", "insert", "delete"]
+Opcode = tuple[str, int, int, int, int]
+
+# Matching work allowed for one comparison (review finding H1), in SequenceMatcher cells: a
+# region of n old and m new elements is charged n * m. With autojunk off, difflib's time grows
+# faster than that for repetitive regions with dense edits (its recursion rescans), so the value
+# was set by the worst pattern measured: 0.30 s at 250,000 cells (LOG.md 017). Typical documents
+# use a tiny fraction of it, because unique lines anchor the alignment first.
+MAX_COMPARE_CELLS = 250_000
 
 
 class Segment(BaseModel):
@@ -47,6 +58,121 @@ class DiffStats(BaseModel):
 class DocumentDiff(BaseModel):
     rows: list[DiffRow]
     stats: DiffStats
+    changes: list[str]  # unified diff lines (difflib's format), from the same line alignment
+    approximate: bool = False  # True when part of the comparison ran out of budget
+
+
+class _Budget:
+    def __init__(self, cells: int) -> None:
+        self.left = cells
+        self.exhausted = False
+
+    def spend(self, cells: int) -> bool:
+        if cells > self.left:
+            self.exhausted = True
+            return False
+        self.left -= cells
+        return True
+
+
+def _unique_anchors(a: Sequence[Hashable], b: Sequence[Hashable]) -> list[tuple[int, int]]:
+    """Positions (i, j) of elements that occur exactly once in `a` and once in `b`, keeping the
+    longest chain that is in order on both sides (the idea behind patience diff).
+
+    Real documents are mostly unique paragraphs, so the anchors split a long comparison into
+    many small gaps. Linear in the input, plus k log k for k shared unique elements.
+    """
+    count_a, count_b = Counter(a), Counter(b)
+    where_in_b = {value: j for j, value in enumerate(b) if count_b[value] == 1}
+    pairs = [
+        (i, where_in_b[value])
+        for i, value in enumerate(a)
+        if count_a[value] == 1 and value in where_in_b
+    ]
+    # Longest increasing subsequence of j (pairs are already ordered by i).
+    tails: list[int] = []  # tails[k]: index into pairs of the best chain of length k + 1
+    tail_js: list[int] = []  # the j of each tail, kept sorted for bisect
+    previous: list[int] = [-1] * len(pairs)
+    for index, (_, j) in enumerate(pairs):
+        k = bisect.bisect_left(tail_js, j)
+        if k:
+            previous[index] = tails[k - 1]
+        if k == len(tails):
+            tails.append(index)
+            tail_js.append(j)
+        else:
+            tails[k] = index
+            tail_js[k] = j
+    chain: list[tuple[int, int]] = []
+    index = tails[-1] if tails else -1
+    while index != -1:
+        chain.append(pairs[index])
+        index = previous[index]
+    return chain[::-1]
+
+
+def _gap_opcodes(
+    a: Sequence[Hashable],
+    b: Sequence[Hashable],
+    a_range: tuple[int, int],
+    b_range: tuple[int, int],
+    budget: _Budget,
+) -> list[Opcode]:
+    """Opcodes for a[alo:ahi] -> b[blo:bhi]: trim the common ends in linear time, then match
+    the rest exactly if the budget allows, else report it as one replaced block."""
+    (alo, ahi), (blo, bhi) = a_range, b_range
+    opcodes: list[Opcode] = []
+    head = 0
+    while alo + head < ahi and blo + head < bhi and a[alo + head] == b[blo + head]:
+        head += 1
+    if head:
+        opcodes.append(("equal", alo, alo + head, blo, blo + head))
+    alo, blo = alo + head, blo + head
+    tail = 0
+    while alo < ahi - tail and blo < bhi - tail and a[ahi - 1 - tail] == b[bhi - 1 - tail]:
+        tail += 1
+    ahi, bhi = ahi - tail, bhi - tail
+
+    if alo < ahi and blo < bhi:
+        if budget.spend((ahi - alo) * (bhi - blo)):
+            matcher = difflib.SequenceMatcher(None, a[alo:ahi], b[blo:bhi], autojunk=False)
+            opcodes += [
+                (tag, i1 + alo, i2 + alo, j1 + blo, j2 + blo)
+                for tag, i1, i2, j1, j2 in matcher.get_opcodes()
+            ]
+        else:
+            opcodes.append(("replace", alo, ahi, blo, bhi))
+    elif alo < ahi:
+        opcodes.append(("delete", alo, ahi, blo, blo))
+    elif blo < bhi:
+        opcodes.append(("insert", alo, alo, blo, bhi))
+    if tail:
+        opcodes.append(("equal", ahi, ahi + tail, bhi, bhi + tail))
+    return opcodes
+
+
+def _opcodes(a: Sequence[Hashable], b: Sequence[Hashable], budget: _Budget) -> list[Opcode]:
+    """difflib-style opcodes turning `a` into `b`: exact while the budget lasts.
+
+    Unique shared elements anchor the alignment; each gap between anchors is matched on its own.
+    Adjacent equal runs are merged, so the opcodes read like difflib's.
+    """
+    opcodes: list[Opcode] = []
+    i = j = 0
+    for anchor_i, anchor_j in _unique_anchors(a, b):
+        opcodes += _gap_opcodes(a, b, (i, anchor_i), (j, anchor_j), budget)
+        opcodes.append(("equal", anchor_i, anchor_i + 1, anchor_j, anchor_j + 1))
+        i, j = anchor_i + 1, anchor_j + 1
+    opcodes += _gap_opcodes(a, b, (i, len(a)), (j, len(b)), budget)
+
+    merged: list[Opcode] = []
+    for opcode in opcodes:
+        if merged and opcode[0] == "equal" == merged[-1][0]:
+            _, i1, _, j1, _ = merged[-1]
+            merged[-1] = ("equal", i1, opcode[2], j1, opcode[4])
+        else:
+            merged.append(opcode)
+    return merged
 
 
 def tokenize(line: str) -> list[str]:
@@ -69,9 +195,9 @@ def _merge(segments: list[Segment]) -> list[Segment]:
     return merged
 
 
-def _word_diff(old: str, new: str) -> tuple[list[Segment], list[Segment]]:
+def _word_diff(old: str, new: str, budget: _Budget) -> tuple[list[Segment], list[Segment]]:
     a, b = tokenize(old), tokenize(new)
-    opcodes = difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes()
+    opcodes = _opcodes(a, b, budget)
     old_side: list[Segment] = []
     new_side: list[Segment] = []
     for index, (tag, i1, i2, j1, j2) in enumerate(opcodes):
@@ -113,10 +239,17 @@ def _collapse(rows: list[DiffRow], context: int) -> list[DiffRow]:
     return result
 
 
-def diff_documents(old_text: str, new_text: str, *, context: int | None = None) -> DocumentDiff:
+def diff_documents(
+    old_text: str,
+    new_text: str,
+    *,
+    context: int | None = None,
+    max_cells: int = MAX_COMPARE_CELLS,
+) -> DocumentDiff:
     old_lines, new_lines = old_text.splitlines(), new_text.splitlines()
     rows: list[DiffRow] = []
     stats = DiffStats()
+    budget = _Budget(max_cells)
 
     def deleted(index: int) -> DiffRow:
         stats.lines_removed += 1
@@ -128,9 +261,10 @@ def diff_documents(old_text: str, new_text: str, *, context: int | None = None) 
         stats.words_added += _count_words(new_lines[index])
         return DiffRow(type="insert", new_line=index + 1, new_text=new_lines[index])
 
-    # autojunk=False: the heuristic misaligns documents with many repeated (e.g. blank) lines.
-    matcher = difflib.SequenceMatcher(None, old_lines, new_lines, autojunk=False)
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+    # autojunk stays off: it misaligns documents with frequently repeated lines (headings,
+    # signature blocks); unique-line anchors keep long documents fast instead.
+    line_opcodes = _opcodes(old_lines, new_lines, budget)
+    for tag, i1, i2, j1, j2 in line_opcodes:
         if tag == "equal":
             rows.extend(
                 DiffRow(
@@ -150,7 +284,7 @@ def diff_documents(old_text: str, new_text: str, *, context: int | None = None) 
             paired = min(i2 - i1, j2 - j1)
             for k in range(paired):
                 old_line, new_line = old_lines[i1 + k], new_lines[j1 + k]
-                old_segments, new_segments = _word_diff(old_line, new_line)
+                old_segments, new_segments = _word_diff(old_line, new_line, budget)
                 stats.lines_changed += 1
                 stats.words_removed += sum(
                     _count_words(s.text) for s in old_segments if s.op == "delete"
@@ -175,19 +309,54 @@ def diff_documents(old_text: str, new_text: str, *, context: int | None = None) 
 
     if context is not None:
         rows = _collapse(rows, context)
-    return DocumentDiff(rows=rows, stats=stats)
-
-
-def build_unified_diff(old_text: str, new_text: str) -> list[str]:
-    return list(
-        difflib.unified_diff(
-            old_text.splitlines(),
-            new_text.splitlines(),
-            fromfile="Before",
-            tofile="After",
-            lineterm="",
-        )
+    return DocumentDiff(
+        rows=rows,
+        stats=stats,
+        changes=_unified(old_lines, new_lines, line_opcodes),
+        approximate=budget.exhausted,
     )
+
+
+class _KnownOpcodes(difflib.SequenceMatcher):
+    """A matcher that reports opcodes already computed, so grouping costs no new matching."""
+
+    def __init__(self, a: list[str], b: list[str], opcodes: list[Opcode]) -> None:
+        super().__init__(None, a, b, autojunk=False)
+        self._known = opcodes
+
+    def get_opcodes(self) -> list[Opcode]:
+        return self._known
+
+
+def _unified_range(start: int, stop: int) -> str:
+    """A hunk range the way difflib.unified_diff writes it ("3", "3,4" or "2,0")."""
+    beginning, length = start + 1, stop - start
+    if length == 1:
+        return str(beginning)
+    if not length:
+        beginning -= 1
+    return f"{beginning},{length}"
+
+
+def _unified(old_lines: list[str], new_lines: list[str], opcodes: list[Opcode]) -> list[str]:
+    """Unified diff lines in difflib's format (`fromfile="Before"`, `tofile="After"`)."""
+    lines: list[str] = []
+    for group in _KnownOpcodes(old_lines, new_lines, opcodes).get_grouped_opcodes(3):
+        if not lines:
+            lines += ["--- Before", "+++ After"]
+        first, last = group[0], group[-1]
+        lines.append(
+            f"@@ -{_unified_range(first[1], last[2])} +{_unified_range(first[3], last[4])} @@"
+        )
+        for tag, i1, i2, j1, j2 in group:
+            if tag == "equal":
+                lines += [" " + line for line in old_lines[i1:i2]]
+                continue
+            if tag in ("replace", "delete"):
+                lines += ["-" + line for line in old_lines[i1:i2]]
+            if tag in ("replace", "insert"):
+                lines += ["+" + line for line in new_lines[j1:j2]]
+    return lines
 
 
 def normalize_for_meaningful_change(content: str) -> str:

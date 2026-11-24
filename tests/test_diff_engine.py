@@ -1,5 +1,9 @@
 """Unit tests for the structured diff engine (Phase 4, B10). Pure functions, no database."""
 
+import difflib
+import random
+import time
+
 import pytest
 
 from app.utils.diff import diff_documents, has_meaningful_changes, tokenize
@@ -233,3 +237,110 @@ def test_rows_and_segments_reconstruct_both_documents_for_random_inputs():
         assert result.stats.lines_changed == counts["replace"]
         if old == new:
             assert counts == {"insert": 0, "delete": 0, "replace": 0}
+
+
+# --- bounded work (review finding H1) ----------------------------------------------------
+#
+# With difflib's autojunk off, SequenceMatcher's work grows with the number of matching element
+# pairs, which is quadratic for repetitive input. Before the fix a 448,000-character document of
+# repeated lines took 69 s and one 245,000-character line never finished; any viewer could send
+# that request. Time bounds below are generous; the unbounded engine missed them by minutes.
+
+_WORDS = ["the", "party", "shall", "agreement", "term", "notice", "clause", "payment", "liability"]
+
+
+def _words(rng, count):
+    return " ".join(rng.choice(_WORDS) for _ in range(count))
+
+
+def _assert_rebuilds_both_sides(result, old, new):
+    assert [r.old_text for r in result.rows if r.old_line is not None] == old.splitlines()
+    assert [r.new_text for r in result.rows if r.new_line is not None] == new.splitlines()
+    for row in result.rows:
+        if row.type == "replace":
+            assert side_text(row.old_segments) == row.old_text
+            assert side_text(row.new_segments) == row.new_text
+
+
+def _timed(old, new):
+    started = time.perf_counter()
+    result = diff_documents(old, new)  # every row, so both sides can be rebuilt from them
+    return result, time.perf_counter() - started
+
+
+def test_a_large_realistic_contract_is_compared_exactly_and_quickly():
+    # ~2.4M characters: paragraphs separated by blank lines, 10 scattered edits. It took 7.45 s:
+    # the blank lines alone made 27M matching pairs.
+    rng = random.Random(1)
+    paragraphs = [_words(rng, 60) for _ in range(5200)]
+    old = "\n\n".join(paragraphs)
+    new = "\n\n".join(p + (" amended" if i % 520 == 7 else "") for i, p in enumerate(paragraphs))
+
+    result, seconds = _timed(old, new)
+
+    assert seconds < 3
+    assert result.approximate is False
+    assert len(rows_of("replace", result)) == 10
+    assert result.stats.words_added == 10
+    _assert_rebuilds_both_sides(result, old, new)
+
+
+def test_one_edit_in_a_very_long_line_is_exact_and_quick():
+    rng = random.Random(2)
+    old = _words(rng, 40_000)  # ~300,000 characters, no line breaks
+    middle = old.index(" ", len(old) // 2)  # at a word boundary
+    new = old[:middle] + " amended" + old[middle:]
+
+    result, seconds = _timed(old, new)
+
+    assert seconds < 3
+    assert result.approximate is False
+    [row] = result.rows
+    # " amended" or "amended " are equally minimal; either way it is one insert and no deletion.
+    [inserted] = [s.text for s in row.new_segments if s.op == "insert"]
+    assert inserted.strip() == "amended"
+    assert [s.text for s in row.old_segments if s.op == "delete"] in ([], [""])
+    _assert_rebuilds_both_sides(result, old, new)
+
+
+def test_hostile_repeated_lines_finish_quickly_and_say_approximate():
+    old_lines = ["Signature: ____", "", "Date: ____"] * 16_000
+    new_lines = [line + (" x" if i % 997 == 0 else "") for i, line in enumerate(old_lines)]
+    old, new = "\n".join(old_lines), "\n".join(new_lines)
+
+    result, seconds = _timed(old, new)
+
+    assert seconds < 5
+    assert result.approximate is True
+    _assert_rebuilds_both_sides(result, old, new)
+
+
+def test_a_long_line_edited_at_both_ends_finishes_quickly_and_says_approximate():
+    rng = random.Random(3)
+    body = _words(rng, 40_000)
+    old, new = "A " + body + " Z", "B " + body + " Y"
+
+    result, seconds = _timed(old, new)
+
+    assert seconds < 5
+    assert result.approximate is True
+    _assert_rebuilds_both_sides(result, old, new)
+
+
+def test_small_changes_are_not_approximate():
+    assert diff_documents("one\ntwo", "one\nthree").approximate is False
+
+
+def test_unified_changes_keep_difflibs_format():
+    rng = random.Random(4)
+    for _ in range(200):
+        old = "\n".join(_words(rng, rng.randint(1, 4)) for _ in range(rng.randint(0, 30)))
+        lines = old.splitlines()
+        for _ in range(rng.randint(0, 3)):
+            if lines:
+                lines[rng.randrange(len(lines))] = _words(rng, 3)
+        new = "\n".join(lines)
+        expected = list(
+            difflib.unified_diff(old.splitlines(), new.splitlines(), "Before", "After", lineterm="")
+        )
+        assert diff_documents(old, new).changes == expected
