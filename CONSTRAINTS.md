@@ -45,7 +45,8 @@ and the suite must fail. Results are recorded in `LOG.md`.
 ## Exceptions
 
 A new row is reported by the floor guard for review. It blocks unless it names an owner and expires
-within 90 days. Each row's path is also listed in `.constraintsignore`.
+within 90 days. A row covers either a whole file (its path is listed in `.constraintsignore`) or a
+single suppression line that cites the row's ID, e.g. `# noqa: S603  [W3]`.
 
 | ID | Rule | Path | Reason | Owner | Expires |
 |----|------|------|--------|-------|---------|

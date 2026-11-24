@@ -180,6 +180,18 @@ def exception_row_is_complete(text: str, today: dt.date | None = None) -> bool:
     return today <= expires <= today + dt.timedelta(days=MAX_EXCEPTION_DAYS)
 
 
+EXCEPTION_REF = re.compile(r"\[(W\d+)\]")
+
+
+def exception_ids(path: str = "CONSTRAINTS.md") -> set[str]:
+    """IDs in the Exceptions table of the working-tree CONSTRAINTS.md."""
+    try:
+        text = Path(path).read_text()
+    except OSError:
+        return set()
+    return {m.group(1) for m in re.finditer(r"^\|\s*(W\d+)\s*\|", text, re.MULTILINE)}
+
+
 def find_violations(
     added: list[Line],
     removed: list[Line],
@@ -189,6 +201,11 @@ def find_violations(
 ) -> list[tuple[str, str, str]]:
     findings: list[tuple[str, str, str]] = []
     notices = notices if notices is not None else []
+    known_ids = exception_ids()
+
+    def cites_exception(text: str) -> bool:
+        # A single suppression line may cite a tracked exception ID in brackets, e.g. [W3].
+        return any(m.group(1) in known_ids for m in EXCEPTION_REF.finditer(text))
 
     def flag(rule: str, file: str, text: str) -> None:
         if not any(fnmatch.fnmatch(file, g) for g in ignore):
@@ -196,7 +213,7 @@ def find_violations(
 
     for line in added:
         if is_code(line.file):
-            if SUPPRESSIONS.search(line.text):
+            if SUPPRESSIONS.search(line.text) and not cites_exception(line.text):
                 flag("silenced-checker", line.file, line.text)
             if STUBS.search(line.text):
                 flag("unfinished-work", line.file, line.text)

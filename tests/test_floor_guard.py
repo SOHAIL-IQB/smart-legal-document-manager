@@ -200,3 +200,22 @@ def test_replacing_two_assertions_with_one_is_a_removal(repo):
     result = guard(repo)
     assert result.returncode == 1
     assert "[assertion-removed]" in result.stderr
+
+
+def _add_exception(repo, row_id):
+    expires = (dt.date.today() + dt.timedelta(days=30)).isoformat()
+    with (repo / "CONSTRAINTS.md").open("a") as f:
+        f.write(f"| {row_id} | silenced-checker | app.py:3 | fixed argv | owner | {expires} |\n")
+
+
+def test_a_suppression_citing_a_tracked_exception_passes(repo):
+    _add_exception(repo, "W7")
+    edit(repo, "app.py", "return a + b", "return a + b  # noqa: S603  [W7]")
+    assert guard(repo).returncode == 0
+
+
+def test_a_suppression_citing_an_unknown_exception_fails(repo):
+    edit(repo, "app.py", "return a + b", "return a + b  # noqa: S603  [W99]")
+    result = guard(repo)
+    assert result.returncode == 1
+    assert "[silenced-checker]" in result.stderr
