@@ -57,8 +57,11 @@ def login(
 ) -> AuthResponse:
     client_ip = request.client.host if request.client else "unknown"
     key = f"{client_ip}|{payload.email.lower()}"
+    ip_key = f"ip|{client_ip}"
 
-    retry_after = login_rate_limiter.retry_after(key)
+    retry_after = login_rate_limiter.retry_after(key) or login_rate_limiter.retry_after(
+        ip_key, get_settings().login_max_failures_per_ip
+    )
     if retry_after is not None:
         log_event("login_rate_limited", logging.WARNING, retry_after=retry_after)
         raise RateLimitedError(
@@ -69,9 +72,10 @@ def login(
         user = user_service.authenticate(db, email=payload.email, password=payload.password)
     except AppError:
         login_rate_limiter.record_failure(key)
+        login_rate_limiter.record_failure(ip_key)
         log_event("login_failed", logging.WARNING, reason="invalid_credentials")
         raise
-    login_rate_limiter.reset(key)
+    login_rate_limiter.reset(key)  # not ip_key: a success elsewhere mustn't clear spraying
     return _start_session(response, user)
 
 

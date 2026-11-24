@@ -81,16 +81,17 @@ class LoginRateLimiter:
             attempts.popleft()
         return attempts
 
-    def retry_after(self, key: str) -> int | None:
+    def retry_after(self, key: str, max_failures: int | None = None) -> int | None:
         """Seconds until the key may try again, or None if it isn't blocked."""
         settings = get_settings()
+        limit = settings.login_max_failures if max_failures is None else max_failures
         now = time.monotonic()
         with self._lock:
             attempts = self._prune(key, now)
             if not attempts:
                 del self._failures[key]  # don't keep an entry for every key ever seen
                 return None
-            if len(attempts) < settings.login_max_failures:
+            if len(attempts) < limit:
                 return None
             return max(1, int(attempts[0] + settings.login_window_seconds - now))
 

@@ -33,7 +33,10 @@ class Settings(BaseSettings):
     # Tokens name who issued them and who they are for; decode rejects anything else.
     jwt_issuer: str = "smart-legal-document-manager"
     jwt_audience: str = "smart-legal-document-manager-web"
-    login_max_failures: int = 10
+    login_max_failures: int = 10  # per IP + email
+    # Per IP across all emails, so one address can't spray a password at every account (M4).
+    # High enough for an office behind one NAT address.
+    login_max_failures_per_ip: int = 100
     login_window_seconds: int = 15 * 60
 
     # Uploads (PDF / DOCX / TXT). Also set the same limit on any reverse proxy in front of the API.

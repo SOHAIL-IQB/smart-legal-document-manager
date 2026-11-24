@@ -295,6 +295,7 @@ Read from the environment or a local `.env` (see `.env.example`).
 | `CORS_ORIGINS` | `["http://localhost:5173"]` | JSON list; `*` is refused because the API uses cookies |
 | `ACCESS_TOKEN_MINUTES` | `720` | Session length, 5 minutes to 7 days |
 | `LOGIN_MAX_FAILURES`, `LOGIN_WINDOW_SECONDS` | `10`, `900` | Failed sign-ins (and wrong passwords on account deletion) before `429` |
+| `LOGIN_MAX_FAILURES_PER_IP` | `100` | Failed sign-ins from one IP across all emails in the same window, so one address can't spray a password at every account |
 | `MAX_UPLOAD_BYTES` | `10485760` (10 MB) | Set the same limit on any reverse proxy |
 | `MAX_JSON_BYTES` | `9437184` (9 MB) | Every other request body |
 | `FORWARDED_ALLOW_IPS` | `127.0.0.1,::1` | Proxies trusted for `X-Forwarded-For`. **Production refuses `*`**, which would let clients forge their IP |

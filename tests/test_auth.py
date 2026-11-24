@@ -113,6 +113,29 @@ def test_login_is_rate_limited_after_repeated_failures(client):
     assert login(client, email="carol@example.com").status_code == 200
 
 
+def test_one_ip_spraying_many_emails_is_rate_limited(client, monkeypatch):
+    # Review finding M4: the per-email limit never trips when each email is tried only once.
+    monkeypatch.setattr(get_settings(), "login_max_failures_per_ip", 5)
+    for n in range(5):
+        response = login(client, email=f"target{n}@example.com", password="Password123")
+        assert response.status_code == 401
+
+    blocked = login(client, email="target99@example.com", password="Password123")
+    assert blocked.status_code == 429
+    assert blocked.json()["error"]["code"] == "rate_limited"
+
+
+def test_a_successful_sign_in_does_not_reset_the_per_ip_count(client, monkeypatch):
+    # Otherwise an attacker could clear the count by signing in to their own account in between.
+    monkeypatch.setattr(get_settings(), "login_max_failures_per_ip", 5)
+    register(client)
+    for n in range(4):
+        assert login(client, email=f"target{n}@example.com").status_code == 401
+    assert login(client).status_code == 200
+    assert login(client, email="target4@example.com").status_code == 401
+    assert login(client, email="target5@example.com").status_code == 429
+
+
 def test_successful_login_resets_failure_count(client):
     register(client)
     limit = get_settings().login_max_failures
