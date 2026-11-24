@@ -1,66 +1,95 @@
 # Smart Legal Document Manager
 
-## Overview
+A multi-user document version-control API for legal teams. Every edit is kept as a version,
+any two versions can be compared word by word, and each document is shared with owners, editors
+and viewers. Members are notified of meaningful changes, and every action is recorded in an
+append-only activity log. Contracts can be uploaded as PDF, DOCX or TXT.
 
-Smart Legal Document Manager is a backend-first system built for legal teams that need reliable document traceability. It helps lawyers track document changes through version history, compare any two versions, and trigger smart notifications only when meaningful content changes occur. The API is designed for future frontend integration while already providing everything needed for backend evaluation and testing.
+Built with FastAPI, SQLAlchemy 2, Alembic and PostgreSQL 16 on Python 3.12. A React frontend is
+planned (`PLAN.md`, Phases 8–10).
 
 ## Features
 
-- Document version tracking
-- Version comparison (diff)
-- Smart notification system
-- Metadata management
-- Safe data storage with transactions
-- Background processing
+- **Version history that can't be rewritten:** numbers are never reused, a deleted version stays
+  in the audit trail, restoring creates a new version, and concurrent saves queue instead of
+  colliding.
+- **Word-level comparison** for a side-by-side view, with change stats and whitespace-only
+  detection.
+- **Sharing with roles** (owner, editor, viewer). Non-members can't even see that a document exists.
+- **Search, filters and pagination** over titles and the latest text.
+- **File upload** (PDF, DOCX, TXT). Parsing runs in a confined worker process.
+- **Notifications and an activity log**, written in the same transaction as the action.
+- **Your data:** export it as JSON, or delete your account.
+- **Operations:** liveness and readiness checks, Prometheus metrics, JSON logs with request IDs,
+  and security headers.
 
-## Technology Stack
+## Quick Start
 
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Alembic
-- Docker
-- GitHub Actions CI
-- pytest
+Requires Docker.
 
-## System Architecture
-
-The project follows a modular FastAPI structure so each layer has a clear responsibility.
-
-- `app/routers/` handles REST API endpoints.
-- `app/services/` contains business logic such as version creation, comparison orchestration, and delete operations.
-- `app/database/` manages SQLAlchemy models and database sessions.
-- `app/notifications/` contains background notification logic.
-- `app/utils/` contains reusable helper functions such as diff formatting and meaningful-change detection.
-- `tests/` contains automated API tests.
-- `migrations/` contains Alembic migration files.
-
-## Project Structure
-
-```text
-smart-legal-document-manager/
-
-app/
-routers/
-services/
-database/
-notifications/
-utils/
-
-tests/
-migrations/
-
-README.md
-USER_GUIDE.md
-Dockerfile
-requirements.txt
+```bash
+docker compose up --build -d
+docker compose exec api python -m scripts.seed
 ```
 
-## Database Schema
+- API: <http://localhost:8000/api>.
+- Interactive docs: <http://localhost:8000/api/docs>.
+- The seed creates three demo accounts:
+  - emails `asha@demo.example`, `ben@demo.example` and `chloe@demo.example`;
+  - password `demo password 2026` for all three.
+- A curl walkthrough of every feature: [`USER_GUIDE.md`](USER_GUIDE.md).
+- Stop with `docker compose down`; add `-v` to also delete the database volume.
+
+## Architecture
+
+```text
+client (browser / curl)
+   │  HTTP, JSON under /api
+   ▼
+app/main.py         middleware, outermost first: security headers → request ID + access log
+                    + metrics → CORS → body-size limit
+app/api/routes/     thin routes: parse input, resolve access (app/api/deps.py), call a service
+app/services/       business rules; one transaction per action, including its activity
+                    event and notifications
+app/db/             SQLAlchemy models and session ──▶ PostgreSQL 16 (Alembic: migrations/)
+app/core/           config, errors (one error shape), security, limits, logging, metrics
+app/utils/          diff engine; text extraction ──▶ parse_worker.py in its own process
+```
+
+Decisions are recorded as ADRs:
+- [0001 — Authentication and authorization](docs/adr/0001-authentication-and-authorization.md):
+  JWT in an `httpOnly` cookie or bearer token, roles, CSRF guard, threat model.
+- [0002 — API contract](docs/adr/0002-api-contract.md): naming, pagination, error shape, status
+  codes, and which writes are safe to retry.
+
+Other records:
+- `PLAN.md`: the plan.
+- `LOG.md`: what was done, with evidence.
+- `CHANGELOG.md`: what changed.
+- `PERF.md`: performance baseline.
+- `CONSTRAINTS.md`: the enforced quality bar.
+- `docs/specs/`: per-phase specs.
+- `AGENTS.md`: how to work on this repository.
+
+```text
+app/
+  api/          routes/, deps.py (auth and access), router.py
+  core/         config, errors, headers, limits, logging, metrics, security
+  db/           models.py, session.py
+  schemas/      pydantic request and response models
+  services/     account, activity, documents, members, notifications, users, versions
+  utils/        diff, extract, parse_worker
+migrations/     Alembic versions (each additive, with a tested downgrade)
+scripts/        seed.py, bench.py, floor_guard.py
+tests/          pytest (SQLite by default, Postgres with TEST_DATABASE_URL)
+docs/           adr/, specs/
+```
+
+## Data Model
 
 | Table | Purpose |
 |---|---|
-| `users` | `id`, `name`, `email` (unique, lowercase), `password_hash` (Argon2id), `created_at` |
+| `users` | `id`, `name`, `email` (unique, lowercase), `password_hash` (Argon2id), `created_at`, `deleted_at` (set when the account is deleted and anonymized) |
 | `documents` | `id`, `title`, `created_by`, `created_at`, `updated_at` |
 | `document_members` | `document_id`, `user_id`, `role` (`owner` / `editor` / `viewer`), `added_at` |
 | `document_versions` | `id`, `document_id`, `version_number`, `content`, `content_hash` (SHA-256), `word_count`, `change_note`, `source` (`manual` / `restore` / `upload`), `restored_from`, `edited_by`, `created_at`, `deleted_at`, `deleted_by` |
@@ -195,53 +224,90 @@ was backfilled from the versions table (`"backfilled": true`).
 | Document shared with you / your role changed / you were removed | that member (not when you leave yourself) |
 | Document deleted | every other member; the notification outlives the document |
 
-## Running the Project
+## Commands
 
-Requires Python 3.12+ and Docker.
+Local development uses Python 3.12 in `.venv` and Postgres from Docker (host port 5434).
 
-### Docker (API + PostgreSQL)
+| Purpose | Command |
+|---|---|
+| Set up | `python3.12 -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.txt && cp .env.example .env` |
+| Start the database | `docker compose up -d db` |
+| Migrate | `alembic upgrade head` |
+| Run the API (reloads on change) | `uvicorn app.main:app --reload` |
+| Demo data | `python -m scripts.seed` |
+| Lint and format check | `ruff check . && ruff format --check .` |
+| Tests on SQLite, with coverage | `pytest --cov` |
+| Create the Postgres test database (once) | `docker compose exec db createdb -U postgres sldm_test` |
+| Tests on PostgreSQL | `TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5434/sldm_test pytest` |
+| Quality floor (weakened tests, new suppressions) | `python scripts/floor_guard.py --base origin/main` |
+| Latency baseline (API running) | `python -m scripts.bench --base http://localhost:8000` |
 
-```bash
-docker compose up --build
-```
+CI (`.github/workflows/ci.yml`) runs three jobs:
+- lint and the SQLite suite, with the coverage floor of 97.5%;
+- a migration round trip and the full suite on PostgreSQL;
+- `pip-audit`, `gitleaks` and the floor guard.
 
-The API runs at `http://localhost:8000` and applies migrations on start. PostgreSQL is published
-on host port `5434`.
+The rules each check enforces are in [`CONSTRAINTS.md`](CONSTRAINTS.md).
 
-### Local development
+## Operations
 
-```bash
-python3.12 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
-cp .env.example .env
-docker compose up -d db
-alembic upgrade head
-uvicorn app.main:app --reload
-```
+### Health checks
 
-### Demo data
+| Endpoint | Checks | Use for |
+|---|---|---|
+| `GET /api/health/live` | the process answers; never touches the database | liveness probe (restart if failing) |
+| `GET /api/health/ready` (also `/api/health`) | `SELECT 1` on the database; `503 unavailable` if it fails | readiness probe (stop routing traffic) |
 
-```bash
-python -m scripts.seed                          # local
-docker compose exec api python -m scripts.seed  # in the container
-```
+### Logs
 
-Creates three demo users (`asha@demo.example`, `ben@demo.example`, `chloe@demo.example`, password
-`demo password 2026`) and four sample contracts. The contracts include version history, a restore,
-a deleted version, sharing in every role, and the resulting activity and notifications. Running it
-again changes nothing, and it refuses to run when `ENVIRONMENT=production`.
+Logs are JSON, one object per line, on stdout. Every request writes one `http_request` line with
+`request_id`, `method`, the route template, `status`, `duration_ms` and `user_id`. Named events:
+- `login_failed`, `login_rate_limited`;
+- `upload_rejected` (with a reason code);
+- `version_conflict`;
+- `account_deleted`, `account_delete_refused`, `account_delete_rate_limited`;
+- `unhandled_error` (with the traceback).
 
-Walkthrough of every feature with curl: [`USER_GUIDE.md`](USER_GUIDE.md).
+Fields are allowlisted: no tokens, passwords, emails or request bodies.
 
-## Running Tests
+Every response carries an `X-Request-ID`, and every error body repeats it. To find a user's
+failed request in the logs, search for that ID. A valid incoming UUID is kept, so a proxy's ID
+carries through.
 
-```bash
-pytest --cov                # fast, on SQLite
-ruff check . && ruff format --check .
-```
+### Metrics
 
-To run the same suite against PostgreSQL:
+`GET /metrics` serves Prometheus metrics. It is not under `/api` and not in the API docs.
+- `http_requests_total{method, route, status_class}`
+- `http_request_duration_seconds{method, route}`
 
-```bash
-TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5434/sldm_test pytest
-```
+Labels use route templates and fixed sets only, so clients can't create new series. Set
+`METRICS_TOKEN` to require `Authorization: Bearer <token>`; without it, the endpoint is open.
+
+### Environment variables
+
+Read from the environment or a local `.env` (see `.env.example`).
+
+| Variable | Default | Notes |
+|---|---|---|
+| `ENVIRONMENT` | `development` | `production` turns on secure cookies and HSTS, and refuses the checks marked below |
+| `DATABASE_URL` | Postgres on `localhost:5434` | SQLAlchemy URL, e.g. `postgresql+psycopg://user:pass@host:5432/db` |
+| `SECRET_KEY` | development placeholder | **Production refuses** the default or anything under 32 characters |
+| `CORS_ORIGINS` | `["http://localhost:5173"]` | JSON list; `*` is refused because the API uses cookies |
+| `ACCESS_TOKEN_MINUTES` | `720` | Session length, 5 minutes to 7 days |
+| `LOGIN_MAX_FAILURES`, `LOGIN_WINDOW_SECONDS` | `10`, `900` | Failed sign-ins (and wrong passwords on account deletion) before `429` |
+| `MAX_UPLOAD_BYTES` | `10485760` (10 MB) | Set the same limit on any reverse proxy |
+| `MAX_JSON_BYTES` | `9437184` (9 MB) | Every other request body |
+| `FORWARDED_ALLOW_IPS` | `127.0.0.1,::1` | Proxies trusted for `X-Forwarded-For`. **Production refuses `*`**, which would let clients forge their IP |
+| `METRICS_TOKEN` | unset | Bearer token for `/metrics` |
+| `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR` |
+
+### Deploying
+
+- **Container:** the image runs as a non-root user. It applies migrations on start and serves with
+  `--proxy-headers` and no `Server` header.
+- **Behind a proxy:** set `FORWARDED_ALLOW_IPS` to the proxy's address, so the sign-in rate limit
+  sees real client IPs.
+- **Single process:** the sign-in rate limiter and the parse-slot limit are in memory, per
+  process. Run one worker process, or add a shared store first (ADR 0001).
+- **Memory:** size the container for 4 parse workers of up to 1 GiB each plus the API (about 5 GiB),
+  or lower `PARSE_MAX_CONCURRENT` in `app/utils/extract.py`.
