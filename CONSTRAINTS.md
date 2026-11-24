@@ -54,3 +54,4 @@ single suppression line that cites the row's ID, e.g. `# noqa: S603  [W3]`.
 | W2 | silenced-checker, unfinished-work, test-made-easier | tests/test_floor_guard.py | Its tests write those patterns into throwaway repositories to prove they are caught | SOHAIL-IQB | 2027-02-20 |
 | W3 | silenced-checker | app/utils/extract.py (the `subprocess.Popen` line in `_run_worker`) | ruff S603 flags every subprocess call; the argv is fixed to this interpreter and the parse worker module, with no user input | SOHAIL-IQB | 2027-02-20 |
 | W4 | silenced-checker | scripts/seed.py (the `DEMO_PASSWORD` line) | ruff S105 flags a hard-coded password; this is the published demo password for seeded sample accounts, and the seed refuses to run in production | SOHAIL-IQB | 2027-02-20 |
+| W5 | silenced-checker | scripts/bench.py (the two `random.Random` lines) | ruff S311 flags non-cryptographic randomness; it only generates repeatable benchmark text and picks | SOHAIL-IQB | 2027-02-20 |
