@@ -1,7 +1,10 @@
 """Domain errors and the handlers that turn them into one consistent JSON shape.
 
 Every error response looks like:
-    {"error": {"code": "not_found", "message": "Document 7 was not found.", "details": ...}}
+    {"error": {"code": "not_found", "message": "Document 7 was not found.",
+               "details": ..., "request_id": "..."}}
+`details` appears only when there is something to add; `request_id` matches the X-Request-ID
+response header and the server logs (ADR 0002).
 """
 
 import logging
