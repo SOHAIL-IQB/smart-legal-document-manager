@@ -122,6 +122,26 @@ def test_weakening_constraints_fails(repo, old, new, rule):
     assert f"[{rule}]" in result.stderr
 
 
+def test_dropping_a_rules_number_fails(repo):
+    # The rule stays, but its limit is gone: "p95 at most 200 ms" becomes a promise with no number.
+    edit(repo, "CONSTRAINTS.md", "p95 at most 200 ms", "p95 kept low")
+    result = guard(repo)
+    assert result.returncode == 1
+    assert "[threshold-removed]" in result.stderr
+
+
+def test_changing_a_number_without_a_direction_fails(repo):
+    # Neither "at least" nor "at most": any change is reported, since it can't be judged.
+    retries = "| Retries | 3 attempts per job | ci |\n"
+    edit(repo, "CONSTRAINTS.md", "| Latency |", retries + "| Latency |")
+    for args in (["add", "."], ["commit", "-q", "-m", "add retries"]):
+        assert run(["git", *args], repo).returncode == 0
+    edit(repo, "CONSTRAINTS.md", "3 attempts per job", "5 attempts per job")
+    result = guard(repo)
+    assert result.returncode == 1
+    assert "[threshold-changed]" in result.stderr
+
+
 @pytest.mark.parametrize(
     ("old", "new"),
     [
