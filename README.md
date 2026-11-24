@@ -153,6 +153,12 @@ is stored (as a version with `source: "upload"` and the original `source_filenam
   uncompressed (zip bombs), and files with no text.
 - DOCX paragraphs and tables are extracted in document order (table cells joined with ` | `).
   python-docx parses XML with entity resolution off (no XXE).
+- PDF and DOCX files are parsed in a separate, short-lived worker process. It gets no secrets
+  (a scrubbed environment), runs from `/`, can't write files or start processes, and is stopped
+  after 20 s of wall time or 20 s of CPU, with a 1 GiB memory limit on Linux. A file that takes
+  too long is a `422`. At most 4 files are parsed at once; when all 4 slots stay busy for 5 s, the
+  upload gets `503 busy` and can be retried. Size the container for 4 workers (about 4 GiB plus
+  the API) or lower `PARSE_MAX_CONCURRENT` in `app/utils/extract.py`.
 
 ## Notifications and Activity Log
 

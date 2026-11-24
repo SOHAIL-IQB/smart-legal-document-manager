@@ -52,3 +52,4 @@ single suppression line that cites the row's ID, e.g. `# noqa: S603  [W3]`.
 |----|------|------|--------|-------|---------|
 | W1 | silenced-checker, unfinished-work | scripts/floor_guard.py | The guard's source contains the patterns it searches for, plus one `noqa: S603, S607` for its fixed `git` subprocess call | SOHAIL-IQB | 2027-02-20 |
 | W2 | silenced-checker, unfinished-work, test-made-easier | tests/test_floor_guard.py | Its tests write those patterns into throwaway repositories to prove they are caught | SOHAIL-IQB | 2027-02-20 |
+| W3 | silenced-checker | app/utils/extract.py (the `subprocess.Popen` line in `_run_worker`) | ruff S603 flags every subprocess call; the argv is fixed to this interpreter and the parse worker module, with no user input | SOHAIL-IQB | 2027-02-20 |

@@ -96,10 +96,11 @@ def test_zip_bomb_docx_is_refused_before_inflating():
         extract_text("bomb.docx", make_zip_bomb_docx(uncompressed_mb=60))
 
 
-def test_too_many_pdf_pages_is_refused(monkeypatch):
-    monkeypatch.setattr("app.utils.extract.MAX_PDF_PAGES", 2)
+def test_too_many_pdf_pages_is_refused():
+    # A real 501-page file: parsing runs in a separate process (Phase 7 T6), so patching the limit
+    # in this process would not reach it.
     with pytest.raises(UnreadableFileError, match="pages"):
-        extract_text("long.pdf", make_pdf("1", "2", "3"))
+        extract_text("long.pdf", make_pdf(*[f"Page {n}" for n in range(1, 502)]))
 
 
 @pytest.mark.parametrize("data", [b"", b"   \n\t  \n"])
