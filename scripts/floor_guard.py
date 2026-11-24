@@ -192,6 +192,30 @@ def exception_ids(path: str = "CONSTRAINTS.md") -> set[str]:
     return {m.group(1) for m in re.finditer(r"^\|\s*(W\d+)\s*\|", text, re.MULTILINE)}
 
 
+def threshold_verdict(
+    was: list[tuple[float, str | None]], now: list[tuple[float, str | None]]
+) -> str | None:
+    """How a rule's numbers changed, compared in order per direction ("min", "max", or none).
+
+    None when every number held or tightened; otherwise the first problem found.
+    """
+    for direction in ("min", "max", None):
+        before = [n for n, d in was if d == direction]
+        after = [n for n, d in now if d == direction]
+        for i, value in enumerate(before):
+            if i >= len(after):
+                return "threshold-removed"
+            if after[i] == value:
+                continue
+            if direction is None:
+                return "threshold-changed"
+            loosened_min = direction == "min" and after[i] < value
+            loosened_max = direction == "max" and after[i] > value
+            if loosened_min or loosened_max:
+                return "threshold-loosened"
+    return None
+
+
 def find_violations(
     added: list[Line],
     removed: list[Line],
@@ -247,24 +271,7 @@ def find_violations(
             if not EXCEPTION_ROW.match(old.text.strip()):  # dropping an exception tightens
                 flag("rule-removed", old.file, old.text)
             continue
-        was, now = thresholds(old.text), thresholds(new.text)
-        verdict = None
-        for direction in ("min", "max", None):
-            before = [n for n, d in was if d == direction]
-            after = [n for n, d in now if d == direction]
-            for i, value in enumerate(before):
-                if verdict:
-                    break
-                if i >= len(after):
-                    verdict = "threshold-removed"
-                elif after[i] == value:
-                    continue
-                elif direction is None:
-                    verdict = "threshold-changed"
-                elif (direction == "min" and after[i] < value) or (
-                    direction == "max" and after[i] > value
-                ):
-                    verdict = "threshold-loosened"
+        verdict = threshold_verdict(thresholds(old.text), thresholds(new.text))
         if verdict:
             flag(verdict, old.file, f"{old.text.strip()}  ->  {new.text.strip()}")
     return findings
