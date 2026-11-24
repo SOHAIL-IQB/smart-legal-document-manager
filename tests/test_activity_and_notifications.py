@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy import select
 
-from app.db.models import ActivityEvent
+from app.db.models import ActivityEvent, Notification
 from app.db.session import SessionLocal
 from tests.files import make_pdf
 
@@ -347,3 +347,31 @@ def test_every_timestamp_the_api_returns_has_a_timezone(client, alice, bob, make
         marked["read_at"],
     ]
     assert all(s.endswith(("Z", "+00:00")) for s in stamps), stamps
+
+
+def test_long_names_and_titles_still_fit_the_notification_message(client, signup):
+    # Review finding M3: name (up to 255) + title (up to 255) + text passed the 500-character
+    # column. Postgres refused the row, so sharing, and every later save, failed with a 500.
+    owner = signup("N" * 255, "long-owner@example.com")
+    editor = signup("E" * 255, "long-editor@example.com")
+    created = client.post(
+        "/api/documents", json={"title": "T" * 255, "content": "v1"}, headers=owner.headers
+    )
+    document_id = created.json()["document_id"]
+
+    share(client, owner, document_id, editor, role="editor")
+    add_version(client, editor, document_id, "v2")
+    role_change = client.patch(
+        f"/api/documents/{document_id}/members/{editor.id}",
+        json={"role": "viewer"},
+        headers=owner.headers,
+    )
+    assert role_change.status_code == 200
+    deleted = client.delete(f"/api/documents/{document_id}?confirm=true", headers=owner.headers)
+    assert deleted.status_code == 200
+
+    with SessionLocal() as db:
+        messages = db.scalars(select(Notification.message)).all()
+    assert len(messages) == 4  # shared, new version, role changed, deleted
+    assert all(len(message) <= 500 for message in messages)
+    assert all(message.endswith(("…", ".")) for message in messages)

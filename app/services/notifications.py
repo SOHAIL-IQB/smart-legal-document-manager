@@ -16,6 +16,16 @@ from app.db.models import (
     utcnow,
 )
 
+# Names (255) and titles (255) can together outrun the column; Postgres would refuse the row
+# and with it the whole action (review finding M3).
+MAX_MESSAGE_CHARS = Notification.__table__.c.message.type.length
+
+
+def _fit(message: str) -> str:
+    if len(message) <= MAX_MESSAGE_CHARS:
+        return message
+    return message[: MAX_MESSAGE_CHARS - 1] + "…"
+
 
 def notify(
     db: Session,
@@ -34,7 +44,7 @@ def notify(
                 document_id=document.id if document else None,
                 actor_id=actor.id,
                 kind=kind.value,
-                message=message,
+                message=_fit(message),
                 version_number=version_number,
             )
         )
