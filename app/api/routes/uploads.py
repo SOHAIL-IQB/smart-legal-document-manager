@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.logging import log_event
 from app.db.models import VersionSource
+from app.schemas.common import NoNul
 from app.schemas.document import DocumentCreateResponse, DocumentVersionCreateResponse
 from app.services import documents as document_service
 from app.services import versions as version_service
@@ -67,7 +68,7 @@ def create_document_from_file(
     db: DbSession,
     file: Annotated[UploadFile, File(description=_FILE_HELP)],
     title: Annotated[
-        str | None, Form(max_length=255, description="Defaults to the file name.")
+        str | None, Form(max_length=255, description="Defaults to the file name."), NoNul
     ] = None,
 ) -> DocumentCreateResponse:
     extracted, filename = _read_and_extract(file)
@@ -93,7 +94,7 @@ def create_version_from_file(
     db: DbSession,
     response: Response,
     file: Annotated[UploadFile, File(description=_FILE_HELP)],
-    change_note: Annotated[str | None, Form(max_length=500)] = None,
+    change_note: Annotated[str | None, Form(max_length=500), NoNul] = None,
 ) -> DocumentVersionCreateResponse:
     extracted, filename = _read_and_extract(file)
     result = version_service.create_version(

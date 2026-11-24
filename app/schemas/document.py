@@ -4,10 +4,10 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.db.models import Role, VersionSource
-from app.schemas.common import Content, Title
+from app.schemas.common import Content, NoNul, Title
 from app.utils.diff import DiffRow, DiffStats
 
-ChangeNote = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
+ChangeNote = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500), NoNul]
 
 
 class DocumentCreate(BaseModel):

@@ -3,7 +3,9 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
-Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+from app.schemas.common import NoNul
+
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255), NoNul]
 # Upper bound stops very long inputs from wasting CPU in Argon2.
 Password = Annotated[str, Field(min_length=8, max_length=128)]
 

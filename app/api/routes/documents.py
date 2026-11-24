@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query, status
 from app.api.deps import CurrentUser, DbSession, EditorAccess, OwnerAccess, ViewerAccess
 from app.core.errors import AppError
 from app.db.models import Role
-from app.schemas.common import MessageResponse
+from app.schemas.common import MessageResponse, NoNul
 from app.schemas.document import (
     DocumentCreate,
     DocumentCreateResponse,
@@ -52,6 +52,7 @@ def list_documents(
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search titles and the latest content."),
+        NoNul,
     ] = None,
     role: Annotated[
         Role | None, Query(description="Only documents where I have this role.")

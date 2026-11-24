@@ -139,3 +139,55 @@ def test_cors_rejects_unknown_origin(client):
 def test_health(client):
     # Since Phase 7 the health check is a readiness check that also reports the database.
     assert client.get("/api/health").json() == {"status": "ok", "database": "ok"}
+
+
+# Review finding M2: PostgreSQL can't store NUL in text, so these answered 500 there (and SQLite
+# stored them). They are refused at the boundary with a 422 on both databases.
+NUL = "before\u0000after"
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "document title",
+        "document content",
+        "new title",
+        "version content",
+        "change note",
+        "account name",
+        "search query",
+        "upload title",
+        "upload change note",
+    ],
+)
+def test_nul_characters_are_refused_with_a_422(client, alice, make_document, case):
+    document_id = make_document(alice)
+    docs = f"/api/documents/{document_id}"
+    txt = {"file": ("a.txt", b"Plain text.", "text/plain")}
+    requests = {
+        "document title": ("POST", "/api/documents", {"json": {"title": NUL, "content": "x"}}),
+        "document content": ("POST", "/api/documents", {"json": {"title": "T", "content": NUL}}),
+        "new title": ("PATCH", f"{docs}/title", {"json": {"title": NUL}}),
+        "version content": ("POST", f"{docs}/versions", {"json": {"content": NUL}}),
+        "change note": (
+            "POST",
+            f"{docs}/versions",
+            {"json": {"content": "new", "change_note": NUL}},
+        ),
+        "search query": ("GET", "/api/documents", {"params": {"q": NUL}}),
+        "upload title": ("POST", "/api/documents/upload", {"files": txt, "data": {"title": NUL}}),
+        "upload change note": (
+            "POST",
+            f"{docs}/versions/upload",
+            {"files": txt, "data": {"change_note": NUL}},
+        ),
+    }
+    if case == "account name":
+        body = {"name": NUL, "email": "nul@example.com", "password": "correct horse battery"}
+        response = client.post("/api/auth/register", json=body)
+    else:
+        method, url, kwargs = requests[case]
+        response = client.request(method, url, headers=alice.headers, **kwargs)
+
+    assert response.status_code == 422, response.text
+    assert response.json()["error"]["code"] == "validation_error"
