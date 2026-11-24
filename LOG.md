@@ -661,3 +661,77 @@ exception).
 
 **Status:** Slices A–D done (T1–T11). Next: checkpoint (push, CI green, owner question 2), then T12
 (changelog and README structure), T13 (reviews) and T14 (simplification).
+
+## 015 — 2026-11-24 — Phase 7 T15: account deletion and data export
+
+**Owner decisions:**
+- Open question 2 answered "add now".
+- Spec addendum T15 (`docs/specs/phase-7-hardening.md`) approved as written, including migration
+  `0007`. Names already written into past activity details and other people's notifications are
+  kept (option "also scrub old names" not chosen).
+
+**Design found in the code, before writing the spec:**
+- `documents.created_by`, `document_versions.edited_by` and `activity_events.actor_id` reference
+  `users.id` with no cascade, and the activity log is append-only. So deletion anonymizes the
+  account row instead of removing it.
+- A document can have several owners, so the refusal is "last owner of a document other members
+  still use".
+- Unexpired tokens would keep working without a marker, hence `users.deleted_at`.
+
+**Corrections made while implementing (spec updated to match):**
+- The placeholder email `…@deleted.invalid` fails pydantic's `EmailStr` (special-use domain),
+  which would turn any response showing it into a 500. It is `deleted-user-<id>@deleted.example`
+  (RFC 2606 reserved, never delivers).
+- The spec said a wrong password returns `permission_denied`; the project's 403 code is
+  `forbidden`.
+- Two of my test expectations were wrong (that error code, and version order, which is oldest
+  first); the code was right.
+
+**What was built:**
+- `GET /api/auth/me/export`: a JSON download (`Content-Disposition: attachment`, `no-store`) with
+  profile, memberships, versions authored (with content), activity and notifications. Document
+  data is limited to documents the user can still access.
+- `DELETE /api/auth/me` with `{"password"}`:
+  - The password is checked again, with its own key on the sign-in limiter.
+  - 409 with `details.documents` when the user is the last owner of a shared document.
+  - Otherwise, in one transaction: sole-member documents deleted, other documents left (a
+    `member.removed` event with `left: true` and the placeholder name), own notifications deleted,
+    and name, email and password replaced.
+  - 204 and the cookie cleared; an `account_deleted` log event with `user_id` and counts only.
+- `get_current_user` refuses a deleted account's tokens (401). `authenticate` also refuses
+  deleted accounts, as a second lock.
+- Files: `app/services/account.py`, `app/schemas/account.py`, `app/api/routes/auth.py`,
+  `app/api/deps.py`, `app/services/users.py`, `app/db/models.py`,
+  `migrations/versions/20261124_0007_user_deleted_at.py`, `tests/test_account.py` (20 tests), one
+  retry test, README, `USER_GUIDE.md` §11, and the ADR 0002 retry table (`DELETE /auth/me` → 401).
+
+**Tests first:** all 19 initial tests failed before the code existed. The 20th test was added for a
+surviving break (below).
+
+**Deliberate breaks (run in the throwaway copy; real files hashed before and after):** 16 breaks:
+- last owner not protected; co-owner blocked;
+- sole-member documents kept; memberships kept; notifications kept;
+- name, email or password kept;
+- export leaks versions, activity, or other inboxes;
+- deleted account tokens work;
+- sign-in second lock removed;
+- password not checked; no rate limit; export not a download.
+
+15 of 16 were caught. "Sign-in second lock removed" survived: the stored password is random, so
+nothing reaches that line over HTTP. A test now restores a known hash on a deleted account (as a
+restored backup might) and expects 401; the break is caught.
+
+**Verification:**
+- `ruff check . && ruff format --check .`: clean.
+- `pytest --cov`: 436 passed, 1 skipped; coverage 98.07%.
+- Postgres: 437 passed.
+- Migration on Postgres and SQLite: upgrade, downgrade base, upgrade, `alembic check` ("No new
+  upgrade operations detected"), downgrade base.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- Live, on the rebuilt Docker stack (migration 0007 applied on start), following `USER_GUIDE.md`
+  §11:
+  - export: 200 with the attachment header and `no-store`, all seven sections;
+  - wrong password 403, delete 204, then `/auth/me` 401 and sign-in 401;
+  - the `account_deleted` log line carries only `request_id`, `user_id` and counts.
+
+**Status:** T15 done. Next: T12 (changelog, README structure), T13 (review), T14 (simplification).

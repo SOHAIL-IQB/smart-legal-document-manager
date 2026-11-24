@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-24):** Phase 7 Slices A–D (T1–T11) done. **Next: Slice A–D checkpoint (push, CI green, owner question 2), then T12–T14.** Details: LOG.md entry 014; tasks in `docs/specs/phase-7-hardening.md`.
+> **Resume point (2026-11-24):** Phase 7 T1–T11 and T15 (account deletion and export) done and pushed. **Next: T12 (changelog, README), T13 (review), T14 (simplification).** Details: LOG.md entries 014–015; tasks in `docs/specs/phase-7-hardening.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -195,6 +195,7 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] Seed script with demo users + realistic contracts (T10)
 - [ ] docker-compose: db + api + frontend; CI: ruff, pytest (SQLite + Postgres service), alembic check, frontend build (B16)
 - [x] Rules file + written quality bar + floor guard (T1); CI dependency audit, secret scan, floor guard (T2); JWT `iss`/`aud` (T5); ADR 0002 API contract (T9); performance baseline in `PERF.md` (T11)
+- [x] Account deletion (anonymized) and data export (T15; owner answered open question 2)
 - [ ] Changelog + README structure (T12)
 - [ ] Code review pass (T13) + simplification (T14)
 - ⏸ **Owner reviews finished backend**
@@ -261,4 +262,4 @@ accurate record.
 ## 9. Open items / blockers
 
 - ~~`[!]` Docker daemon not running~~ — resolved 2026-11-22 (Docker 29.2.0); Postgres container `smart-legal-document-manager-db` is up on port 5434.
-- Account deletion / data export (privacy) is not planned yet. Candidate for Phase 7.
+- Account deletion / data export: done in Phase 7 (T15, LOG 015).
