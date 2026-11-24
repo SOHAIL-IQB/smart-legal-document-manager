@@ -789,3 +789,108 @@ Setup:
 
 **Status:** T12 done. Next: T13 (review) and T14 (simplification); then the owner reviews the
 finished backend.
+
+## 017 — 2026-11-24 — Phase 7 T13: backend review and fixes
+
+**How the review was done (deviation from the spec):**
+- The spec named three fresh-context agents (security-auditor, code-reviewer, test-engineer).
+  The owner asked to stop agent review cycles (LOG 014), and chose "Start T13 myself".
+- I reviewed on `f49af7e`, with the checkout clean and matching `origin/main`. Every file in
+  `app/` was read, plus CI, using the code-review-and-quality checklist and the security
+  checklist (all five axes).
+- Suspected defects were confirmed by experiment before they were classified: timings, and
+  probes on both SQLite and PostgreSQL.
+- The cross-model second opinion was offered (manual only); the owner chose to fix first.
+
+**Findings:**
+
+| # | Finding | Evidence | Class |
+|---|---|---|---|
+| H1 | Compare does unbounded quadratic work. difflib with autojunk off is O(n·m) and worse for repetitive regions; any viewer can trigger it. | One line of 61 k characters: 6.67 s. One line of 245 k: still running after 90 s. 448 k characters of repeated lines: 69 s. A realistic 2.4 M-character contract with scattered edits: 7.45 s. | Actionable, High |
+| M1 | Owners could share a document with a deleted account (regression from T15). The placeholder email is predictable, so a "Deleted user" co-owner let the real owner delete their account and leave a document nobody can open. | New test: 201 in every role | Actionable, Medium |
+| M2 | NUL in text inputs crashed on PostgreSQL. SQLite stored it, so no test saw it. | Probe: content, title, name, change note, search query and upload title each 500 on Postgres and 2xx on SQLite | Actionable, Medium |
+| M3 | Notification text can exceed `String(500)`: name (255) + title (255) + text. Postgres refuses the row, and the action's transaction with it. | Probe: sharing 500 on Postgres; every version save on such a document would fail too | Actionable, Medium |
+| M4 | The sign-in limit is per IP+email only, so one IP can spray a password at every account. | Code and ADR 0001 | Actionable, Medium |
+| D1 | ADR 0001 said only signed-in owners can learn whether an email is registered; sign-up's 409 tells anyone. | Code | Actionable (doc) |
+| T1 | Logout doesn't revoke tokens (12 h) | Already in ADR 0001 | Trade-off, recorded |
+| T2 | No per-user quotas; the data export is built in memory, so a user who stores a lot makes a large export | Code | Trade-off, recorded here |
+| T3 | No database connect or statement timeout | `app/db/session.py` | Trade-off, recorded here |
+| T4 | CORS doesn't expose `X-Request-ID` or `Content-Disposition` to browser code | `app/main.py` | FYI for Phase 9 (the frontend should use a same-origin proxy) |
+| T5 | GitHub Actions are pinned by tag, not commit SHA | `ci.yml` | Deferred: CI changes need the owner's approval (`AGENTS.md`) |
+| N1 | `# type: ignore` comments with no type checker running | 4 places | Nit, for T14 |
+| N2 | The catch-all 500 handler never runs in tests | `errors.py` 113–114 | Noise: a backstop for errors in the outermost middleware |
+
+Checked and clean: SQL injection (parameterized, `LIKE` escaped); IDOR (every document route
+resolves membership; notifications are scoped to their owner); secrets in logs; JWT validation;
+upload filenames (control characters stripped, 255 maximum).
+
+**Fixes (each test-first; every new test failed before its fix):**
+- **M1:** `add_member` treats a deleted account like an unknown email (404). 3 tests, one per
+  role.
+- **M3:** `notify()` fits messages to the column length read from the model and ends a cut
+  message with "…". The test (sharing, a version, a role change, a deletion, with a 255-character
+  name and title) also passes on Postgres.
+- **M2:** one `NoNul` validator in `app/schemas/common.py`, on title, content, change note, name,
+  the search `q` and both upload form fields: 422 `validation_error`. 9 tests, passing on both
+  databases.
+- **M4:** a second limiter key per IP, `LOGIN_MAX_FAILURES_PER_IP` (default 100 in the same
+  15-minute window). A successful sign-in resets only the IP+email key, otherwise an attacker
+  could clear the count with their own account. 2 tests.
+- **H1:** `app/utils/diff.py` aligns in three steps:
+  1. Elements unique on both sides anchor the alignment (longest increasing chain, patience-diff
+     style).
+  2. Each gap is trimmed at both ends.
+  3. The rest is matched exactly while a per-request budget lasts (`MAX_COMPARE_CELLS`, a gap of
+     n×m is charged n·m); past it, the gap is one replaced block and the response says
+     `approximate: true`.
+  - The unified `changes` are built from the same alignment, so difflib isn't run a second time
+    without bounds. A test checks the format is identical to `difflib.unified_diff` on 200
+    random documents.
+  - Blank-line junking was tried first and dropped: the profile showed it moved the cost into
+    difflib's recursion (33 M dictionary lookups on the realistic contract).
+  - Choosing the budget: a first estimate (30 ns per cell, 20 M cells) still allowed 15 s on a
+    dense repetitive gap, because difflib's cost grows faster than n·m there. The budget was
+    then set by the worst pattern measured: 0.30 s at 250,000 cells (edits every 2 elements, on
+    lines and on words). 200 hostile gaps sharing the budget took 0.11 s.
+
+  | Case | Before | After |
+  |---|---|---|
+  | Realistic 2.2 M-character contract, 10 scattered edits | 7.45 s | 0.03 s, exact |
+  | 448 k characters of repeated lines, scattered edits | 69 s | 0.49 s, approximate |
+  | 280 k-character line edited at both ends | over 90 s | 0.08 s, approximate |
+  | 280 k-character line, one edit | over 30 s | 0.04 s, exact |
+  | 2 M-character single line | — | 0.44 s, exact |
+
+  7 new engine tests and 2 API tests. The existing 300-case reconstruction test and the
+  repeated-headings and blank-lines alignment tests pass unchanged.
+
+My own test mistakes, corrected before committing:
+- one inserted a word mid-word;
+- one checked the rebuild on collapsed rows;
+- one required `" amended"` where `"amended "` is equally minimal;
+- `# noqa: E402` imports were placed mid-file. They were moved to the top rather than kept as new
+  suppressions.
+
+**Deliberate breaks (throwaway copy, real files hashed before and after):** 21 of 21 caught.
+- M1 (1): deleted account can be shared.
+- M3 (2): message not fitted; off by one.
+- M2 (8): the check off, then each guard removed in turn (title, content, change note, name,
+  search, upload title, upload change note).
+- M4 (3): per-IP failures not counted; limit not checked; a success clears the per-IP count.
+- H1 (7):
+  - no budget: the two tests ran 7 min 20 s and failed;
+  - `approximate` never set; the API hides it;
+  - anchors out of order;
+  - no head trimming; no tail trimming;
+  - equal runs not merged.
+
+**Verification:**
+- `ruff check . && ruff format --check .`: clean.
+- `pytest --cov`: 458 passed, 1 skipped; coverage 98.21%.
+- Postgres: 459 passed.
+- Floor guard: clean.
+
+**Docs:** README (comparison method and the `approximate` flag; the new environment variable) and
+ADR 0001 (the per-IP limit in the threat model; the corrected enumeration trade-off).
+
+**Status:** T13 done. Next: T14 (simplification), then the owner reviews the finished backend.

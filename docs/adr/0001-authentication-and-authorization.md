@@ -17,7 +17,7 @@ membership lists, user credentials.
 | Threat | Abuse case | Control |
 |---|---|---|
 | Spoofing | Send someone else's id; replay or forge a token | Identity comes only from a signed JWT (HS256, server secret). `user_id` removed from all request bodies. Tokens expire. |
-| Spoofing | Guess passwords | Argon2id hashes; login limited to 10 failed attempts per IP+email per 15 min (429). |
+| Spoofing | Guess passwords; spray one password at many accounts | Argon2id hashes. Sign-in is limited to 10 failed attempts per IP+email and 100 per IP across all emails, per 15 min (429); a successful sign-in clears only the IP+email count (added 2026-11-24, review finding M4). |
 | Spoofing | Learn which emails are registered from login errors or timing | Same error message for unknown email and wrong password; a dummy hash is verified for unknown emails so timing matches. |
 | Tampering | Another site makes the browser POST with the user's cookie (CSRF) | Cookie is `SameSite=Lax` and `httpOnly`; unsafe requests authenticated by cookie must also send `X-Requested-With: XMLHttpRequest`, which a cross-site form cannot set and CORS blocks for scripts. |
 | Repudiation | "I didn't change that clause" | `edited_by` is taken from the token, not the client. Full activity log arrives in Phase 6. |
@@ -54,7 +54,10 @@ membership lists, user credentials.
   (max 12 h). Server-side revocation (a token version column) is a possible later addition.
 - **The login rate limiter is in-memory**, so it is per process. That is fine for the single-process
   deployment here; with several instances it must move to a shared store such as Redis.
-- **Owners can learn whether an email is registered** when sharing (a 404 says no account exists).
-  That trade-off is accepted for usability; it is limited to signed-in owners.
+- **Anyone can learn whether an email is registered.** Sign-up answers 409 for an existing
+  address, and sharing answers 404 when no account exists. An earlier version of this ADR said
+  only signed-in owners could; the 2026-11-24 review corrected that. Accepted for usability:
+  hiding it would need email verification on sign-up. Sign-in itself still doesn't reveal it
+  (same message and timing).
 - Existing documents get their creator backfilled as owner by migration `0002`. Existing users get
   an unusable password hash and must be re-created (there were no real users).
