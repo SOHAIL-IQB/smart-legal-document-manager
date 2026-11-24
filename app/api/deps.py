@@ -40,7 +40,7 @@ def get_current_user(
         raise AuthenticationError("Not signed in.")
     user_id = decode_access_token(token)
     user = db.get(User, user_id) if user_id is not None else None
-    if user is None:
+    if user is None or user.deleted_at is not None:  # a deleted account's tokens stop working
         raise AuthenticationError("Your session is invalid or has expired. Please sign in again.")
     request.state.user_id = user.id  # for the access log line
     return user

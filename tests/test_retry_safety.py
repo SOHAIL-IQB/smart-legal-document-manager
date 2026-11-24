@@ -109,3 +109,9 @@ def test_documented_unsafe_endpoints_really_duplicate(client, alice):
     files = {"file": ("nda.pdf", make_pdf("Terms."), "application/pdf")}
     client.post("/api/documents/upload", files=files, headers=alice.headers)
     assert client.get("/api/documents", headers=alice.headers).json()["total"] == 4
+
+
+def test_delete_account_retry_is_a_401(client, alice):
+    body = {"password": "correct horse battery"}
+    first, second = twice(client, "DELETE", "/api/auth/me", alice, json=body)
+    assert (first.status_code, second.status_code) == (204, 401)

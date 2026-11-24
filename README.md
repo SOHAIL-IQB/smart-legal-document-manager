@@ -83,6 +83,17 @@ the returned token as `Authorization: Bearer <token>`. Every document has member
 | Add or restore a version, rename | | ✓ | ✓ |
 | Delete a version or the document, manage members | | | ✓ |
 
+**Your data.** `GET /auth/me/export` downloads your profile, memberships, the versions you wrote,
+your activity and your notifications, for the documents you can still access.
+`DELETE /auth/me` deletes your account after asking for your password again:
+- Documents only you belong to are deleted, and you leave the others.
+- It is refused (`409`, with the list) while you are the last owner of a document other people
+  still use.
+- The account is anonymized rather than removed, because versions and the append-only activity
+  log refer to it: it shows as "Deleted user", and its sessions stop working.
+- Names already written into past activity details or other people's notifications stay as they
+  were.
+
 Users who aren't members get `404`, so document ids can't be probed. Design and threat model:
 [`docs/adr/0001-authentication-and-authorization.md`](docs/adr/0001-authentication-and-authorization.md).
 
@@ -94,6 +105,8 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 |---|---|---|
 | `POST` | `/auth/register`, `/auth/login`, `/auth/logout` | anyone |
 | `GET` | `/auth/me` | signed in |
+| `GET` | `/auth/me/export` (your data as a JSON download) | signed in |
+| `DELETE` | `/auth/me` (body: `{"password": "..."}`) | signed in |
 | `GET` / `POST` | `/documents` (`?q=&role=&sort=&order=&limit=&offset=`) | signed in (lists only your documents) |
 | `GET` | `/documents/{id}` | viewer+ |
 | `PATCH` | `/documents/{id}/title` | editor+ |

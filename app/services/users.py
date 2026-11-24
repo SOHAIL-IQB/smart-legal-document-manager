@@ -33,4 +33,6 @@ def authenticate(db: Session, *, email: str, password: str) -> User:
     # verify_password runs a dummy hash when user is None, so timing doesn't reveal the email.
     if not verify_password(password, user.password_hash if user else None) or user is None:
         raise AuthenticationError(INVALID_CREDENTIALS)
+    if user.deleted_at is not None:  # unreachable by password alone; kept as a second lock
+        raise AuthenticationError(INVALID_CREDENTIALS)
     return user

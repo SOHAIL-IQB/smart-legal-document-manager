@@ -96,6 +96,9 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
     )
+    # Set when the account is deleted: the row stays as an anonymous placeholder so history
+    # (versions, activity) still resolves, and its tokens stop working (Phase 7 T15).
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
     created_documents: Mapped[list["Document"]] = relationship(back_populates="creator")
     edited_versions: Mapped[list["DocumentVersion"]] = relationship(

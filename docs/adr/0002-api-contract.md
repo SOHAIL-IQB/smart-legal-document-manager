@@ -63,6 +63,7 @@ every observable behavior becomes something a client depends on (Hyrum's law).
    | `POST /documents/{id}/members` | yes | 409 (already a member) |
    | `PATCH` / `DELETE /documents/{id}/members/{user_id}` | yes | same role / 404 |
    | `POST /notifications/{id}/read`, `/notifications/read-all` | yes | no change |
+   | `DELETE /auth/me` | yes | 401 (the account's tokens no longer work) |
 
    A client that retries `POST /documents` or `POST /documents/upload` after a network error
    should first check the document list.

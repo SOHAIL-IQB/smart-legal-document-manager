@@ -141,6 +141,20 @@ Deleting a version hides it but keeps it in the audit trail (`is_deleted`, `dele
 `deleted_by`). Its number is never reused. Fetching, comparing or restoring it returns `410`.
 The last remaining version can't be deleted (`409`).
 
+## 11. Export your data, or delete your account
+
+```bash
+curl -s $API/auth/me/export -H "Authorization: Bearer $BOB" -o my-data.json
+
+curl -s -X DELETE $API/auth/me -H "Authorization: Bearer $BOB" \
+  -H "Content-Type: application/json" -d '{"password":"correct horse battery"}'   # 204
+```
+
+The export covers documents you can still access. Deleting asks for your password again (`403`
+if wrong, `429` after repeated failures), and is refused with `409` while you are the last owner
+of a document other people use. Make someone else an owner first. Afterwards your token returns
+`401`, your versions show "Deleted user" as their author, and the email address can sign up again.
+
 ## Errors
 
 Every error has the same shape:
