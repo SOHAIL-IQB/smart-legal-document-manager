@@ -49,7 +49,9 @@ def add_member(
     db: Session, access: DocumentAccess, *, email: str, role: Role
 ) -> tuple[DocumentMember, User]:
     user = find_user_by_email(db, email)
-    if user is None:
+    # A deleted account's placeholder email is predictable; it must not become a member
+    # (review finding M1), and it answers exactly like an email with no account.
+    if user is None or user.deleted_at is not None:
         raise NotFoundError("No account exists with that email. Ask them to sign up first.")
     if db.get(DocumentMember, (access.document.id, user.id)) is not None:
         raise ConflictError(f"{user.email} already has access to this document.")

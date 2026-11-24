@@ -300,3 +300,24 @@ def test_a_deleted_account_cannot_sign_in_even_with_a_known_password_hash(client
         db.commit()
     login = client.post("/api/auth/login", json={"email": placeholder, "password": PASSWORD})
     assert login.status_code == 401
+
+
+@pytest.mark.parametrize("role", ["owner", "editor", "viewer"])
+def test_a_deleted_account_cannot_be_added_to_a_document(
+    client, alice, signup, make_document, role
+):
+    # Review finding M1: the placeholder email is predictable. Adding the placeholder as a
+    # co-owner would let the real owner delete their account and leave a document nobody can open.
+    bob = signup("Bob", "bob@example.com")
+    assert delete_account(client, bob).status_code == 204
+    document_id = make_document(alice)
+
+    response = client.post(
+        f"/api/documents/{document_id}/members",
+        json={"email": f"deleted-user-{bob.id}@deleted.example", "role": role},
+        headers=alice.headers,
+    )
+
+    assert response.status_code == 404
+    assert count(DocumentMember, DocumentMember.user_id == bob.id) == 0
+    assert count(Notification, Notification.user_id == bob.id) == 0
