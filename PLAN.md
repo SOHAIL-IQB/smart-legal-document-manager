@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-24):** Phase 7 T1–T11 and T15 (account deletion and export) done and pushed. **Next: T12 (changelog, README), T13 (review), T14 (simplification).** Details: LOG.md entries 014–015; tasks in `docs/specs/phase-7-hardening.md`.
+> **Resume point (2026-11-24):** Phase 7 T1–T12 and T15 done and pushed. **Next: T13 (review), T14 (simplification), then the owner reviews the backend.** Details: LOG.md entries 014–016; tasks in `docs/specs/phase-7-hardening.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -196,7 +196,7 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [ ] docker-compose: db + api + frontend; CI: ruff, pytest (SQLite + Postgres service), alembic check, frontend build (B16)
 - [x] Rules file + written quality bar + floor guard (T1); CI dependency audit, secret scan, floor guard (T2); JWT `iss`/`aud` (T5); ADR 0002 API contract (T9); performance baseline in `PERF.md` (T11)
 - [x] Account deletion (anonymized) and data export (T15; owner answered open question 2)
-- [ ] Changelog + README structure (T12)
+- [x] Changelog + README structure, every README command run on a clean clone (T12)
 - [ ] Code review pass (T13) + simplification (T14)
 - ⏸ **Owner reviews finished backend**
 

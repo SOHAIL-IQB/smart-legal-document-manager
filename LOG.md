@@ -735,3 +735,57 @@ restored backup might) and expects 401; the break is caught.
   - the `account_deleted` log line carries only `request_id`, `user_id` and counts.
 
 **Status:** T15 done. Next: T12 (changelog, README structure), T13 (review), T14 (simplification).
+
+## 016 — 2026-11-24 — Phase 7 T12: changelog and README structure
+
+**What changed:**
+- `CHANGELOG.md` (new, Keep a Changelog): everything since the original 2026-03-17 submission,
+  under Breaking, Added, Changed, Fixed and Security. Each entry traces to a commit body or to a
+  defect ID (B1–B16 in `PLAN.md` §4) or review finding (R1–R8, LOG 009). It is "Unreleased"
+  (the API reports `0.2.0`): tagging a release is a separate decision.
+- `README.md` restructured:
+  - Overview and Features rewritten.
+  - Quick start, Architecture (with the ADR links) and Commands added.
+  - Operations added: health checks, logs and events, metrics, a table of every environment
+    variable, deployment notes.
+  - The feature sections (data model, auth, endpoints, comparison, search, upload, notifications)
+    were kept, with `users.deleted_at` added to the data model.
+
+**Found in the old README:**
+- "System Architecture" and "Project Structure" still described `app/routers/`, `app/database/`
+  and `app/notifications/`, none of which exist since Phase 1.
+- "Features" listed "Background processing", replaced by same-transaction notifications in Phase 6.
+- The Postgres test command used `sldm_test`, but nothing created that database. On a clean clone
+  the suite can't connect. The Commands table now has the `createdb` step.
+
+Event names, metric names and environment-variable defaults were copied from the code
+(`log_event` calls, `app/core/metrics.py`, `app/core/config.py`), not written from memory.
+
+**Verification: every README command on a clean clone.**
+
+Setup:
+- `git clone` of this repository into the scratchpad, plus the two changed files.
+- The folder name differs (`sldm-clean-clone`), so Docker made a separate project and a fresh
+  database volume.
+- The README's fixed container names meant the dev containers had to be removed first
+  (`docker compose down`, without `-v`). The dev volume was untouched, and the dev database was
+  restored afterwards (8 users, 637 documents, `sldm_test` present).
+
+| Command | Result |
+|---|---|
+| `docker compose up --build -d` | `/api/health/ready` → `{"status":"ok","database":"ok"}` |
+| `docker compose exec api python -m scripts.seed` | demo data created; `/api/docs` 200; demo sign-in 200 |
+| Set up (venv, `pip install -r requirements-dev.txt`, `cp .env.example .env`) | ok, Python 3.12.16 |
+| `docker compose up -d db` / `alembic upgrade head` | running / at `20261124_0007` (head) |
+| `python -m scripts.seed` | "Demo data already present; nothing changed." |
+| `ruff check . && ruff format --check .` | clean, 86 files |
+| `pytest --cov` | 436 passed, 1 skipped, 98% |
+| Postgres tests before `createdb` | connection failure (the gap above) |
+| `docker compose exec db createdb -U postgres sldm_test`, then the Postgres tests | 437 passed |
+| `python scripts/floor_guard.py --base origin/main` | clean |
+| `uvicorn app.main:app --reload` | ready |
+| `python -m scripts.bench --base http://localhost:8000` | completed and printed its table (not added to `PERF.md`: local macOS uvicorn, not the Docker baseline) |
+| `docker compose down -v` | removed the clone's containers, network and volume only |
+
+**Status:** T12 done. Next: T13 (review) and T14 (simplification); then the owner reviews the
+finished backend.
