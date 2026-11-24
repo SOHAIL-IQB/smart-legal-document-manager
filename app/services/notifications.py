@@ -3,7 +3,7 @@ transaction as the action that causes them."""
 
 from collections.abc import Iterable
 
-from sqlalchemy import func, select, update
+from sqlalchemy import ColumnElement, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.errors import NotFoundError
@@ -60,7 +60,7 @@ def other_member_ids(db: Session, document_id: int, actor: User) -> list[int]:
     )
 
 
-def _mine(user: User):  # type: ignore[no-untyped-def]
+def _mine(user: User) -> ColumnElement[bool]:
     return Notification.user_id == user.id
 
 

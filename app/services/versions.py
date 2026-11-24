@@ -9,8 +9,9 @@ Invariants (audit defects B2, B3, B4):
 import hashlib
 import logging
 from dataclasses import dataclass
+from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -69,7 +70,7 @@ def _lock_document(db: Session, document_id: int) -> None:
     db.execute(select(Document.id).where(Document.id == document_id).with_for_update())
 
 
-def _live(stmt):  # type: ignore[no-untyped-def]
+def _live(stmt: Select[Any]) -> Select[Any]:
     return stmt.where(DocumentVersion.deleted_at.is_(None))
 
 

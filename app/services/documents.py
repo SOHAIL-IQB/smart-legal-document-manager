@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import Row, Select, and_, func, or_, select
 from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm.util import AliasedClass
 
 from app.core.errors import NotFoundError, PermissionDeniedError
 from app.db.models import (
@@ -73,7 +74,7 @@ def _escape_like(term: str) -> str:
     return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def _summaries_for(user: User):  # type: ignore[no-untyped-def]
+def _summaries_for(user: User) -> tuple[Select[Any], AliasedClass[DocumentVersion]]:
     """One row per document the user belongs to, with live-version stats and latest content."""
     stats = (
         select(
@@ -110,7 +111,7 @@ def _summaries_for(user: User):  # type: ignore[no-untyped-def]
     return stmt, latest
 
 
-def _to_summary(row) -> DocumentSummary:  # type: ignore[no-untyped-def]
+def _to_summary(row: Row[Any]) -> DocumentSummary:
     document, role, creator_name, latest_version, live_count, word_count = row
     return DocumentSummary(
         document=document,

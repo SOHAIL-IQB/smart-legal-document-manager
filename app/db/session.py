@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import Any
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -17,7 +18,7 @@ def _build_engine(database_url: str) -> Engine:
 
         # SQLite ignores foreign keys unless asked; enforce them so tests match Postgres.
         @event.listens_for(engine, "connect")
-        def _enable_sqlite_foreign_keys(dbapi_connection, _record) -> None:  # type: ignore[no-untyped-def]
+        def _enable_sqlite_foreign_keys(dbapi_connection: Any, _record: Any) -> None:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
