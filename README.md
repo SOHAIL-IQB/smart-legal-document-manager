@@ -206,6 +206,18 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+### Demo data
+
+```bash
+python -m scripts.seed                          # local
+docker compose exec api python -m scripts.seed  # in the container
+```
+
+Creates three demo users (`asha@demo.example`, `ben@demo.example`, `chloe@demo.example`, password
+`demo password 2026`) and four sample contracts. The contracts include version history, a restore,
+a deleted version, sharing in every role, and the resulting activity and notifications. Running it
+again changes nothing, and it refuses to run when `ENVIRONMENT=production`.
+
 Walkthrough of every feature with curl: [`USER_GUIDE.md`](USER_GUIDE.md).
 
 ## Running Tests
