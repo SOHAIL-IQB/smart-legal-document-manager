@@ -968,3 +968,32 @@ These match entry 018.
 - then a spec for approval (spec-driven-development);
 - impeccable for the direction and `DESIGN.md`; 21st.dev for component candidates;
 - the owner approves the look before Phase 9 builds anything.
+
+## 020 — 2026-11-27 — Phase 8 interview, PRODUCT.md and spec approved
+
+**Interview** (interview-me: one question at a time, each with my guess):
+- Q1, who mainly judges the frontend: portfolio reviewers.
+- Q2, who the product convincingly serves: an in-house legal team.
+- Q3, the name: replace it with a short one. My guess here was deliberately in the direction I
+  expected pushback, to tell real agreement from politeness after two recommended picks.
+- The restate (outcome, judges, story users, why now, success, constraints, out of scope) was
+  confirmed with an explicit "Yes, that's right".
+
+**`PRODUCT.md`** (impeccable init):
+- Written from confirmed facts only. The product name is marked as an open decision.
+- One inference was removed before saving: "without an account" in a principle implied a demo
+  design the owner hadn't chosen.
+- impeccable reported `ACCOUNT: not signed in`; the owner was told once about `npx impeccable login`.
+
+**Image generation:** the only connected tool is Figma's `generate_image`, which spends the owner's
+Figma AI credits on each call. It is not used without consent, so Phase 8 is code-first.
+
+**Spec:** `docs/specs/phase-8-design-direction.md`. Owner: "Approve as written", which accepts the
+three recommendations:
+1. Demo entry: a private demo workspace per visitor (option 3). Its endpoint and clean-up job are
+   Phase 9 work.
+2. Code-first: no Figma images.
+3. The visual world starts on the landing page.
+
+Deviation recorded in the spec: `DESIGN.md` moves to Phase 9 (impeccable writes it from the built
+screens).
