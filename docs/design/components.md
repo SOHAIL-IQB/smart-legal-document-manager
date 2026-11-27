@@ -20,9 +20,20 @@ Folding Sequence, `.impeccable/surfaces/frontend-src-pages-landing-tsx.md`).
 - The rest were judged from their catalog descriptions only. They are marked **claimed**, and their
   code must be checked when Phase 9 installs them.
 
-**License:** neither retrieved file carries a license header (the matches for "mit" were inside
-"submit" and "limit"). The 21st.dev catalog terms must be confirmed before any catalog code ships in
-this public repository. **This is open.**
+**License (resolved 2026-11-27, Phase 9 F0).** The [21st.dev Terms of Service](https://21st.dev/terms)
+(last updated July 20, 2026) say:
+- Marketplace code is "the sole and exclusive property of their respective authors and 21st Labs
+  Inc.", for use "solely through the official 21st.dev platform".
+- Redistribution "without authorization", or without a visible link back to the component page, is
+  prohibited.
+- The terms don't say whether a public repository counts, or how a component's own license
+  (sometimes MIT) interacts with them.
+
+**Decision:** no catalog code is copied into this public repository. The candidates below are
+**design references** for behavior, structure and wording. Every part is built by us on shadcn
+(open-source Radix primitives) with npm packages under their own open-source licenses (`motion`,
+`sonner`, `lucide-react`). That also matches impeccable's rule that every element is rebuilt in the
+world's vocabulary.
 
 **New dependencies these imply:** `motion` or `framer-motion`, `lucide-react`, `sonner`. Each needs
 the owner's approval in the Phase 9 spec (`AGENTS.md`).
@@ -43,9 +54,10 @@ the owner's approval in the Phase 9 spec (`AGENTS.md`).
 | Toasts (saved, restored, errors with request ID) | **Toast Notification** (Sonner) by ghaerdi | [21st #46222](https://21st.dev/@ghaerdi/components/toast) | **Claimed:** Sonner uses an `aria-live` region | Brief confirmations ("Version 5 saved"); errors keep the API's message and request ID. Toasts appear in place, without sliding (motion grammar) |
 | Landing page sheet and folds | **Build our own** | — | Our own: the sheet is decorative over real text; the primary action is a real link | The direction contract's first viewport; no catalog component exists or should |
 
-## Open before Phase 9 installs anything
+## Status of the open items (Phase 9 F0, 2026-11-27)
 
-1. Confirm the 21st.dev catalog license terms for code copied into this public repository.
-2. Retrieve and check the **claimed** candidates' code (two per day on the free tier): the command
-   palette, the timeline, the notification inbox, the file dropzone and the toast.
-3. The Phase 9 spec lists the new npm dependencies for the owner's approval.
+1. License: **resolved.** No catalog code is copied (see above).
+2. Code checks of the "claimed" candidates: **no longer needed.** No catalog code is used. Their
+   accessibility claims become requirements our own builds must meet, and the Phase 9 tests check
+   them (keyboard, labels, focus, live regions).
+3. Dependencies: **approved** with the Phase 9 spec (LOG 026).

@@ -39,6 +39,9 @@ shows no console errors.
   dropzone, toast. The free tier allows two retrievals a day.
 - Any candidate whose license is unclear or whose code fails accessibility is built our own instead.
 - Acceptance: `docs/design/components.md` updated; no catalog code is copied before this passes.
+- **Done 2026-11-27 (LOG 027):** the license is unclear for a public repository, so no catalog code is
+  copied. Every part is built our own on shadcn/Radix, with 21st.dev candidates as design references.
+  The code checks are therefore not needed.
 
 **F1. Demo workspace (backend, test-first; spec D2)**
 

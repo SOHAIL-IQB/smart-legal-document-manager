@@ -1175,3 +1175,19 @@ The owner replied **"Approve as written"** to `docs/specs/phase-9-frontend-build
 **Order of work:** F0's code checks need 21st.dev retrievals, and today's two are used (reset
 2026-11-28). So F0's license check is done now, its code checks tomorrow, and F1 (the demo
 workspace, backend, test-first) proceeds meanwhile, since it doesn't depend on F0.
+
+## 027 — 2026-11-27 — Phase 9 F0: no catalog code; 21st.dev components are references only
+
+[21st.dev's Terms of Service](https://21st.dev/terms) were read in full through the fetch tool
+(last updated July 20, 2026):
+- Marketplace code is the property of its authors and 21st Labs Inc., for use "solely through the
+  official 21st.dev platform".
+- Redistribution "without authorization", or without a visible link back, is prohibited.
+- Nothing addresses public repositories or how a component's own license (sometimes MIT) interacts
+  with these terms.
+
+**Decision** (the spec's F0 rule: unclear license means build our own): no catalog code is copied
+into this public repository. The candidates in `docs/design/components.md` are design references
+only. Parts are built on shadcn/Radix (open source) with `motion`, `sonner` and `lucide-react` under
+their own licenses. The five pending code checks are no longer needed; their accessibility claims
+become requirements our builds must meet. F0 is done without waiting for tomorrow's retrieval quota.
