@@ -62,6 +62,7 @@ The visual world is created once, on one first surface, and every other surface 
 - The owner picks one, or asks for another round.
 - Acceptance: one name chosen by the owner, recorded in `PRODUCT.md` under Brand Commitments,
   with the conflict check noted in `LOG.md`.
+- **Done 2026-11-27: Tracemark** (LOG 021). Countermark was dropped: an existing app uses it.
 
 ### D2. How a reviewer gets into the demo
 

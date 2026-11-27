@@ -997,3 +997,25 @@ three recommendations:
 
 Deviation recorded in the spec: `DESIGN.md` moves to Phase 9 (impeccable writes it from the built
 screens).
+
+## 021 — 2026-11-27 — Phase 8 D1: the product is named Tracemark
+
+**Conflict check.** A basic web search per name (standard mode; the queries held only the
+candidate name and the category). This is not legal trademark clearance.
+
+| Name | Result |
+|---|---|
+| Clausetrail | No product. The "Clause…" prefix is crowded in legal tech (Clause, ClauseBase, ClauseGuide). |
+| Draftline | No product. Close to Draftable, which sells legal comparison software. |
+| Inkstep | Clear. The nearest names are InStep (a step counter) and InkSoft (print). |
+| Countermark | **Conflict:** an existing "Countermark" app has its own terms of use on countermark.com. Dropped. |
+| Redlet | No product, but "Redline" names are everywhere in contract tools. |
+| Tracemark (replacement) | Clear. The nearest are TraceMyTrack and TraceTool, unrelated trackers. |
+
+**Owner's choice: Tracemark.** My stated guess was Inkstep; the owner chose differently, so the
+pick was not a polite acceptance. Recorded in `PRODUCT.md` (Brand Commitments) and in the spec
+(D1 done). "Smart Legal Document Manager" stays as the descriptor and the repository name.
+
+**D2** was decided at spec approval (LOG 020): a private demo workspace per visitor.
+
+**Checkpoint (after D1 and D2):** committed and pushed; CI checked.

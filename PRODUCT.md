@@ -70,14 +70,16 @@ What the product can truthfully claim, because the backend proves it with tests:
 - Constraints: use the existing API; only small, additive API changes if a screen needs them.
 - Out of scope (owner-confirmed): real-time co-editing, e-signatures, AI summaries (declined
   2026-11-22), pricing and payments, native mobile apps, rich-text editing.
-- **Open decision:** the product's short name. The owner chose to replace "Smart Legal Document
-  Manager" with a short, original name, keeping the long form as the descriptor and the
-  repository name. Candidates come in the Phase 8 spec.
+- Product name: **Tracemark** (chosen 2026-11-27; see Brand Commitments).
 
 ## Brand Commitments
 
-- "Smart Legal Document Manager" remains the descriptor and the repository name.
-- No other name, logo, voice or visual identity exists yet.
+- **Name: Tracemark** (owner's choice, 2026-11-27, from five checked candidates). It says every change
+  leaves a mark you can trace. A basic web check found no software product using the name. That is
+  not a legal trademark clearance.
+- "Smart Legal Document Manager" remains the descriptor ("Tracemark — smart legal document
+  manager") and the repository name.
+- No logo, voice or visual identity exists yet; Phase 8 D3 creates the visual world.
 
 ## Evidence on Hand
 
