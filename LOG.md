@@ -1308,3 +1308,69 @@ workspace is not retry-safe; switching is; now three unsafe endpoints), and `USE
 - **Live:** the Docker API plus `npm run dev`. The page shows "API ready · database ok" from
   `GET localhost:5173/api/health/ready → 200` (through the proxy), with no console errors. One
   `ERR_ABORTED` is React's development double-run of effects, cancelled by its own cleanup.
+
+## 030 — 2026-11-27 — Phase 9 F3: the app shell
+
+**Owner approved** the three ESLint companion packages flagged in entry 029 (`@eslint/js`,
+`eslint-plugin-react-hooks`, `globals`): "Keep them, start F3".
+
+**Docs read**, with gaps settled in the installed source (source-driven development):
+- [React Router installation](https://reactrouter.com/start/data/installation) and
+  [routing](https://reactrouter.com/start/data/routing) (v8.5.3). The docs disagreed on where
+  `RouterProvider` comes from. The installed 8.5.3 exports it from both `react-router` and
+  `react-router/dom`; the browser app uses `react-router/dom`, as the installation page says. The
+  router is created once outside React, as that page requires.
+- [Sonner](https://sonner.emilkowal.ski/) (2.0.8). The docs don't cover accessibility, so the
+  source was read: the toast region is `aria-live="polite"`, `aria-relevant="additions text"`,
+  reachable by a hotkey and out of the tab order. `toast.error(message, { description })` was
+  confirmed in its type definitions.
+
+**Built:**
+- `src/api/client.ts`: the one way to call the API.
+  - Same origin, with the session cookie.
+  - `X-Requested-With` on every write; JSON bodies; `FormData` left to the browser.
+  - The API's error shape becomes `ApiError` (status, code, message, request ID, details).
+  - Non-JSON failures and network outages give clear messages; aborts are rethrown unchanged.
+- `src/lib/errors.ts`: one error display. The API's message, plus "Reference: <request ID>"
+  (which matches the server logs). Anything else gets a generic message, never internals.
+- `src/lib/queryClient.ts`: every failed query or mutation is shown once, unless marked
+  `meta.silent`. Only network and server errors are retried, at most twice; never a 4xx.
+- `src/auth/session.ts` and `RequireAuth.tsx`: `GET /auth/me`, where 401 means signed out.
+  - The guard shows "checking", then an error with retry, or redirects to sign-in, remembering the
+    full path and query as `state.from`.
+- `src/routes.tsx`: public routes, the signed-in area behind the guard, and a 404. The pages are
+  placeholders naming the task that builds them.
+- `src/main.tsx`: the query client, router and toaster.
+
+**My own mistake, caught by a test:** abort detection used `instanceof DOMException`. In jsdom a
+`DOMException` isn't an `Error`, and class identity differs between environments. Aborts are now
+recognised by the standard `name === "AbortError"`, and the test helper throws any non-`Response`.
+
+**Deliberate breaks** (a throwaway copy of `frontend/`, with `node_modules` symlinked; the real
+source hashed before and after). 14 breaks:
+- writes lose the CSRF header; cookie not sent;
+- aborts reported as network errors; request ID dropped;
+- uploads get a JSON content type;
+- reference not shown; internal messages leak;
+- guard lets signed-out visitors in; return path forgotten; signed out treated as an error;
+- silent queries toast; failed mutations not shown; 4xx retried;
+- no 404 route.
+
+**14 of 14 caught.** The query-client and route tests were written after their code; these breaks
+show they fail without it.
+
+**Verification:**
+- `npm run typecheck`, `npm run lint`: clean.
+- `npm test`: 23 passed (7 files).
+- `npm run build`: 386.3 KB JS (120.1 KB gzipped), up from 219.7 KB with React Router, TanStack
+  Query and Sonner. For F11's bundle budget, per-route code splitting is the expected remedy.
+- **Live** (Docker API and the Vite dev server):
+  - `/documents?q=lease` redirected to Sign in with `state.from = "/documents?q=lease"`, no toast;
+  - `/no/such/page` shows the 404;
+  - `/` shows "API ready · database ok".
+
+**Open finding:** every signed-out visit makes the browser log "Failed to load resource: 401" for
+the session check (`GET /auth/me`). That's the browser's own network log, not app code, but it
+breaks the spec's "no console errors" success criterion. The likely remedy is a small additive
+endpoint that answers 200 with `{ "user": null }` when signed out. It is proposed to the owner
+rather than added unasked, since it changes the API.

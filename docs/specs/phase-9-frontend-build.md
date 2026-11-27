@@ -105,6 +105,8 @@ Acceptance:
 - One error handler shows the API's message and request ID.
 - Toasts (Sonner, restyled).
 - Acceptance: tests for the guard, the CSRF header, and error handling with a request ID.
+- **Done 2026-11-27 (LOG 030):** 23 frontend tests; 14 of 14 deliberate breaks caught; checked live
+  against the API. Open: a signed-out session check makes the browser log a 401 (LOG 030).
 
 ### Slice B — Surfaces (impeccable new-work, code-led; each surface finishes with its review)
 
