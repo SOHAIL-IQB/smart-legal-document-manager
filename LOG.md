@@ -1146,3 +1146,16 @@ reset at 21st.dev's side; they were retried one at a time and succeeded.
 
 **Implied new dependencies** (`motion` or `framer-motion`, `lucide-react`, `sonner`) go to the owner
 in the Phase 9 spec.
+
+## 025 — 2026-11-27 — Phase 8 D6: the owner approved the look
+
+The owner reviewed the D6 summary:
+- the name, Inkstep;
+- demo entry: a private workspace per visitor;
+- the Folding Sequence world and its direction contract;
+- the component list, with its open license item.
+
+They replied **"approved"**. Phase 8 is closed in `PLAN.md`.
+
+Per the spec's checkpoint, the next step is a Phase 9 spec (frontend build) for approval before
+any frontend code.

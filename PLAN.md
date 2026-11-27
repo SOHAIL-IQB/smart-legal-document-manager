@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-27):** Backend (Phases 0–7) done and signed off by the owner. **Next: Phase 8 (design direction): interview, then a spec for approval.** Details: LOG.md entry 019.
+> **Resume point (2026-11-27):** Phase 8 (design direction) done and approved: product named Inkstep, visual world the Folding Sequence. **Next: the Phase 9 spec (frontend build) for owner approval, before any frontend code.** Details: LOG.md entries 019–025; `docs/specs/phase-8-design-direction.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -201,10 +201,11 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] Simplification pass (T14): 3 behavior-neutral changes, 2 missing floor guard tests added (LOG 018)
 - [x] **Owner reviews finished backend**: signed off 2026-11-27 (LOG 019)
 
-### Phase 8 — Design direction `[ ]`
-- [ ] `impeccable` skill: design brief, direction, tokens (DESIGN.md)
-- [ ] 21st.dev: source component candidates (data table, command/search, diff view, notifications popover, upload dropzone, auth forms)
-- ⏸ **Owner approves the look before full build**
+### Phase 8 — Design direction `[x]` (spec: `docs/specs/phase-8-design-direction.md`, LOG 019–025)
+- [x] Interview and `PRODUCT.md`; product named **Inkstep** after a full name check
+- [x] `impeccable` skill: visual world **the Folding Sequence**, direction contract in `.impeccable/surfaces/`. `DESIGN.md` moved to Phase 9 (written from the built screens)
+- [x] 21st.dev: component candidates in `docs/design/components.md`
+- [x] **Owner approves the look before full build**: approved 2026-11-27
 
 ### Phase 9 — Frontend build `[ ]`
 - [ ] Scaffold Vite + TS + Tailwind + shadcn; typed API client; auth context; route guards

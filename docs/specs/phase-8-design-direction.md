@@ -149,6 +149,8 @@ visitor (account deletion is a real feature). Three options, each with a differe
   (D2) and the component list (D5) together.
 - Acceptance: explicit approval recorded in `LOG.md` with the owner's words. `PLAN.md` gate:
   "Owner approves the look before full build".
+- **Done 2026-11-27:** the owner replied "approved" to the D6 review of name, demo entry, world,
+  contract and components (LOG 025).
 
 ## Checkpoints
 
