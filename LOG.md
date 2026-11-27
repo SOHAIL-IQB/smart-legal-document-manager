@@ -1113,3 +1113,36 @@ replay) and the motion grammar (one fold at a time, about 420 ms; reduced motion
 
 **Not committed:** `.impeccable/reference/` (impeccable's catalog images, third-party, 17 MB) has
 its own ignore file; `.impeccable/questions/` ignores itself.
+
+## 024 — 2026-11-27 — Phase 8 D5: component candidates
+
+**21st.dev account state:** free tier, AI generation off, two full-code retrievals per day. Per the
+21st skill, no generation tool was used.
+
+**Searches:** ten parts, from catalog metadata (free). Four searches timed out and one connection
+reset at 21st.dev's side; they were retried one at a time and succeeded.
+
+**Retrieved and checked in code** (both of the day's retrievals):
+- **Data Table (#27049):** a real `<table>` with `<thead>` and `<th scope>`, `aria-sort`, arrow,
+  Home and End keys with `aria-activedescendant`, an `aria-live` status, reduced-motion support.
+  Chosen for the documents index.
+- **Share Dialog (#26993):** `role="dialog"`, an `aria-live` status and Escape, **but** no
+  `aria-modal`, no focus trap, no `<label>`s, no email-type input, and a `role="menu"` role picker
+  with no arrow keys. Its wording is kept; the dialog is rebuilt on Radix.
+- Neither file carries a license header (the "mit" matches were inside "submit" and "limit").
+  Confirming 21st.dev's catalog terms before shipping catalog code is an open item.
+
+**Decisions** (`docs/design/components.md`):
+- **From 21st.dev:** documents table, command palette, activity timeline, notification inbox,
+  upload dropzone, toasts, and the share dialog (wording only).
+- **Built our own:**
+  - the comparison, because every catalog diff is a code diff and none is for prose;
+  - the version margin column, which is the world's signature interaction;
+  - sign-in and sign-up, because the catalog forms bring social login or TanStack Form instead
+    of the planned react-hook-form + zod;
+  - the landing sheet.
+- Every candidate is restyled into the fold language, and sliding, tilting and springy motion is
+  removed per the direction contract.
+
+**Implied new dependencies** (`motion` or `framer-motion`, `lucide-react`, `sonner`) go to the owner
+in the Phase 9 spec.

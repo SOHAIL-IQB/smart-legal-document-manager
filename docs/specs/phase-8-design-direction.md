@@ -138,6 +138,10 @@ visitor (account deletion is a real feature). Three options, each with a differe
   - its accessibility state (keyboard, focus, labels).
 - Acceptance: every listed part has a chosen candidate, or an explicit "build our own" with the
   reason.
+- **Done 2026-11-27:** `docs/design/components.md` (LOG 024). Seven parts take a 21st.dev candidate;
+  four are built our own (comparison, version margin, sign-in forms, landing sheet). Two
+  candidates were verified in code; the share dialog showed accessibility gaps and is rebuilt on
+  Radix. Open: the catalog license terms, and code checks of five more candidates.
 
 ### D6. Owner approval of the look
 
