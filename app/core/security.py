@@ -3,6 +3,7 @@
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -68,14 +69,16 @@ def decode_access_token(token: str) -> int | None:
 
 
 class LoginRateLimiter:
-    """Counts failed logins per key in a sliding window. In-memory: one process only (ADR 0001)."""
+    """Counts events (failed logins, new demo workspaces) per key in a sliding window.
+    In-memory: one process only (ADR 0001)."""
 
-    def __init__(self) -> None:
+    def __init__(self, window_seconds: Callable[[], int] | None = None) -> None:
         self._failures: dict[str, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._window = window_seconds or (lambda: get_settings().login_window_seconds)
 
     def _prune(self, key: str, now: float) -> deque[float]:
-        window = get_settings().login_window_seconds
+        window = self._window()
         attempts = self._failures[key]
         while attempts and attempts[0] <= now - window:
             attempts.popleft()
@@ -93,7 +96,7 @@ class LoginRateLimiter:
                 return None
             if len(attempts) < limit:
                 return None
-            return max(1, int(attempts[0] + settings.login_window_seconds - now))
+            return max(1, int(attempts[0] + self._window() - now))
 
     def record_failure(self, key: str) -> None:
         with self._lock:
