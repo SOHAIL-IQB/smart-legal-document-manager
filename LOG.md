@@ -936,3 +936,35 @@ Most signals were noise and were left alone:
 
 **Status:** Phase 7 tasks T1–T15 are done. Next: the owner reviews the finished backend
 (PLAN.md gate), then Phase 8 (design direction).
+
+## 019 — 2026-11-27 — Backend signed off; Phase 8 begins
+
+**Session start (`AGENTS.md`):**
+- The resume point and entry 018 said T1–T15 were done and pushed.
+- Git matched: `HEAD` `0799281`, tree clean, in sync with `origin/main`.
+- Docker had no containers and no data volume. The owner had run `docker compose down -v` to
+  start the demo from an empty database, and that also removed the `sldm_test` database.
+- Restored with the README's own commands: `docker compose up -d db`, then
+  `docker compose exec db createdb -U postgres sldm_test`.
+
+**Checks:**
+- `ruff check . && ruff format --check .`: clean.
+- `pytest`: 460 passed, 1 skipped.
+- Postgres: 461 passed.
+- Floor guard: clean.
+
+These match entry 018.
+
+**Owner review of the backend:**
+- After the walkthrough (features, architecture, quality enforcement, the live demo, seven
+  recorded trade-offs), the owner tried the demo stack.
+- The owner then wrote "Its fine so the backend is completed ?". I answered that the plan's
+  sign-off gate was the only open step and asked them to confirm.
+- They replied "Now start where we left", which is recorded as the sign-off.
+- No trade-off was asked to change. Phase 7 is closed.
+
+**Next:** Phase 8 (design direction). Per PLAN §8:
+- interview-me for design intent (one question at a time, with a stated guess);
+- then a spec for approval (spec-driven-development);
+- impeccable for the direction and `DESIGN.md`; 21st.dev for component candidates;
+- the owner approves the look before Phase 9 builds anything.

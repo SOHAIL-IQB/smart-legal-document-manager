@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-24):** Phase 7 tasks T1–T15 done and pushed. **Next: the owner reviews the finished backend, then Phase 8 (design direction).** Details: LOG.md entries 014–018; tasks in `docs/specs/phase-7-hardening.md`.
+> **Resume point (2026-11-27):** Backend (Phases 0–7) done and signed off by the owner. **Next: Phase 8 (design direction): interview, then a spec for approval.** Details: LOG.md entry 019.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -186,7 +186,7 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] Found and fixed: SQLite returned timestamps without a timezone → `UTCDateTime` column type
 - **Verify:** 266 passed on Postgres; 13/13 mutations caught after fixing one test; migration backfill checked on both databases; USER_GUIDE run live
 
-### Phase 7 — Hardening & ops `[~]` all tasks done, awaiting owner review (spec: `docs/specs/phase-7-hardening.md`, LOG 013–018)
+### Phase 7 — Hardening & ops `[x]` (spec: `docs/specs/phase-7-hardening.md`, LOG 013–019)
 - [x] R4 (T4): set `FORWARDED_ALLOW_IPS` / `--proxy-headers` for the host's proxy so the login rate limit sees real client IPs (LOG 009)
 - [x] R5 (T6): run PDF/DOCX extraction with a CPU time limit (subprocess + timeout) (LOG 009)
 - [x] R8 (T3): security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, CSP for the API docs) (LOG 009)
@@ -199,7 +199,7 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] Changelog + README structure, every README command run on a clean clone (T12)
 - [x] Backend review (T13): 1 High + 4 Medium found and fixed, trade-offs recorded (LOG 017)
 - [x] Simplification pass (T14): 3 behavior-neutral changes, 2 missing floor guard tests added (LOG 018)
-- ⏸ **Owner reviews finished backend**
+- [x] **Owner reviews finished backend**: signed off 2026-11-27 (LOG 019)
 
 ### Phase 8 — Design direction `[ ]`
 - [ ] `impeccable` skill: design brief, direction, tokens (DESIGN.md)
