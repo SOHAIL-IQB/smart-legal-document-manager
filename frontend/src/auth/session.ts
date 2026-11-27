@@ -7,10 +7,14 @@ export type SessionUser = components['schemas']['UserResponse']
 
 export const sessionKey = ['session'] as const
 
-/** The signed-in user, or null when signed out (401 is an answer here, not an error). */
+type SessionResponse = components['schemas']['SessionResponse']
+
+/** The signed-in user, or null when signed out. The endpoint answers 200 either way, so a
+ *  signed-out visit logs no failed request; a 401 (say, from an older API) still means signed out. */
 export async function fetchSession(signal?: AbortSignal): Promise<SessionUser | null> {
   try {
-    return await api<SessionUser>('/auth/me', { signal })
+    const { user } = await api<SessionResponse>('/auth/session', { signal })
+    return user ?? null
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return null
     throw error

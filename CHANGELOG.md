@@ -23,6 +23,8 @@ The rebuild of the original submission (2026-11-22 to 2026-11-24). The API repor
 - **Accounts and sharing:**
   - registration, sign-in, sign-out and `GET /auth/me`, with a JWT in an `httpOnly` cookie
     for browsers or a bearer token for API clients;
+  - `GET /auth/session`, which answers 200 with `{"user": null}` when signed out, so a browser's
+    first check on each visit isn't logged as a failed request;
   - per-document roles owner, editor and viewer, with endpoints to share, change roles and
     remove members. A document always keeps an owner.
 - **Version history:**

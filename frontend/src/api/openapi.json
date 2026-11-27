@@ -1536,6 +1536,26 @@
         "title": "Segment",
         "type": "object"
       },
+      "SessionResponse": {
+        "properties": {
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The signed-in user, or null when signed out."
+          }
+        },
+        "required": [
+          "user"
+        ],
+        "title": "SessionResponse",
+        "type": "object"
+      },
       "SwitchRequest": {
         "properties": {
           "user_id": {
@@ -1851,6 +1871,33 @@
           }
         },
         "summary": "Register",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "description": "Who is signed in, if anyone. Signed out is an answer here, not an error, so a browser's\nfirst check on each visit doesn't log a failed request. /me keeps answering 401.",
+        "operationId": "session_api_auth_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Session",
         "tags": [
           "auth"
         ]

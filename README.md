@@ -145,6 +145,7 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 |---|---|---|
 | `POST` | `/auth/register`, `/auth/login`, `/auth/logout` | anyone |
 | `GET` | `/auth/me` | signed in |
+| `GET` | `/auth/session` (`{"user": ...}`, `null` when signed out; never 401) | anyone |
 | `GET` | `/auth/me/export` (your data as a JSON download) | signed in |
 | `DELETE` | `/auth/me` (body: `{"password": "..."}`) | signed in |
 | `POST` | `/demo/workspaces` (send `X-Requested-With`) | anyone; 5 per IP per hour |

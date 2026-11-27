@@ -53,6 +53,24 @@ def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+def get_optional_user(
+    request: Request,
+    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> User | None:
+    """The signed-in user, or None where get_current_user would answer 401.
+
+    Same rules by construction: only "not signed in" becomes None; every other refusal still raises.
+    """
+    try:
+        return get_current_user(request, db, credentials)
+    except AuthenticationError:
+        return None
+
+
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+
+
 def require_role(minimum: Role) -> Callable[..., DocumentAccess]:
     def dependency(document_id: int, user: CurrentUser, db: DbSession) -> DocumentAccess:
         return get_document_access(db, document_id=document_id, user=user, minimum=minimum)

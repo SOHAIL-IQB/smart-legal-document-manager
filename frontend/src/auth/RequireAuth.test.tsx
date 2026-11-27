@@ -32,18 +32,23 @@ function renderAt(path: string) {
   )
 }
 
-const meResponse = (status: number, body: unknown) =>
-  vi.fn(async () => new Response(JSON.stringify(body), { status }))
+// Answers the session endpoint only, so a test fails if the guard asks anything else.
+const sessionAnswer = (user: unknown) =>
+  vi.fn(async (url: string) =>
+    url === '/api/auth/session'
+      ? new Response(JSON.stringify({ user }), { status: 200 })
+      : new Response('{}', { status: 404 }),
+  )
 
 test('a signed-out visitor goes to sign-in, remembering where they were going', async () => {
-  vi.stubGlobal('fetch', meResponse(401, { error: { code: 'unauthorized', message: 'Not signed in.' } }))
+  vi.stubGlobal('fetch', sessionAnswer(null))
   renderAt('/documents?q=lease')
   expect(await screen.findByText('sign-in page, return to /documents?q=lease')).toBeTruthy()
   expect(screen.queryByText('the documents')).toBeNull()
 })
 
 test('a signed-in user sees the page', async () => {
-  vi.stubGlobal('fetch', meResponse(200, { id: 1, name: 'Asha', email: 'a@x.example', created_at: '2026-11-27T00:00:00Z' }))
+  vi.stubGlobal('fetch', sessionAnswer({ id: 1, name: 'Asha', email: 'a@x.example', created_at: '2026-11-27T00:00:00Z' }))
   renderAt('/documents')
   expect(await screen.findByText('the documents')).toBeTruthy()
 })

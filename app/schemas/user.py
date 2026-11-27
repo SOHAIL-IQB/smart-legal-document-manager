@@ -30,6 +30,10 @@ class UserResponse(BaseModel):
     created_at: datetime
 
 
+class SessionResponse(BaseModel):
+    user: UserResponse | None = Field(description="The signed-in user, or null when signed out.")
+
+
 class AuthResponse(BaseModel):
     user: UserResponse
     access_token: str = Field(description="Also set as an httpOnly cookie for browsers.")

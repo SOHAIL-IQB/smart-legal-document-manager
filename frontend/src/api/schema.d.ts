@@ -90,6 +90,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session
+         * @description Who is signed in, if anyone. Signed out is an answer here, not an error, so a browser's
+         *     first check on each visit doesn't log a failed request. /me keeps answering 401.
+         */
+        get: operations["session_api_auth_session_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/demo/workspaces": {
         parameters: {
             query?: never;
@@ -1083,6 +1104,11 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** SessionResponse */
+        SessionResponse: {
+            /** @description The signed-in user, or null when signed out. */
+            user: components["schemas"]["UserResponse"] | null;
+        };
         /** SwitchRequest */
         SwitchRequest: {
             /** User Id */
@@ -1323,6 +1349,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_api_auth_session_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionResponse"];
                 };
             };
         };

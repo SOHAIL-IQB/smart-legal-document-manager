@@ -100,13 +100,15 @@ Acceptance:
 
 **F3. App shell**
 - Router with public routes (landing, sign in, sign up, 404) and signed-in routes behind a guard.
-- Auth state from `GET /api/auth/me`.
+- Auth state from `GET /api/auth/session` (200 with `user: null` when signed out). Amended after
+  F3 with the owner's approval; it was `GET /api/auth/me`, where signed out is a 401 (LOG 031).
 - Every write sends `X-Requested-With`.
 - One error handler shows the API's message and request ID.
 - Toasts (Sonner, restyled).
 - Acceptance: tests for the guard, the CSRF header, and error handling with a request ID.
 - **Done 2026-11-27 (LOG 030):** 23 frontend tests; 14 of 14 deliberate breaks caught; checked live
-  against the API. Open: a signed-out session check makes the browser log a 401 (LOG 030).
+  against the API. The open finding, a browser-logged 401 on every signed-out visit, was fixed by
+  the session endpoint (LOG 031).
 
 ### Slice B — Surfaces (impeccable new-work, code-led; each surface finishes with its review)
 

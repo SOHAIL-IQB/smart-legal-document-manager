@@ -25,7 +25,7 @@ test('an unknown address shows the not-found page', () => {
 test('the signed-in area is behind the guard', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify({ error: { code: 'unauthorized', message: 'x' } }), { status: 401 })),
+    vi.fn(async () => new Response(JSON.stringify({ user: null }), { status: 200 })),
   )
   renderAt('/account')
   expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeTruthy()

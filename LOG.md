@@ -1374,3 +1374,61 @@ the session check (`GET /auth/me`). That's the browser's own network log, not ap
 breaks the spec's "no console errors" success criterion. The likely remedy is a small additive
 endpoint that answers 200 with `{ "user": null }` when signed out. It is proposed to the owner
 rather than added unasked, since it changes the API.
+
+## 031 — 2026-11-27 — `GET /auth/session`: signed out is an answer, not a 401
+
+**Why:** LOG 030's open finding. Every signed-out visit made the browser log a failed 401 for the
+session check, against the spec's "no console errors". The owner approved a small additive
+endpoint.
+
+**What changed:**
+- `app/api/deps.py`: `get_optional_user` / `OptionalUser`. It calls `get_current_user` and turns
+  only `AuthenticationError` into `None`, so both endpoints apply the same rules by construction:
+  - token validity, a deleted account, and an expired demo workspace;
+  - every other refusal still raises.
+- `app/api/routes/auth.py`: `GET /auth/session` returns `SessionResponse` (`app/schemas/user.py`).
+  It always answers 200, with `{"user": <user>}` or `{"user": null}`. `GET /auth/me` is unchanged
+  and still answers 401 when signed out.
+- `frontend/src/auth/session.ts`: the session check uses it. A 401 (say, from an older API) still
+  means signed out; any other failure is still an error.
+- OpenAPI snapshot and generated types regenerated (`python -m scripts.export_openapi`,
+  `npm run gen:api`). Updated the README endpoint table, CHANGELOG, and the Phase 9 spec (F3 line
+  amended, open finding closed).
+
+**Tests first:**
+- `tests/test_session_check.py`, 11 tests: 10 failed before the endpoint existed; the 11th, "/me
+  still 401", passed and guards the unchanged behaviour. They cover:
+  - signed out: 200 with null;
+  - bearer and cookie both give the user, identical to `/me`;
+  - four invalid tokens, a garbage cookie, a deleted account and an expired demo workspace all
+    count as signed out.
+- `frontend/src/auth/session.test.ts`, 4 tests: 2 failed before the change (the endpoint and the
+  body shape).
+- The guard and route tests now stub only `/api/auth/session` with its real 200 shape, so they
+  fail if the guard asks anything else.
+
+**Deliberate breaks** (throwaway copies, refreshed with rsync first; real files hashed before and
+after):
+- Backend: "session always signed out" (3 failed) and "signed out is a 401 again" (8 failed).
+  2 of 2 caught.
+- Frontend: all 16 breaks re-run. New: "session check back on /auth/me" (5 failed) and "whole body
+  taken as the user" (5 failed). 16 of 16 caught.
+
+**Verification:**
+- `ruff check .`, `ruff format --check .`: clean.
+- `pytest --cov`: 497 passed, 1 skipped; coverage 98%.
+- Postgres suite: 498 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- `npm run typecheck`, `npm run lint`: clean. `npm test`: 27 passed (8 files).
+- `npm run build`: 386.3 KB JS (120.1 KB gzipped).
+- **Live:**
+  - Docker API rebuilt; before the rebuild, `GET /api/auth/session` answered 404 (old image), after
+    it 200 `{"user":null}`.
+  - In the browser pane, `/documents` signed out redirected to Sign in. `/api/auth/session`
+    answered 200, and the console had no errors.
+  - The two `ERR_ABORTED` network entries are React StrictMode's development double mount
+    cancelling the first request. They are not console errors and don't happen in a production
+    build.
+  - Signed in through a throwaway demo workspace, `/documents` rendered with no console errors; then
+    signed out (204).
+

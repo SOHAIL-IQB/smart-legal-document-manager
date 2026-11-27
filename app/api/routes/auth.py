@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Request, Response, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import CurrentUser, DbSession, OptionalUser
 from app.api.sessions import end_session, start_session
 from app.core.config import get_settings
 from app.core.errors import AppError, PermissionDeniedError, RateLimitedError
@@ -10,7 +10,13 @@ from app.core.logging import log_event
 from app.core.security import login_rate_limiter, verify_password
 from app.db.models import User, utcnow
 from app.schemas.account import AccountExport, DeleteAccountRequest
-from app.schemas.user import AuthResponse, LoginRequest, RegisterRequest, UserResponse
+from app.schemas.user import (
+    AuthResponse,
+    LoginRequest,
+    RegisterRequest,
+    SessionResponse,
+    UserResponse,
+)
 from app.services import account as account_service
 from app.services import users as user_service
 
@@ -65,6 +71,13 @@ def logout(response: Response) -> Response:
 @router.get("/me", response_model=UserResponse)
 def me(user: CurrentUser) -> User:
     return user
+
+
+@router.get("/session", response_model=SessionResponse)
+def session(user: OptionalUser) -> SessionResponse:
+    """Who is signed in, if anyone. Signed out is an answer here, not an error, so a browser's
+    first check on each visit doesn't log a failed request. /me keeps answering 401."""
+    return SessionResponse(user=UserResponse.model_validate(user) if user else None)
 
 
 @router.get(
