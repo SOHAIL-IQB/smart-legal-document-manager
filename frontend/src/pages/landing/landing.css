@@ -1,0 +1,898 @@
+/* The landing page: the sheet is the page. Sizes inside the sheet are in container units, so the
+   composition holds at every sheet size. Small text never sits on vermilion. */
+
+.landing {
+  --crease-ground: rgb(216 58 46 / 0.32);
+  overflow-x: clip;
+}
+
+/* ---- Hero: stacked by default (phones, tablets, short screens) ------------------------------- */
+
+.hero {
+  /* Room under the sheet for the masthead above and the fold strip below, in the first view. */
+  --S: min(100vw, 640px, max(300px, calc(100svh - 220px)));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.masthead,
+.hero__folds,
+.hero__intro,
+.hero__excerpt {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+  padding-block: 8px;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--color-sumi);
+  font-size: 1.375rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.wordmark__mark {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-vermilion);
+  background-image: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 0.75px),
+    rgb(246 241 233 / 0.85) calc(50% - 0.75px) calc(50% + 0.75px),
+    transparent calc(50% + 0.75px)
+  );
+}
+
+.masthead__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 4px;
+  color: var(--color-sumi);
+  font-weight: 500;
+}
+
+.hero__folds {
+  padding-top: 14px;
+}
+
+.hero__intro {
+  margin-block: 28px 0;
+  font-size: 1.125rem;
+  line-height: 1.45;
+}
+
+.hero__excerpt {
+  padding-block: 24px 56px;
+  transform-origin: 50% 0;
+}
+
+/* ---- The sheet -------------------------------------------------------------------------------- */
+
+.sheet {
+  container: sheet / size;
+  position: relative;
+  flex: none;
+  align-self: center;
+  width: var(--S);
+  height: var(--S);
+  background-color: var(--color-vermilion);
+  background-image: var(--grain-sheet);
+  color: var(--color-fold);
+  box-shadow:
+    0 1px 2px rgb(70 20 12 / 0.14),
+    0 22px 44px -26px rgb(70 20 12 / 0.45);
+}
+
+.sheet__creases {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.crease {
+  opacity: 0;
+  transition: opacity var(--duration-fold) var(--ease-paper);
+}
+
+.crease[data-on] {
+  opacity: 1;
+}
+
+.crease path {
+  fill: none;
+  stroke: var(--color-fold);
+  stroke-opacity: 0.4;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.crease[data-form='withdrawn'] path {
+  stroke-dasharray: 8 7;
+}
+
+/* Doubled: a wide fold-white stroke with the sheet's own colour drawn down its middle. */
+.crease[data-form='restored'] .crease__double {
+  stroke-width: 5;
+}
+
+.crease[data-form='restored'] path:not(.crease__double) {
+  stroke: var(--color-vermilion);
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+.sheet__headline {
+  position: absolute;
+  top: 6.5cqh;
+  left: 7cqw;
+  right: 6cqw;
+  margin: 0;
+  font-size: 9.6cqw;
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+}
+
+.sheet__panel {
+  position: absolute;
+  top: 50cqh;
+  left: 0;
+  height: 50cqh;
+  margin: 0;
+  transform-origin: 50% 0; /* the horizontal crease */
+  backface-visibility: hidden;
+}
+
+.sheet__clause {
+  display: none;
+}
+
+/* ---- Clause marks: underline inserted, strike removed, then a short afterglow ------------------ */
+
+.clause p {
+  margin: 0;
+}
+
+.clause__text + .clause__text {
+  margin-top: 0.7em;
+}
+
+/* A paper label stuck on the excerpt: sumi on washi, so it can sit on the sheet at any size. */
+.clause .clause__sample {
+  display: inline-block;
+  margin-bottom: 0.9rem;
+  padding: 3px 9px;
+  background-color: var(--color-washi);
+  background-image: var(--grain-ground);
+  color: var(--color-sumi);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+  box-shadow: 0 1px 2px rgb(70 20 12 / 0.25);
+}
+
+.clause ins,
+.clause del {
+  text-decoration-thickness: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.clause[data-glow] ins,
+.clause[data-glow] del {
+  animation: afterglow 1.9s var(--ease-paper) both;
+}
+
+.clause ins {
+  text-decoration-line: underline;
+  text-underline-offset: 0.18em;
+}
+
+.clause del {
+  margin-right: 0.3em;
+  text-decoration-line: line-through;
+}
+
+/* A marked change stays on one line, so a strike or underline never runs across a line end. */
+.clause ins,
+.clause del {
+  white-space: nowrap;
+}
+
+.clause--sheet {
+  --glow: rgb(246 241 233 / 0.34);
+  font-size: clamp(24px, 3.1cqw, 34px);
+  text-shadow: 0 1px 2px rgb(110 20 12 / 0.45); /* ink sits on the paper, above its creases */
+  line-height: 1.28;
+}
+
+.clause--ground {
+  --glow: rgb(216 58 46 / 0.2);
+  font-size: 1.1875rem;
+  line-height: 1.5;
+}
+
+.clause--ground ins,
+.clause--ground del {
+  text-decoration-color: var(--color-vermilion-ink);
+}
+
+.clause--ground del {
+  color: var(--color-sumi-soft);
+}
+
+@keyframes afterglow {
+  from {
+    background-color: var(--glow);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+/* ---- The corner: the next fold ------------------------------------------------------------------ */
+
+.corner {
+  container: corner / inline-size;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 50cqw;
+  height: 50cqh;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-sumi);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  perspective: 900px;
+}
+
+/* The ring is drawn above the paper layers inside the corner, which would cover an outline. */
+.corner:focus-visible {
+  outline: none;
+}
+
+.corner:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: 1;
+  outline: 3px solid var(--color-sumi);
+  pointer-events: none;
+}
+
+.corner__ground {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-fold);
+  background-image: var(--grain-ground);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.corner__lift,
+.corner__face {
+  transform-origin: 50% 50%;
+  transition: transform var(--duration-fold) var(--ease-paper);
+}
+
+.corner__lift {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(5px 8px 9px rgb(80 16 8 / 0.34));
+}
+
+.corner__flap {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-washi);
+  background-image:
+    linear-gradient(
+      to bottom right,
+      transparent calc(50% - 1.5px),
+      rgb(26 26 26 / 0.16) calc(50% - 1.5px) 50%,
+      transparent 50%
+    ),
+    var(--grain-ground);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.corner__face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  width: 66%;
+  padding: 9cqw 0 0 9cqw;
+}
+
+.corner__label {
+  display: block;
+  font-size: clamp(16px, 7cqw, 28px);
+  font-weight: 500;
+  line-height: 1.12;
+}
+
+.corner__arrow {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 0.25em;
+  vertical-align: -0.08em;
+  transition: transform var(--duration-fold) var(--ease-paper);
+}
+
+.corner__note {
+  max-width: 72%;
+  color: var(--color-sumi-soft);
+  font-size: clamp(14px, 4cqw, 16px);
+  line-height: 1.3;
+}
+
+@container corner (max-width: 280px) {
+  .corner__note {
+    display: none;
+  }
+}
+
+/* The flap lifts on its crease when pointed at, as a corner does before it is turned. */
+.corner:hover .corner__lift,
+.corner:hover .corner__face,
+.corner:focus-visible .corner__lift,
+.corner:focus-visible .corner__face {
+  transform: rotate3d(1, -1, 0, -16deg);
+}
+
+.corner:hover .corner__arrow,
+.corner:focus-visible .corner__arrow {
+  transform: translateX(0.15em);
+}
+
+.corner[data-pending] {
+  cursor: progress;
+}
+
+.corner[data-pending] .corner__lift,
+.corner[data-pending] .corner__face {
+  transform: rotate3d(1, -1, 0, -26deg);
+}
+
+/* ---- The margin column ---------------------------------------------------------------------------- */
+
+.folds__slider {
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.folds__slider:active {
+  cursor: grabbing;
+}
+
+.folds__slider:focus-visible {
+  outline-offset: 6px;
+}
+
+/* Narrow screens: a strip of folds directly under the sheet, the shown fold named beneath it. */
+.folds__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block: 1px solid var(--crease-ground);
+}
+
+.folds__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 4px;
+}
+
+.folds__row .folds__number {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.5rem;
+}
+
+.folds__row + .folds__row {
+  border-left: 1px solid var(--crease-ground);
+}
+
+.folds__text {
+  display: none;
+}
+
+.folds__row .folds__rule {
+  flex: 1;
+  min-width: 1rem;
+  max-width: 1.75rem;
+}
+
+.folds__caption {
+  margin: 10px 0 0;
+  color: var(--color-sumi-soft);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+
+.folds__caption-number {
+  color: var(--color-vermilion-ink);
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.folds__number {
+  display: grid;
+  place-items: center;
+  width: 2.625rem;
+  height: 2.625rem;
+  color: var(--color-vermilion);
+  font-size: 1.75rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  touch-action: none; /* drag here on a touch screen; the rest of the row still scrolls */
+  transition:
+    background-color var(--duration-fold) var(--ease-paper),
+    color var(--duration-fold) var(--ease-paper);
+}
+
+.folds__row[data-shown] .folds__number {
+  background-color: var(--color-vermilion);
+  background-image: var(--grain-sheet);
+  color: var(--color-fold);
+}
+
+.folds__rule {
+  border-top: 2px solid var(--color-vermilion);
+}
+
+.folds__row[data-state='withdrawn'] .folds__rule {
+  border-top-style: dashed;
+}
+
+.folds__row[data-state='restored'] .folds__rule {
+  border-top: 6px double var(--color-vermilion);
+}
+
+
+.folds__author {
+  font-weight: 500;
+}
+
+.folds__note {
+  color: var(--color-sumi-soft);
+  font-size: 0.9375rem;
+}
+
+.folds__note em {
+  font-style: normal;
+}
+
+.folds__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  font-weight: 400;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+.folds__replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-vermilion-ink);
+  background: none;
+  color: var(--color-vermilion-ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease-paper);
+}
+
+.folds__replay:hover {
+  background-color: rgb(180 45 34 / 0.08);
+}
+
+.gold-dot {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-gold);
+  box-shadow: inset 0 0 0 1px var(--color-gold-edge);
+}
+
+.gold-dot--large {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- Hero, wide screens: the sheet fills the height, offset right ----------------------------------- */
+
+@media (min-width: 1100px) and (min-height: 600px) {
+  .hero {
+    /* The sheet takes the height; the margin column takes what width is left, up to 560px. */
+    --gutter: clamp(32px, 5vw, 112px);
+    --S: min(100svh, calc(100vw - 380px - var(--gutter)));
+    --left: min(560px, calc(100vw - var(--S) - var(--gutter)));
+    --pad: clamp(28px, 3vw, 56px);
+    display: grid;
+    grid-template-columns: var(--left) var(--S) minmax(var(--gutter), 1fr);
+    grid-template-rows: calc(var(--S) / 2) calc(var(--S) / 2);
+  }
+
+  /* The sheet's horizontal crease runs on across the ground, dividing the margin into panels. */
+  .hero::before,
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: calc(var(--S) / 2);
+    height: 1px;
+    background: var(--crease-ground);
+  }
+
+  .hero::before {
+    left: 0;
+    width: var(--left);
+  }
+
+  .hero::after {
+    left: calc(var(--left) + var(--S));
+    right: 0;
+  }
+
+  .masthead,
+  .hero__folds,
+  .hero__intro {
+    max-width: none;
+    margin: 0;
+    padding-inline: var(--pad);
+  }
+
+  .masthead {
+    grid-area: 1 / 1;
+    align-self: start;
+    padding-top: clamp(14px, 3vh, 32px);
+  }
+
+  .hero__intro {
+    grid-area: 1 / 1;
+    align-self: end;
+    max-width: calc(30ch + 2 * var(--pad));
+    padding-bottom: clamp(24px, 5vh, 52px);
+    font-size: clamp(1.1875rem, 1.45vw, 1.375rem);
+  }
+
+  .hero__folds {
+    grid-area: 2 / 1;
+    padding-top: clamp(18px, 3.5vh, 36px);
+  }
+
+  .hero__excerpt {
+    display: none;
+  }
+
+  .sheet {
+    grid-area: 1 / 2 / 3 / 3;
+    align-self: start;
+  }
+
+  .sheet__clause {
+    display: block;
+    width: 60cqw;
+    padding: 4.5cqh 4cqw 4cqh 7cqw;
+  }
+
+  .corner {
+    width: 42cqw;
+    height: 42cqh;
+  }
+
+  /* Wide screens: the folds run down the margin, each with its author and note. */
+  .folds__list {
+    display: block;
+    border-top: 0;
+  }
+
+  .folds__row .folds__number {
+    width: 2.625rem;
+    height: 2.625rem;
+    font-size: 1.75rem;
+  }
+
+  .folds__row {
+    display: grid;
+    grid-template-columns: 2.625rem 1.75rem minmax(0, 1fr);
+    column-gap: 12px;
+    min-height: 48px;
+    padding: 4px 0;
+    border-top: 1px solid var(--crease-ground);
+  }
+
+  .folds__row + .folds__row {
+    border-left: 0;
+  }
+
+  .folds__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  .folds__caption,
+  .folds__dot {
+    display: none; /* the column names the current version in its row */
+  }
+}
+
+/* ---- Below the sheet ------------------------------------------------------------------------------- */
+
+.legend,
+.record {
+  padding: clamp(72px, 10vw, 136px) clamp(20px, 6vw, 112px) 0;
+}
+
+.section-title {
+  max-width: 18ch;
+  margin: 0 0 clamp(28px, 4vw, 48px);
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.legend__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  column-gap: clamp(32px, 5vw, 72px);
+  margin: 0;
+}
+
+.legend__item {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0;
+  border-top: 1px solid var(--crease-ground);
+}
+
+.legend__sample {
+  display: flex;
+  align-items: center;
+}
+
+.legend__text {
+  margin: 0;
+  max-width: 44ch;
+}
+
+.legend__rule {
+  display: block;
+  width: 5rem;
+  border-top: 2px solid var(--color-vermilion);
+}
+
+.legend__rule[data-form='withdrawn'] {
+  border-top-style: dashed;
+}
+
+.legend__rule[data-form='restored'] {
+  border-top: 6px double var(--color-vermilion);
+}
+
+.legend__word {
+  font-size: 1.25rem;
+  text-decoration-color: var(--color-vermilion-ink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+del.legend__word {
+  color: var(--color-sumi-soft);
+}
+
+.record__panels {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.record__panel {
+  padding: clamp(28px, 3vw, 40px) 0 clamp(36px, 4vw, 52px);
+  border-top: 1px solid var(--crease-ground);
+}
+
+.record__title {
+  max-width: 16ch;
+  margin: 0 0 0.45em;
+  color: var(--color-vermilion);
+  font-size: clamp(1.75rem, 2.7vw, 2.5rem);
+  font-weight: 300;
+  line-height: 1.08;
+}
+
+.record__text {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--color-sumi-soft);
+}
+
+@media (min-width: 900px) {
+  .record__panels {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .record__panel:nth-child(even) {
+    padding-left: clamp(32px, 4vw, 64px);
+    border-left: 1px solid var(--crease-ground);
+  }
+
+  .record__panel:nth-child(odd) {
+    padding-right: clamp(32px, 4vw, 64px);
+  }
+}
+
+.close {
+  display: grid;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: end;
+  margin-top: clamp(72px, 10vw, 136px);
+  padding: clamp(64px, 9vw, 128px) clamp(20px, 6vw, 112px);
+  background-color: var(--color-vermilion);
+  background-image: var(--grain-sheet);
+}
+
+.close__title {
+  max-width: 9ch;
+  margin: 0;
+  color: var(--color-fold);
+  font-size: clamp(2.75rem, 7vw, 6rem);
+  font-weight: 300;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+/* The underside of the sheet, its own corner turned. */
+.close__underside {
+  position: relative;
+  padding: clamp(24px, 3vw, 40px);
+  padding-right: clamp(40px, 5vw, 64px);
+  background-color: var(--color-washi);
+  background-image: var(--grain-ground);
+  clip-path: polygon(0 0, calc(100% - 44px) 0, 100% 44px, 100% 100%, 0 100%);
+}
+
+.close__underside::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  background: #d9ccb4;
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.close__underside p {
+  max-width: 50ch;
+  margin: 0 0 24px;
+  font-size: 1.125rem;
+}
+
+.close__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 28px;
+}
+
+.button-fold {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 0;
+  background: var(--color-vermilion-ink);
+  color: var(--color-fold);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease-paper);
+}
+
+.button-fold:hover {
+  background: #96251b;
+}
+
+.button-fold[aria-disabled] {
+  cursor: progress;
+}
+
+.close__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-sumi);
+  font-weight: 500;
+}
+
+@media (min-width: 1000px) {
+  .close {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+  }
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 32px;
+  padding: 28px clamp(20px, 6vw, 112px) 40px;
+  color: var(--color-sumi-soft);
+  font-size: 0.9375rem;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer__link {
+  color: var(--color-sumi);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crease,
+  .corner__lift,
+  .corner__face,
+  .corner__arrow,
+  .folds__number {
+    transition: none;
+  }
+
+  .clause[data-glow] ins,
+  .clause[data-glow] del {
+    animation: none;
+  }
+}

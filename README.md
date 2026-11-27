@@ -5,8 +5,8 @@ any two versions can be compared word by word, and each document is shared with 
 and viewers. Members are notified of meaningful changes, and every action is recorded in an
 append-only activity log. Contracts can be uploaded as PDF, DOCX or TXT.
 
-Built with FastAPI, SQLAlchemy 2, Alembic and PostgreSQL 16 on Python 3.12. A React frontend is
-planned (`PLAN.md`, Phases 8–10).
+Built with FastAPI, SQLAlchemy 2, Alembic and PostgreSQL 16 on Python 3.12. The React frontend,
+Inkstep, is being built in `frontend/` (`PLAN.md`, Phase 9); its landing page is done.
 
 ## Features
 

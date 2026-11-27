@@ -1,0 +1,62 @@
+{
+  "title": "Master Services Agreement — Contoso",
+  "excerpt": "clauses 3 and 4",
+  "folds": [
+    {
+      "number": 1,
+      "author": "Asha Rao",
+      "note": null,
+      "state": "live",
+      "clauses": [
+        [["3. Service Levels. Provider will make the platform available 99.5% of each calendar month."]],
+        [["4. Limitation of Liability. Each party's total liability is limited to the fees paid in the twelve (12) months before the claim."]]
+      ]
+    },
+    {
+      "number": 2,
+      "author": "Chloe Martin",
+      "note": "Higher uptime; 45-day payment",
+      "state": "live",
+      "clauses": [
+        [
+          ["3. Service Levels. Provider will make the platform available "],
+          ["99.5%", "del"],
+          ["99.9%", "ins"],
+          [" of each calendar month."]
+        ],
+        [["4. Limitation of Liability. Each party's total liability is limited to the fees paid in the twelve (12) months before the claim."]]
+      ]
+    },
+    {
+      "number": 3,
+      "author": "Chloe Martin",
+      "note": "Draft: lower liability cap",
+      "state": "withdrawn",
+      "clauses": [
+        [["3. Service Levels. Provider will make the platform available 99.9% of each calendar month."]],
+        [
+          ["4. Limitation of Liability. Each party's total liability is limited to the fees paid in the "],
+          ["twelve (12)", "del"],
+          ["three (3)", "ins"],
+          [" months before the claim."]
+        ]
+      ]
+    },
+    {
+      "number": 4,
+      "author": "Asha Rao",
+      "note": "Liability cap change rejected",
+      "state": "restored",
+      "restores": 2,
+      "clauses": [
+        [["3. Service Levels. Provider will make the platform available 99.9% of each calendar month."]],
+        [
+          ["4. Limitation of Liability. Each party's total liability is limited to the fees paid in the "],
+          ["three (3)", "del"],
+          ["twelve (12)", "ins"],
+          [" months before the claim."]
+        ]
+      ]
+    }
+  ]
+}

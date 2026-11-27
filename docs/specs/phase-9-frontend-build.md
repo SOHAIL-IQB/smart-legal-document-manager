@@ -123,6 +123,17 @@ Acceptance:
 - Its detector run once.
 - Its finish review against the contract (see open question 2).
 - Reduced motion works; no console errors.
+- **Done 2026-11-27 (LOG 032):** first-viewport checks pass at 1440x900 and 390x844, and a
+  1280x620 laptop window gets the two-column layout. The detector found nothing. The finish review
+  returned "fix" twice (five material fixes, then two regressions) and then "ship" on its verdict
+  pass. 31 of 31 frontend deliberate breaks caught, and 3 of 3 for the sample-history check.
+  Decided while building:
+  - The sheet rests on the current version. Replay, the keys and dragging fold it; nothing plays
+    by itself, so the first viewport always shows the contract's composition.
+  - The sheet shows the clause each fold changes, as the contract's singular "the clause" says. The
+    two-clause excerpt sits on the ground on narrow screens.
+  - The typeface is Alegreya Sans, self-hosted.
+  - `DESIGN.md` is still written at F9, as specified.
 
 **F5. Sign in, sign up and demo entry.** Our own forms (react-hook-form + Zod), labelled, with inline
 errors tied by `aria-describedby`. Rate-limit (429) and wrong-password messages come from the API.

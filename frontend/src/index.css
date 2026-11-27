@@ -1,3 +1,97 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+/* Alegreya Sans, self-hosted (SIL Open Font License 1.1: src/assets/fonts/OFL.txt). */
+@font-face {
+  font-family: "Alegreya Sans";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("./assets/fonts/alegreya-sans-300-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Alegreya Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/alegreya-sans-400-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Alegreya Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/alegreya-sans-500-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Alegreya Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/alegreya-sans-700-latin.woff2") format("woff2");
+}
+
+/* The Folding Sequence. Vermilion owns the sheet and large type only: small text never sits on
+   it (fold-white on vermilion is 4.1:1). Small vermilion text on the ground uses vermilion-ink. */
+@theme {
+  --color-fold: #f6f1e9; /* the ground, and the crease lines on the sheet */
+  --color-washi: #ede3d1; /* the underside of the sheet, seen where a corner turns back */
+  --color-vermilion: #d83a2e;
+  --color-vermilion-ink: #b42d22; /* 5.4:1 on the ground */
+  --color-sumi: #1a1a1a;
+  --color-sumi-soft: #4a4540; /* 8.4:1 on the ground */
+  --color-gold: #d4af37; /* one dot: the current version */
+  --color-gold-edge: #9c7e1e;
+
+  --font-sans: "Alegreya Sans", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+
+  --ease-paper: cubic-bezier(0.45, 0, 0.25, 1);
+  --duration-fold: 420ms;
+
+  /* Washi: a faint uneven cloud, thin curling fibres and fine flecks in the sheet; flecks in the
+     ground. Stitched noise, so the tiles meet without seams. */
+  --grain-sheet: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='c' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015' numOctaves='4' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.95 0 0 0 0 0.9 0 0 0 0.22 -0.085'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.03' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.97 0 0 0 0 0.93 0 0 0 -3.2 0.26'/%3E%3C/filter%3E%3Cfilter id='s' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.05 0 0 0 0 0.02 0 0 0 0.5 -0.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  --grain-ground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='s' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.2 0 0 0 0.6 -0.27'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+}
+
+@layer base {
+  html {
+    background: var(--color-fold);
+    color: var(--color-sumi);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scrollbar-color: color-mix(in srgb, var(--color-vermilion) 70%, transparent) var(--color-fold);
+  }
+
+  body {
+    min-height: 100svh;
+    background-color: var(--color-fold);
+    background-image: var(--grain-ground);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    caret-color: var(--color-vermilion);
+  }
+
+  ::selection {
+    background: var(--color-vermilion);
+    color: var(--color-fold);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-sumi);
+    outline-offset: 3px;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}

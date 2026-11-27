@@ -1432,3 +1432,121 @@ after):
   - Signed in through a throwaway demo workspace, `/documents` rendered with no console errors; then
     signed out (204).
 
+## 032 — 2026-11-27 — Phase 9 F4: the landing page
+
+**What was built** (`frontend/src/pages/Landing.tsx`, `frontend/src/pages/landing/`), code-led, to the
+direction contract in `.impeccable/surfaces/frontend-src-pages-landing-tsx.md`:
+- **The sheet:** a vermilion square, full height on wide screens and offset right. Its horizontal
+  crease runs on across the ground, dividing the margin into panels. The headline is in fold-white.
+  - It carries one crease per fold in that fold's line form: solid, dashed for withdrawn, doubled
+    for restored.
+  - It shows the clause that fold changes, with inserted words underlined and removed ones struck.
+- **The margin column** is an ARIA slider over versions 01–04. It takes the keys (Up/Down,
+  Home/End), a drag, or "Replay the history".
+  - Each step folds one panel on its crease, about 420 ms: a lift, then a lay. Changed words get a
+    short afterglow, but only once the sheet has moved.
+  - With reduced motion, states swap directly.
+  - On narrow screens the column is a strip directly under the sheet.
+- **The action:** the lower corner is turned back. The flap shows the washi underside with "Open
+  your demo workspace", which calls `POST /api/demo/workspaces`, stores the session and opens
+  `/documents`. A signed-in visitor sees "Go to your documents" instead.
+- **Below the sheet:** "How to read a sheet" (the line forms and marks), four claims the backend
+  proves, a close with the demo explained, and a footer saying the people and contracts are fictional.
+- **Proof is real:** `msa-history.json` holds the seeded Master Services Agreement history. The new
+  `tests/test_landing_sample.py` checks each fold's text, marks, authors and notes against
+  `app/services/sample_data.py`.
+- **Assets:** Alegreya Sans (300/400/500/700, latin), self-hosted, with its OFL licence alongside.
+  The washi texture is inline SVG noise. The favicon is redrawn as the folded sheet.
+- **Removed:** the F2 health placeholder (`App.tsx`, `App.test.tsx`, `api/health.ts`).
+
+**Decided while building** (recorded in the spec's F4 line):
+- The approved sketch and the contract disagree (the square is on the left in the sketch). The spec
+  says F4 is built to the contract, so the contract wins.
+- **The sheet rests on version 04.** A first build auto-played from 01 on load, so the first
+  viewport (and any capture) showed an unmarked clause or a panel mid-fold. That is against the
+  contract's "the clause, with its change marked" and "the gold dot on 04".
+- **The sheet shows one clause, the one its fold changes.** Two clauses don't fit on a sheet about
+  600 px tall at the 24 px contrast floor (fold-white on vermilion is 4.1:1, so small text never
+  sits on vermilion). The two-clause excerpt sits on the ground on narrow screens.
+- **The typeface** is Alegreya Sans, within "quiet humanist sans" and off impeccable's default list.
+
+**impeccable steps:**
+- `impeccable context --target frontend/src/pages/Landing.tsx`; read `new-work.md` and `craft-floor.md`.
+- **Chromium for the captures.** None was installed. The owner chose to install it:
+  `npx playwright@1.65.1 install chromium` (about 101 MB into `~/Library/Caches/ms-playwright`; no
+  project dependency).
+- **first-viewport** (`--thesis .hero --action .corner`):
+  - The first run failed one check: 99.9% had no sample mark beside it. Fixed with a washi "Sample
+    text: …" label on the clause.
+  - Final: every check ok. 1440x900: thesis 100%. 390x844: thesis 83%. Action inside and answers a
+    click; longest gap 196 px.
+- **Capture side effect:** the tool's click check opens real demo workspaces, and one run carried the
+  session into the next view. Each view was then captured in its own run, after restarting the dev
+  API container to reset its in-memory rate limit.
+- **`impeccable detect --json`** on the changed UI files: `[]`, run once.
+- **Finish review** (the shipped finish-reviewer agent, fresh context, code-led packet), three rounds:
+  - Round 1, fix. Five material fixes:
+    - a laptop height gate (680 px pushed 1280x720 browser windows to the phone layout);
+    - phone order (sheet before intro, h1 before intro);
+    - the fold column in the phone's first viewport;
+    - phone hierarchy (the "04 / restored" panel outranked the headline);
+    - directional fibre texture that read as scratches.
+  - Round 2, fix. All five resolved; two regressions from the batch: the gold dot was missing on
+    the phone, and a struck token split across lines.
+  - Round 3, ship. Both resolved, no new regressions.
+  - Scope of "ship": a verdict pass on the listed fixes, not a fresh full review. Motion, drag,
+    hover and pending states can't be judged from stills; tests and the live checks below cover them.
+- **`DESIGN.md`** is not written yet: the approved spec has the documenter run at F9, after one app
+  screen.
+
+**My own mistakes, caught before commit:**
+- A CSS edit for the one-line rule moved `line-through` onto `ins` as well, striking inserted words.
+  Seen in the 1280 capture and fixed before review.
+- The first "inserted words marked as removed" break broke the JSX tags. The landing tests failed to
+  compile, and the runner counted that crash as a catch. The break now swaps the whole element. The
+  runner now counts a break only when tests run and fail.
+- **Stale console errors:** errors seen early were left over from a stale Vite pre-bundle (two
+  React copies). The cache was cleared, and a fresh tab showed none.
+
+**Robustness:** animations don't advance in a page that isn't rendering, which froze a panel on its
+edge in the hidden browser pane. Each half-fold now has a time limit, and a hidden page swaps
+directly.
+
+**Deliberate breaks** (throwaway copies, refreshed with rsync first; real files hashed before and
+after):
+- Backend: the sample shows an invented figure, the wrong author, or a misquoted note. 3 of 3 caught.
+- Frontend: 15 F4 breaks plus the 16 earlier ones, **31 of 31 caught**. The F4 breaks:
+  - the sheet jumps instead of folding one at a time;
+  - choosing a fold doesn't stop the replay;
+  - the sheet doesn't rest on 04;
+  - the keys run the wrong way; End is broken;
+  - only the latest crease shows;
+  - inserted words are marked as removed;
+  - the sheet shows every clause; the sample label is missing;
+  - the demo doesn't record the session; the demo doesn't open the documents;
+  - a signed-in visitor is offered a new demo;
+  - the afterglow plays on load;
+  - the slider hides "restored" and "current";
+  - the page crashes where motion can't be read.
+
+**Verification:**
+- `ruff check .`, `ruff format --check .`: clean.
+- `pytest --cov`: 499 passed, 1 skipped; coverage 98%.
+- Postgres suite: 500 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- `npm run typecheck`, `npm run lint`: clean. `npm test`: 35 passed (8 files).
+- `npm run build`: 405.2 KB JS (126.1 KB gzipped), 24.8 KB CSS, four 17 KB fonts.
+- **Live** (Vite and the Docker API):
+  - 1440x900, 1280x720/620, 1024x768 and 390x844 checked.
+  - Keyboard: the tab order is wordmark, Sign in, corner, slider, Replay. The corner's focus ring was
+    hidden under its paper layers; it is now drawn above them.
+  - A full replay in a fresh tab ended at 04 with every crease on and no console errors.
+
+**Docs followed:**
+- WAI-ARIA slider pattern: https://www.w3.org/WAI/ARIA/apg/patterns/slider/
+- Web Animations `Element.animate`: https://developer.mozilla.org/en-US/docs/Web/API/Element/animate
+- React `useSyncExternalStore`: https://react.dev/reference/react/useSyncExternalStore
+- React `flushSync`: https://react.dev/reference/react-dom/flushSync
+- CSS container queries: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries
+- SVG `feTurbulence` `stitchTiles`: https://developer.mozilla.org/en-US/docs/Web/SVG/Element/feTurbulence
+

@@ -1,13 +1,13 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 
-import App from '@/App'
 import { RequireAuth } from '@/auth/RequireAuth'
+import { Landing } from '@/pages/Landing'
 import { NotFound } from '@/pages/NotFound'
 import { Placeholder } from '@/pages/Placeholder'
 
 // Data-mode routes: https://reactrouter.com/start/data/routing
 export const routes: RouteObject[] = [
-  { path: '/', element: <App /> }, // the landing page (F4) replaces this placeholder
+  { path: '/', element: <Landing /> },
   { path: '/sign-in', element: <Placeholder title="Sign in" task="F5" /> },
   { path: '/sign-up', element: <Placeholder title="Create an account" task="F5" /> },
   {

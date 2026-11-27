@@ -59,6 +59,9 @@ The rebuild of the original submission (2026-11-22 to 2026-11-24). The API repor
   - the Phase 7 spec;
   - `AGENTS.md`, and `CONSTRAINTS.md` with a floor guard that blocks weakened tests or silenced
     checks.
+- **Frontend (Inkstep, in progress):** the landing page. Its sheet shows the sample agreement's real
+  history; the margin column folds through the versions with the keyboard, a drag or Replay; and
+  the turned-back corner opens a private demo workspace.
 - **CI:**
   - lint and a coverage floor (97.5%);
   - a PostgreSQL job that round-trips the migrations and runs the full suite;
