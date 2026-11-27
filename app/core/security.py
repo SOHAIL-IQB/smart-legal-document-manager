@@ -111,3 +111,5 @@ class LoginRateLimiter:
 
 
 login_rate_limiter = LoginRateLimiter()
+# New demo workspaces per client IP per hour (Phase 9 F1), so nobody can fill the database.
+demo_workspace_limiter = LoginRateLimiter(window_seconds=lambda: 3600)

@@ -1,5 +1,7 @@
 """Every "safe to retry" row in ADR 0002 (docs/adr/0002-api-contract.md), checked by replaying the
-request after it succeeded. The two endpoints documented as unsafe are checked too."""
+request after it succeeded. The endpoints documented as unsafe are checked too."""
+
+from types import SimpleNamespace
 
 from tests.files import make_pdf
 
@@ -115,3 +117,22 @@ def test_delete_account_retry_is_a_401(client, alice):
     body = {"password": "correct horse battery"}
     first, second = twice(client, "DELETE", "/api/auth/me", alice, json=body)
     assert (first.status_code, second.status_code) == (204, 401)
+
+
+def test_creating_a_demo_workspace_is_not_safe_to_retry(client):
+    # Documented as unsafe in ADR 0002: a retry makes a second, separate workspace.
+    headers = {"X-Requested-With": "XMLHttpRequest"}
+    first = client.post("/api/demo/workspaces", headers=headers)
+    second = client.post("/api/demo/workspaces", headers=headers)
+    assert (first.status_code, second.status_code) == (201, 201)
+    assert first.json()["workspace"]["id"] != second.json()["workspace"]["id"]
+
+
+def test_switching_demo_accounts_is_safe_to_retry(client):
+    body = client.post("/api/demo/workspaces", headers={"X-Requested-With": "XMLHttpRequest"})
+    demo = SimpleNamespace(headers={"Authorization": f"Bearer {body.json()['access_token']}"})
+    ben = body.json()["accounts"][1]["user_id"]
+    url = "/api/demo/workspaces/current/switch"
+    first, second = twice(client, "POST", url, demo, json={"user_id": ben})
+    assert first.status_code == second.status_code == 200
+    assert first.json()["user"]["id"] == second.json()["user"]["id"] == ben

@@ -86,6 +86,22 @@ def _in_list(column: str, values: type[enum.StrEnum]) -> str:
     return f"{column} IN ({', '.join(repr(v.value) for v in values)})"
 
 
+class DemoWorkspace(Base):
+    """A visitor's private copy of the demo (Phase 9 F1): three accounts and the sample contracts.
+
+    Expires after `DEMO_WORKSPACE_HOURS`; `scripts.purge_demo` (and every new workspace) removes
+    expired ones with everything in them. No visitor data is stored here, not even the IP.
+    """
+
+    __tablename__ = "demo_workspaces"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime(), default=utcnow, server_default=func.now(), nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, index=True)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -99,6 +115,11 @@ class User(Base):
     # Set when the account is deleted: the row stays as an anonymous placeholder so history
     # (versions, activity) still resolves, and its tokens stop working (Phase 7 T15).
     deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    # Set on demo accounts only. They can't sign in with a password, can share only inside their
+    # own workspace, and their sessions stop when the workspace expires (Phase 9 F1).
+    demo_workspace_id: Mapped[int | None] = mapped_column(
+        ForeignKey("demo_workspaces.id"), index=True
+    )
 
     created_documents: Mapped[list["Document"]] = relationship(back_populates="creator")
     edited_versions: Mapped[list["DocumentVersion"]] = relationship(

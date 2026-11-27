@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.errors import AuthenticationError, PermissionDeniedError
 from app.core.security import decode_access_token
-from app.db.models import Role, User
+from app.db.models import DemoWorkspace, Role, User, utcnow
 from app.db.session import get_db
 from app.services.documents import DocumentAccess, get_document_access
 
@@ -42,6 +42,10 @@ def get_current_user(
     user = db.get(User, user_id) if user_id is not None else None
     if user is None or user.deleted_at is not None:  # a deleted account's tokens stop working
         raise AuthenticationError("Your session is invalid or has expired. Please sign in again.")
+    if user.demo_workspace_id is not None:
+        workspace = db.get(DemoWorkspace, user.demo_workspace_id)
+        if workspace is None or workspace.expires_at <= utcnow():
+            raise AuthenticationError("This demo workspace has expired. Start a new one.")
     request.state.user_id = user.id  # for the access log line
     return user
 

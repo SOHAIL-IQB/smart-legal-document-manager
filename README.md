@@ -112,6 +112,17 @@ the returned token as `Authorization: Bearer <token>`. Every document has member
 | Add or restore a version, rename | | ✓ | ✓ |
 | Delete a version or the document, manage members | | | ✓ |
 
+**Private demo workspaces.** `POST /demo/workspaces` gives a visitor with no account their own copy
+of the demo, and signs them in as its first account:
+- three accounts and the four sample contracts, with history, sharing, activity and notifications;
+- `POST /demo/workspaces/current/switch` becomes another account of the same workspace, to see each
+  role.
+
+Demo accounts can't sign in with a password, and can share only inside their own workspace. A
+workspace expires after 24 hours (`DEMO_WORKSPACE_HOURS`): its sessions stop at once, and
+`python -m scripts.purge_demo` (also run on every new workspace) deletes everything in it. Creation
+needs the `X-Requested-With` header and is limited per IP (`DEMO_WORKSPACES_PER_IP`).
+
 **Your data.** `GET /auth/me/export` downloads your profile, memberships, the versions you wrote,
 your activity and your notifications, for the documents you can still access.
 `DELETE /auth/me` deletes your account after asking for your password again:
@@ -136,6 +147,8 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `GET` | `/auth/me` | signed in |
 | `GET` | `/auth/me/export` (your data as a JSON download) | signed in |
 | `DELETE` | `/auth/me` (body: `{"password": "..."}`) | signed in |
+| `POST` | `/demo/workspaces` (send `X-Requested-With`) | anyone; 5 per IP per hour |
+| `POST` | `/demo/workspaces/current/switch` (body: `{"user_id": ...}`) | a demo account, within its own workspace |
 | `GET` / `POST` | `/documents` (`?q=&role=&sort=&order=&limit=&offset=`) | signed in (lists only your documents) |
 | `GET` | `/documents/{id}` | viewer+ |
 | `PATCH` | `/documents/{id}/title` | editor+ |
@@ -245,6 +258,7 @@ Local development uses Python 3.12 in `.venv` and Postgres from Docker (host por
 | Migrate | `alembic upgrade head` |
 | Run the API (reloads on change) | `uvicorn app.main:app --reload` |
 | Demo data | `python -m scripts.seed` |
+| Delete expired demo workspaces (run hourly) | `python -m scripts.purge_demo` |
 | Lint and format check | `ruff check . && ruff format --check .` |
 | Tests on SQLite, with coverage | `pytest --cov` |
 | Create the Postgres test database (once) | `docker compose exec db createdb -U postgres sldm_test` |
@@ -276,6 +290,7 @@ Logs are JSON, one object per line, on stdout. Every request writes one `http_re
 - `upload_rejected` (with a reason code);
 - `version_conflict`;
 - `account_deleted`, `account_delete_refused`, `account_delete_rate_limited`;
+- `demo_workspace_created`, `demo_workspace_rate_limited`;
 - `unhandled_error` (with the traceback).
 
 Fields are allowlisted: no tokens, passwords, emails or request bodies.
@@ -306,6 +321,8 @@ Read from the environment or a local `.env` (see `.env.example`).
 | `ACCESS_TOKEN_MINUTES` | `720` | Session length, 5 minutes to 7 days |
 | `LOGIN_MAX_FAILURES`, `LOGIN_WINDOW_SECONDS` | `10`, `900` | Failed sign-ins (and wrong passwords on account deletion) before `429` |
 | `LOGIN_MAX_FAILURES_PER_IP` | `100` | Failed sign-ins from one IP across all emails in the same window, so one address can't spray a password at every account |
+| `DEMO_WORKSPACE_HOURS` | `24` | Lifetime of a private demo workspace (1–168) |
+| `DEMO_WORKSPACES_PER_IP` | `5` | New demo workspaces one IP may start per hour |
 | `MAX_UPLOAD_BYTES` | `10485760` (10 MB) | Set the same limit on any reverse proxy |
 | `MAX_JSON_BYTES` | `9437184` (9 MB) | Every other request body |
 | `FORWARDED_ALLOW_IPS` | `127.0.0.1,::1` | Proxies trusted for `X-Forwarded-For`. **Production refuses `*`**, which would let clients forge their IP |

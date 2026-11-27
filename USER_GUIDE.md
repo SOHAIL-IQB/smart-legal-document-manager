@@ -155,6 +155,24 @@ if wrong, `429` after repeated failures), and is refused with `409` while you ar
 of a document other people use. Make someone else an owner first. Afterwards your token returns
 `401`, your versions show "Deleted user" as their author, and the email address can sign up again.
 
+## 12. A private demo workspace (no account needed)
+
+```bash
+curl -s -X POST $API/demo/workspaces -H "X-Requested-With: XMLHttpRequest"
+```
+
+You get three fresh accounts (Asha, Ben and Chloe), the four sample contracts, and a token for Asha
+(also set as a cookie for browsers). The response lists the other two accounts; become one of them
+to see their role:
+
+```bash
+curl -s -X POST $API/demo/workspaces/current/switch -H "Authorization: Bearer $DEMO" \
+  -H "Content-Type: application/json" -d '{"user_id": <Ben's user_id>}'
+```
+
+The workspace is yours alone and lasts 24 hours. Demo accounts can't sign in with a password or
+share with real accounts. One address may start 5 workspaces an hour (`429` after that).
+
 ## Errors
 
 Every error has the same shape:

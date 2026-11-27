@@ -39,6 +39,10 @@ def reset_state():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     login_rate_limiter.reset()
+    # Imported here, not at the top: the top-level imports must follow the environment setup.
+    from app.core.security import demo_workspace_limiter
+
+    demo_workspace_limiter.reset()
     yield
     Base.metadata.drop_all(bind=engine)
 

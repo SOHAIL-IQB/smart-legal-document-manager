@@ -51,7 +51,10 @@ def add_member(
     user = find_user_by_email(db, email)
     # A deleted account's placeholder email is predictable; it must not become a member
     # (review finding M1), and it answers exactly like an email with no account.
-    if user is None or user.deleted_at is not None:
+    # Answers like an unknown email: a deleted account (review finding M1), or an account in
+    # another world. Demo accounts share only inside their own workspace (Phase 9 F1).
+    other_world = user is not None and user.demo_workspace_id != access.user.demo_workspace_id
+    if user is None or user.deleted_at is not None or other_world:
         raise NotFoundError("No account exists with that email. Ask them to sign up first.")
     if db.get(DocumentMember, (access.document.id, user.id)) is not None:
         raise ConflictError(f"{user.email} already has access to this document.")

@@ -1191,3 +1191,68 @@ into this public repository. The candidates in `docs/design/components.md` are d
 only. Parts are built on shadcn/Radix (open source) with `motion`, `sonner` and `lucide-react` under
 their own licenses. The five pending code checks are no longer needed; their accessibility claims
 become requirements our builds must meet. F0 is done without waiting for tomorrow's retrieval quota.
+
+## 028 — 2026-11-27 — Phase 9 F1: private demo workspaces
+
+**Built, test-first** (22 tests in `tests/test_demo_workspace.py`; the first 19 failed before any
+code existed):
+- `POST /api/demo/workspaces` creates three demo accounts and the four sample contracts with
+  history, and signs in as the first account (cookie and token).
+  - It requires `X-Requested-With` (otherwise login CSRF), and is limited to 5 per IP per hour.
+  - It also purges expired workspaces.
+- `POST /api/demo/workspaces/current/switch` becomes another account of the same workspace.
+- Migration `0008`: the `demo_workspaces` table and `users.demo_workspace_id`. No visitor data is
+  stored, not even the IP; the limiter is in memory. It round-trips on Postgres and SQLite, and
+  `alembic check` reports no drift.
+
+Isolation:
+- Sharing between worlds answers 404, like an unknown email.
+- Demo accounts never sign in with a password: an unusable hash, plus an explicit lock.
+- An expired workspace's sessions stop at once, before any purge.
+- `python -m scripts.purge_demo` deletes expired workspaces with their documents, notifications
+  and accounts.
+
+**Two refactors, committed separately with no behavior change** (each commit passed the full suite
+alone at 460 tests, the pre-F1 count):
+- Session helpers and `RateLimitedError` moved out of the auth routes. The limiter now takes its
+  window as a setting reader.
+- The sample contracts moved from `scripts/seed.py` into `app/services/sample_data.py`, moved
+  mechanically rather than retyped. The seed's tests pass unchanged.
+
+**My own test mistakes, fixed:**
+- One test identified the purged workspace by id, but SQLite reuses a deleted row's id. It now
+  checks that no expired workspace remains.
+- A retry test built an object with `type(...)()`; replaced with `SimpleNamespace`.
+- The retry tests' docstring said "two" unsafe endpoints; now three.
+
+**Floor guard caught my edit** of the `conftest.py` import line that carries a pre-existing
+`# noqa: E402`: a changed line counts as a new suppression. Fixed without an exception: that line is
+untouched, and the new limiter is imported inside the reset fixture.
+
+**Deliberate breaks** (throwaway copy; real files hashed before and after). 13 breaks:
+- sharing across worlds;
+- demo sign-in lock removed;
+- expired sessions working;
+- no CSRF header needed;
+- no rate limit; creations not counted;
+- real accounts may switch; switching across workspaces; switching to a deleted account;
+- purge keeps documents; purge keeps notifications;
+- creation doesn't purge;
+- lifetime setting ignored.
+
+12 were caught at first. Two observations:
+- **The runner itself had a flaw:** two F1 files were already in its file-to-tests map, so their
+  breaks would have run old tests only. Every F1 break now names its tests.
+- **"Purge keeps notifications" survived.** The cascade from deleting the users plus isolation make
+  the explicit delete redundant in normal operation. It is kept as defence for a stray
+  cross-world notification (which would otherwise block the purge with a foreign-key error), and a
+  new test plants one. After that: **13 of 13 caught.**
+
+**Verification:**
+- `ruff check . && ruff format --check .`: clean.
+- `pytest --cov`: 484 passed, 1 skipped; coverage 98.34%.
+- Postgres: 485 passed.
+- Floor guard: clean.
+
+**Docs:** README (endpoints, demo section, settings, events, commands), ADR 0002 (creating a
+workspace is not retry-safe; switching is; now three unsafe endpoints), and `USER_GUIDE.md` §12.

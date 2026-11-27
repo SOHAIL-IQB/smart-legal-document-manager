@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     login_max_failures_per_ip: int = 100
     login_window_seconds: int = 15 * 60
 
+    # Private demo workspaces (Phase 9 F1): lifetime, and how many one IP may start per hour.
+    demo_workspace_hours: int = Field(default=24, ge=1, le=7 * 24)
+    demo_workspaces_per_ip: int = Field(default=5, ge=1)
+
     # Uploads (PDF / DOCX / TXT). Also set the same limit on any reverse proxy in front of the API.
     max_upload_bytes: int = 10 * 1024 * 1024
 

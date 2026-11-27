@@ -78,6 +78,8 @@ Acceptance:
 - Deliberate breaks in the throwaway copy.
 - README, ADR 0002 (retry safety: creating a workspace is not safe to retry) and the user guide
   updated.
+- **Done 2026-11-27 (LOG 028):** 22 tests, passing on both databases; 13 of 13 deliberate breaks
+  caught; migration `0008` round-trips with no drift.
 
 **F2. Scaffold `frontend/`**
 - Stack: Vite + React + TypeScript; Tailwind CSS 4 via `@tailwindcss/vite`; shadcn initialised (Radix

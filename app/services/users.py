@@ -35,4 +35,6 @@ def authenticate(db: Session, *, email: str, password: str) -> User:
         raise AuthenticationError(INVALID_CREDENTIALS)
     if user.deleted_at is not None:  # unreachable by password alone; kept as a second lock
         raise AuthenticationError(INVALID_CREDENTIALS)
+    if user.demo_workspace_id is not None:  # demo sessions come only from the demo endpoints
+        raise AuthenticationError(INVALID_CREDENTIALS)
     return user

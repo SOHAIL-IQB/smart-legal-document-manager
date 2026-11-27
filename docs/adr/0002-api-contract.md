@@ -64,17 +64,20 @@ every observable behavior becomes something a client depends on (Hyrum's law).
    | `PATCH` / `DELETE /documents/{id}/members/{user_id}` | yes | same role / 404 |
    | `POST /notifications/{id}/read`, `/notifications/read-all` | yes | no change |
    | `DELETE /auth/me` | yes | 401 (the account's tokens no longer work) |
+   | `POST /demo/workspaces` | **no** | creates a second workspace (and counts toward the per-IP limit) |
+   | `POST /demo/workspaces/current/switch` | yes | the same account's session again |
 
    A client that retries `POST /documents` or `POST /documents/upload` after a network error
-   should first check the document list.
+   should first check the document list. A second demo workspace is harmless (it expires) but
+   counts toward the visitor's hourly limit.
 
 ## Alternatives considered
 
 - **camelCase JSON:** conventional for JavaScript clients, but a full rename now with no
   functional gain. Rejected for the reasons in decision 2.
 - **Idempotency keys** (`Idempotency-Key` header stored with the result): the correct general
-  solution, but it needs a key store with a unique constraint and a retention policy. With only two
-  non-retry-safe endpoints, both used by a person clicking a button, it was deferred.
+  solution, but it needs a key store with a unique constraint and a retention policy. With only three
+  non-retry-safe endpoints, all used by a person clicking a button, it was deferred.
 - **Page/size pagination** (`page`, `page_size`): friendlier for page numbers, but offset/limit is
   simpler to implement correctly and still lets the UI compute pages from `total`.
 
