@@ -1256,3 +1256,55 @@ untouched, and the new limiter is imported inside the reset fixture.
 
 **Docs:** README (endpoints, demo section, settings, events, commands), ADR 0002 (creating a
 workspace is not retry-safe; switching is; now three unsafe endpoints), and `USER_GUIDE.md` §12.
+
+## 029 — 2026-11-27 — Phase 9 F2: the frontend scaffold
+
+**Official docs read** (source-driven development):
+- [Vite guide](https://vite.dev/guide/) (v8.4): `npm create vite@latest -- --template react-ts`;
+  Node 20.19+ or 22.12+.
+- [Tailwind CSS with Vite](https://tailwindcss.com/docs/installation/using-vite) (v4.3).
+- [shadcn with Vite](https://ui.shadcn.com/docs/installation/vite) and
+  [shadcn manual installation](https://ui.shadcn.com/docs/installation/manual).
+- [typescript-eslint dependency versions](https://typescript-eslint.io/users/dependency-versions)
+  (v8.74): TypeScript `>=4.8.4 <6.1.0`.
+
+**Decisions forced by evidence:**
+- **TypeScript 5.9.3, not 7.0 or 6.0.** create-vite 9.4 pins TypeScript 7.0.2, which typescript-eslint
+  doesn't support. The newest supported release, 6.0.3, failed `npm install` with a peer conflict:
+  openapi-typescript 7.13 requires `typescript@^5.x`. Forcing it (`--legacy-peer-deps`) was refused,
+  because that accepts a broken combination. 5.9.3 satisfies every approved tool.
+- **ESLint, not oxlint.** The template ships oxlint, which isn't on the approved list. The spec's
+  ESLint + typescript-eslint is used. Added with it, and flagged to the owner: `@eslint/js` (ESLint's
+  own rules), `eslint-plugin-react-hooks` (React team; rules of hooks) and `globals`.
+- **No shadcn preset.** `shadcn init` asks for a visual preset (fonts and colours, e.g. Geist). That
+  would plant a look under the locked Folding Sequence world, so the documented manual installation
+  was used instead: the `cn` helper and `components.json`. Style `radix-nova` (the approved Radix
+  base) was validated by a CLI dry run.
+- **Supply chain:** before installing, the publishers were checked. `cn` comes from shadcn
+  (`shadcn-ui/cn`); `tw-animate-css` and `class-variance-authority` from their authors. Every install
+  used `--ignore-scripts`. `npm audit`: 0 vulnerabilities.
+
+**Built:**
+- `frontend/` (Vite 8.4, React 19.3, Tailwind 4.3), with the approved runtime packages.
+- Node 26 pinned in `.nvmrc` and `engines`.
+- The dev server proxies `/api` to port 8000 (same origin for the cookie and response headers).
+- Scripts: `typecheck`, `lint`, `test`, `build`, `gen:api`.
+- A separate `tsconfig.test.json`, because Node-only tests must not be typechecked as browser code.
+  `tsc -b` covers app, tests and config.
+- A placeholder page showing API readiness. The designed landing page is F4. Vite's template
+  favicon is replaced in F4.
+
+**Typed API client, with drift guarded twice:**
+- `scripts/export_openapi.py` writes `frontend/src/api/openapi.json`. `tests/test_openapi_snapshot.py`
+  failed with the snapshot missing, then passed.
+- `npm run gen:api` generates `src/api/schema.d.ts`. `src/api/schema.test.ts` failed with it missing,
+  then passed.
+- `src/api/health.ts` is typed from the generated schema.
+
+**Verification:**
+- Frontend: `npm run typecheck` clean; `npm run lint` clean; `npm test` 3 passed; `npm run build`
+  219.7 KB JS (68.8 KB gzipped) and 8.7 KB CSS.
+- Backend: ruff clean; `pytest` 486 passed, 1 skipped; Postgres 487 passed; floor guard clean.
+- **Live:** the Docker API plus `npm run dev`. The page shows "API ready · database ok" from
+  `GET localhost:5173/api/health/ready → 200` (through the proxy), with no console errors. One
+  `ERR_ABORTED` is React's development double-run of effects, cancelled by its own cleanup.

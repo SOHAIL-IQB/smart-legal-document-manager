@@ -94,6 +94,9 @@ Acceptance:
   committed. A test fails when the generated file is out of date, like the README check.
 - Acceptance: `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` pass; the dev server
   shows the API's health.
+- **Done 2026-11-27 (LOG 029):** TypeScript is **5.9.3**: typescript-eslint supports `<6.1.0`, and
+  openapi-typescript 7.13 requires `^5`. ESLint replaced the template's oxlint. All four checks
+  pass, and the dev server shows the API's readiness through the proxy.
 
 **F3. App shell**
 - Router with public routes (landing, sign in, sign up, 404) and signed-in routes behind a guard.
