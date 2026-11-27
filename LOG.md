@@ -1054,3 +1054,62 @@ not legal clearance.
 
 **Owner's choice: Inkstep** (from Stetfold, Inkstep, Clauswell and Recitra; my stated guess was
 Stetfold). `PRODUCT.md` and the spec are corrected.
+
+## 023 — 2026-11-27 — Phase 8 D3 and D4: the visual world is the Folding Sequence
+
+**Derivation** (impeccable new-work-world, before any roll): seven worlds from the in-house legal
+team's culture, not its software, ordered by resonance:
+1. consolidated legislation
+2. pleading paper
+3. land and notarial registers
+4. Bates numbering and exhibit tabs
+5. the records room
+6. the signing ritual (the name's one literal reading)
+7. the deal tombstone
+
+They span six material families. Rut noted: the navy SaaS page, its cream-serif-redline
+opposite, and ink splashes.
+
+**Roll service.** The first `concept-seed` run degraded (roll service unreachable). It was rerun
+with network access after stating the exact contact: one GET to `https://impeccable.style/api/roll`
+carrying scope, mode, an eight-hex seed key and a re-roll counter; no project data. The only file
+written is `.impeccable/questions/roll.json`. Seed reference: `seed:a1d94de8f3bc5217`.
+
+**Round 1** (assigned candidate 7, the deal tombstone):
+- Six catalog challengers were fused with the product and judged on audience recognition and
+  product clarity. All six declined, each donating one named raise.
+- My pick: consolidated legislation, with its familiarity risk stated.
+- The decision page was served. The built-in browser pane blocks its embedded sketches
+  (`ERR_BLOCKED_BY_CLIENT`; the sketch files themselves returned 200 and render when opened
+  directly), so the page was also opened in the default browser.
+- **Owner: re-roll** (plain).
+
+**Round 2** (every round-1 direction eliminated; two new grounded candidates added, the minute book
+and seal, and the court cause list):
+- Assigned candidate 5, the court cause list.
+- The folding sequence was judged **competitive**: it holds product clarity (numbered folds, every
+  earlier crease kept, recoverable steps) but loses audience recognition.
+- The risograph was declined because its comparison marks change by colour alone, against the WCAG
+  commitment. Four others declined.
+- The owner asked for the choice again. The page was reopened, and the same hand was put in the
+  question tool too (disclosed).
+- **Owner: Folding Sequence**, chosen over the roll and my pick. The page-wait was stopped.
+
+**Fusion decisions:**
+- One uncut sheet = one contract. A numbered fold = a version. Earlier creases stay visible =
+  history.
+- Line form carries state (solid live, dashed withdrawn, doubled restored), with a gold dot on the
+  current version.
+- Kanji step names dropped as costume; steps are named by change notes.
+- Small text never sits on vermilion (AA).
+- The world's own hero is a split layout, which the Persuade rules call the template. My round-2
+  sketch had the same split. The contract therefore makes the sheet the page itself, with the
+  primary action as a turned-back corner (the "next fold").
+
+**D4:** the direction contract is in `.impeccable/surfaces/frontend-src-pages-landing-tsx.md`. It
+reads back with THESIS, OWN-WORLD, STORY, FIRST VIEWPORT, FORM (with the seed reference) and
+FINISH, plus the signature interaction (fold and unfold along the margin column, with afterglow and
+replay) and the motion grammar (one fold at a time, about 420 ms; reduced motion swaps states).
+
+**Not committed:** `.impeccable/reference/` (impeccable's catalog images, third-party, 17 MB) has
+its own ignore file; `.impeccable/questions/` ignores itself.

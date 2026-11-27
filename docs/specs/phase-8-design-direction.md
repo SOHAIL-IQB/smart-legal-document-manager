@@ -102,6 +102,9 @@ visitor (account deletion is a real feature). Three options, each with a differe
   the document workspace.
 - Acceptance: one direction locked by the owner on the decision page (or through the question
   tool if the page can't be served, disclosed).
+- **Done 2026-11-27: the Folding Sequence** (LOG 023). Round 1 was re-rolled. In round 2 the owner
+  chose the competitive challenger over the assigned court cause list and my pick (pleading
+  paper).
 
 ### D4. Direction contract
 
@@ -111,6 +114,8 @@ visitor (account deletion is a real feature). Three options, each with a differe
 - Also record the signature interaction and the motion grammar the build must deliver.
 - Acceptance: the brief reads back with all six blocks and the seed reference; the owner has
   read it.
+- **Written 2026-11-27:** `.impeccable/surfaces/frontend-src-pages-landing-tsx.md`. It reads back
+  with all six blocks and `seed:a1d94de8f3bc5217`. The owner's read is pending (part of D6).
 
 ### D5. Component candidates from 21st.dev
 
