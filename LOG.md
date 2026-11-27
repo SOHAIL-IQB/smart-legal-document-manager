@@ -1019,3 +1019,38 @@ pick was not a polite acceptance. Recorded in `PRODUCT.md` (Brand Commitments) a
 **D2** was decided at spec approval (LOG 020): a private demo workspace per visitor.
 
 **Checkpoint (after D1 and D2):** committed and pushed; CI checked.
+
+## 022 — 2026-11-27 — Correction: Tracemark dropped; the product is named Inkstep
+
+**What went wrong in entry 021.** The conflict check was one standard search per name, phrased
+like "Tracemark software app". It returned no exact match, and I reported the name as clear. The
+owner asked to check that the name isn't too heavily used. An exact-name search (extended mode),
+trademark listings and domains found:
+- **TRACEMARK, US Reg. No. 4199926** (live, Section 8 & 15 accepted): software for authenticating and
+  tracking digital content. This is the decisive conflict.
+- **TraceMark by NGIS on tracemark.com:** an active supply-chain platform on Google Cloud.
+- Vespera's Tracemark (sustainability reporting), tracemark.tech (jewelry traceability), an
+  open-source leak-tracing tool, and an older TRACE MARK registration (Reg. No. 1667361).
+- The name also sounds like "trademark", which confuses a legal product.
+
+Tracemark was dropped. Entry 021 stays as written; this entry corrects it.
+
+**The check from now on, for any name:** an exact-name search in extended mode, plus trademark
+listings (Justia, Trademarkia, uspto.report) and the likely domains. It is a careful web check,
+not legal clearance.
+
+**Rechecked with this method:**
+
+| Round | Name | Result |
+|---|---|---|
+| 1 | Clausetrail | Drop: clausetrail.com is an active vendor-compliance company |
+| 1 | Draftline | Drop: 5+ products; draftline.dev offers version history with restore |
+| 1 | Redlet | Weak: a UK letting agency; reads as derivative of "redline" |
+| 1 | Inkstep | **Pass:** an inactive student tattoo app and an artist handle; no trademark, no product |
+| 2 | Seriatim, Emendo, Margent, Codicil, Quire | Drop: each already used by one or more products (Quire by an established document collaboration app) |
+| 3 | Amendry | Drop: an amendment-tracking tool plus near spellings |
+| 3 | Folvero | Drop: folvero.com and folvero.store in use |
+| 3 | Stetfold, Clauswell, Recitra | Pass: no products and no trademark records |
+
+**Owner's choice: Inkstep** (from Stetfold, Inkstep, Clauswell and Recitra; my stated guess was
+Stetfold). `PRODUCT.md` and the spec are corrected.

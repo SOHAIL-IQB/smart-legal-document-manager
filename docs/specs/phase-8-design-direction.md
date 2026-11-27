@@ -62,7 +62,8 @@ The visual world is created once, on one first surface, and every other surface 
 - The owner picks one, or asks for another round.
 - Acceptance: one name chosen by the owner, recorded in `PRODUCT.md` under Brand Commitments,
   with the conflict check noted in `LOG.md`.
-- **Done 2026-11-27: Tracemark** (LOG 021). Countermark was dropped: an existing app uses it.
+- **Done 2026-11-27: Inkstep** (LOG 022). Tracemark was chosen first and then dropped after a
+  deeper check found a live US software trademark (LOG 021, 022).
 
 ### D2. How a reviewer gets into the demo
 

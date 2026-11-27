@@ -70,14 +70,15 @@ What the product can truthfully claim, because the backend proves it with tests:
 - Constraints: use the existing API; only small, additive API changes if a screen needs them.
 - Out of scope (owner-confirmed): real-time co-editing, e-signatures, AI summaries (declined
   2026-11-22), pricing and payments, native mobile apps, rich-text editing.
-- Product name: **Tracemark** (chosen 2026-11-27; see Brand Commitments).
+- Product name: **Inkstep** (chosen 2026-11-27; see Brand Commitments).
 
 ## Brand Commitments
 
-- **Name: Tracemark** (owner's choice, 2026-11-27, from five checked candidates). It says every change
-  leaves a mark you can trace. A basic web check found no software product using the name. That is
-  not a legal trademark clearance.
-- "Smart Legal Document Manager" remains the descriptor ("Tracemark — smart legal document
+- **Name: Inkstep** (owner's choice, 2026-11-27). It says each version is a step written in ink that
+  can't be erased. It passed the full check (exact-name search, products, trademark listings, likely
+  domains): the only uses found are an inactive student tattoo app (2022) and an artist's handle. That
+  is a careful web check, not legal trademark clearance; domain availability needs a registrar.
+- "Smart Legal Document Manager" remains the descriptor ("Inkstep — smart legal document
   manager") and the repository name.
 - No logo, voice or visual identity exists yet; Phase 8 D3 creates the visual world.
 
