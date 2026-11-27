@@ -1,6 +1,9 @@
 # Spec: Phase 9 — Frontend build
 
-Status: draft, awaiting owner approval (2026-11-27)
+Status: approved by the owner as written, 2026-11-27. This includes migration `0008`, the listed
+dependencies, the CI frontend job, and the three recommended answers: 24-hour expiry and 5
+workspaces per IP per hour; impeccable's finish reviewer and documenter allowed, one finish review
+per surface; nginx in production
 Source: `PLAN.md` §7 Phase 9 · `PRODUCT.md` · Phase 8 outcome (`docs/specs/phase-8-design-direction.md`,
 `.impeccable/surfaces/frontend-src-pages-landing-tsx.md`, `docs/design/components.md`)
 Skills: spec-driven-development, planning-and-task-breakdown, frontend-ui-engineering, impeccable

@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-27):** Phase 8 (design direction) done and approved: product named Inkstep, visual world the Folding Sequence. **Next: the Phase 9 spec (frontend build) for owner approval, before any frontend code.** Details: LOG.md entries 019–025; `docs/specs/phase-8-design-direction.md`.
+> **Resume point (2026-11-27):** Phase 8 (design direction) done and approved: product named Inkstep, visual world the Folding Sequence. **Phase 9 spec approved; next: Slice A (F0 open items, F1 demo workspace, F2 scaffold, F3 shell).** Details: LOG.md entries 019–026; `docs/specs/phase-9-frontend-build.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 
@@ -207,7 +207,7 @@ Checkpoints marked ⏸ are where I stop and ask you to review before continuing.
 - [x] 21st.dev: component candidates in `docs/design/components.md`
 - [x] **Owner approves the look before full build**: approved 2026-11-27
 
-### Phase 9 — Frontend build `[ ]`
+### Phase 9 — Frontend build `[~]` (spec: `docs/specs/phase-9-frontend-build.md`, approved 2026-11-27)
 - [ ] Scaffold Vite + TS + Tailwind + shadcn; typed API client; auth context; route guards
 - [ ] Pages: Landing · Sign in / Sign up · Documents dashboard (search, filters, pagination) · Document workspace (editor, version timeline, compare side-by-side, activity, sharing) · Notifications · Upload flow · 404
 - [ ] Loading / empty / error states for every view

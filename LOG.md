@@ -1159,3 +1159,19 @@ They replied **"approved"**. Phase 8 is closed in `PLAN.md`.
 
 Per the spec's checkpoint, the next step is a Phase 9 spec (frontend build) for approval before
 any frontend code.
+
+## 026 — 2026-11-27 — Phase 9 spec approved
+
+The owner replied **"Approve as written"** to `docs/specs/phase-9-frontend-build.md`. That approves:
+- the schema change (migration `0008`: `demo_workspaces`, `users.demo_workspace_id`);
+- the listed frontend dependencies;
+- the CI `frontend` job;
+- the three recommendations:
+  - demo workspaces expire after 24 hours, with 5 per IP per hour;
+  - impeccable's finish reviewer and documenter may run as subagents, one finish review per
+    surface;
+  - nginx serves the frontend in production.
+
+**Order of work:** F0's code checks need 21st.dev retrievals, and today's two are used (reset
+2026-11-28). So F0's license check is done now, its code checks tomorrow, and F1 (the demo
+workspace, backend, test-first) proceeds meanwhile, since it doesn't depend on F0.
