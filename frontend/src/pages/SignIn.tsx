@@ -9,7 +9,7 @@ import { signInSchema } from '@/auth/forms'
 import { sessionKey } from '@/auth/session'
 
 import { AccountPage, FormAlert } from './account/AccountPage'
-import { Field } from './account/Field'
+import { Field } from '@/components/Field'
 import { applyServerError, type FormProblem } from './account/serverErrors'
 
 export function SignIn() {

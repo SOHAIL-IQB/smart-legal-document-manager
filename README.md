@@ -149,6 +149,7 @@ All endpoints are under `/api`. Interactive docs: `http://localhost:8000/api/doc
 | `GET` | `/auth/me/export` (your data as a JSON download) | signed in |
 | `DELETE` | `/auth/me` (body: `{"password": "..."}`) | signed in |
 | `POST` | `/demo/workspaces` (send `X-Requested-With`) | anyone; 5 per IP per hour |
+| `GET` | `/demo/workspaces/current` (its expiry and its people) | a demo account |
 | `POST` | `/demo/workspaces/current/switch` (body: `{"user_id": ...}`) | a demo account, within its own workspace |
 | `GET` / `POST` | `/documents` (`?q=&role=&sort=&order=&limit=&offset=`) | signed in (lists only your documents) |
 | `GET` | `/documents/{id}` | viewer+ |

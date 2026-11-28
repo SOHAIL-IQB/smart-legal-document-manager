@@ -1,5 +1,7 @@
 import { useId, useState, type InputHTMLAttributes, type Ref } from 'react'
 
+import './fields.css'
+
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> & {
   label: string
   error?: string

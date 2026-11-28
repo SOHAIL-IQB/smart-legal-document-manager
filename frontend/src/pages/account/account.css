@@ -2,7 +2,6 @@
    form on the washi underside, a crease between them. */
 
 .account {
-  --crease-ground: rgb(216 58 46 / 0.32);
   display: flex;
   flex-direction: column;
   min-height: 100svh;
@@ -74,96 +73,6 @@
 .account__form {
   display: grid;
   gap: 22px;
-}
-
-.field__label {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-}
-
-/* A ruled line, not a box: sumi at rest, thicker vermilion-ink while you write on it. */
-.field__line {
-  display: flex;
-  align-items: center;
-  border-bottom: 1.5px solid var(--color-sumi);
-  transition:
-    border-color 200ms var(--ease-paper),
-    box-shadow 200ms var(--ease-paper),
-    background-color 200ms var(--ease-paper);
-}
-
-.field__line:focus-within {
-  border-bottom-color: var(--color-vermilion-ink);
-  background-color: rgb(246 241 233 / 0.6);
-  box-shadow: 0 1.5px 0 var(--color-vermilion-ink);
-}
-
-.field[data-invalid] .field__line {
-  border-bottom-color: var(--color-vermilion-ink);
-}
-
-.field__input {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 2px 7px;
-  border: 0;
-  background: transparent;
-  color: var(--color-sumi);
-  font: inherit;
-  font-size: 1.125rem;
-}
-
-/* Browser autofill would paint a pale box over the washi; keep the ruled line and sumi ink. */
-.field__input:-webkit-autofill,
-.field__input:autofill {
-  -webkit-box-shadow: 0 0 0 100px var(--color-washi) inset;
-  box-shadow: 0 0 0 100px var(--color-washi) inset;
-  -webkit-text-fill-color: var(--color-sumi);
-  caret-color: var(--color-vermilion);
-}
-
-.field__input:focus-visible {
-  outline: none; /* the line itself shows focus: colour, weight and a lighter ground */
-}
-
-.field__toggle {
-  min-width: 44px;
-  min-height: 40px;
-  padding: 0 4px;
-  border: 0;
-  background: none;
-  color: var(--color-vermilion-ink);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-/* An error is written beside a short struck rule: the world's mark for something rejected. */
-.field__error {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 7px 0 0;
-  color: var(--color-vermilion-ink);
-  font-size: 0.9375rem;
-  line-height: 1.35;
-}
-
-.field__error::before {
-  content: '';
-  flex: none;
-  width: 14px;
-  border-top: 2px solid var(--color-vermilion-ink);
-  transform: translateY(-0.3em);
-}
-
-.field__hint {
-  margin: 6px 0 0;
-  color: var(--color-sumi-soft);
-  font-size: 0.875rem;
 }
 
 .account__alert {

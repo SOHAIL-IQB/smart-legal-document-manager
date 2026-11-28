@@ -2,7 +2,6 @@
    composition holds at every sheet size. Small text never sits on vermilion. */
 
 .landing {
-  --crease-ground: rgb(216 58 46 / 0.32);
   overflow-x: clip;
 }
 

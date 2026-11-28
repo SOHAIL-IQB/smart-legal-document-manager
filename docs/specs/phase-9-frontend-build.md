@@ -151,6 +151,14 @@ errors tied by `aria-describedby`. Rate-limit (429) and wrong-password messages 
 - The ⌘K palette.
 - Upload of a new document.
 - Empty, loading and error states.
+- **Done 2026-11-28 (LOG 034):** the owner chose "Register under a sheet edge", "Upload or paste"
+  and the demo switch in the header now.
+  - The app header (navigation, ⌘K, account menu with Sign out and the demo switch) is built here
+    for every signed-in screen.
+  - One small additive endpoint, `GET /api/demo/workspaces/current`, lets the switch survive a
+    reload.
+  - The finish review went fix, fix, fix, then ship.
+  - Deliberate breaks: 64 of 64 frontend, 3 of 3 backend.
 
 **F7. Document workspace**
 - Read the current version.

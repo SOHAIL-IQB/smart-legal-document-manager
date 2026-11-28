@@ -286,6 +286,26 @@
         "title": "CompareResponse",
         "type": "object"
       },
+      "CurrentWorkspaceResponse": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/DemoAccount"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/DemoWorkspaceInfo"
+          }
+        },
+        "required": [
+          "workspace",
+          "accounts"
+        ],
+        "title": "CurrentWorkspaceResponse",
+        "type": "object"
+      },
       "DeleteAccountRequest": {
         "properties": {
           "password": {
@@ -1926,6 +1946,36 @@
           }
         },
         "summary": "Create Workspace",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/api/demo/workspaces/current": {
+      "get": {
+        "description": "The signed-in demo account's workspace and its people, so the app can offer the switch.",
+        "operationId": "current_workspace_api_demo_workspaces_current_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentWorkspaceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Not a demo account"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Current Workspace",
         "tags": [
           "demo"
         ]

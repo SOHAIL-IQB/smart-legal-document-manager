@@ -57,6 +57,19 @@ def create_workspace(db: Session) -> CreatedWorkspace:
     return CreatedWorkspace(workspace=workspace, accounts=accounts)
 
 
+def current_workspace(db: Session, user: User) -> CreatedWorkspace:
+    """The signed-in demo account's workspace and its people, in the order they were created."""
+    workspace = db.get(DemoWorkspace, user.demo_workspace_id) if user.demo_workspace_id else None
+    if workspace is None:
+        raise NotFoundError("You are not in a demo workspace.")
+    accounts = db.scalars(
+        select(User)
+        .where(User.demo_workspace_id == workspace.id, User.deleted_at.is_(None))
+        .order_by(User.id)
+    ).all()
+    return CreatedWorkspace(workspace=workspace, accounts=list(accounts))
+
+
 def switch_account(db: Session, current: User, target_id: int) -> User:
     """Another account of the same workspace, so the visitor can see each role."""
     if current.demo_workspace_id is None:

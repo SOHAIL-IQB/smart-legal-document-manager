@@ -34,6 +34,11 @@ class DemoWorkspaceResponse(AuthResponse):
     accounts: list[DemoAccount]
 
 
+class CurrentWorkspaceResponse(BaseModel):
+    workspace: DemoWorkspaceInfo
+    accounts: list[DemoAccount]
+
+
 class SwitchRequest(BaseModel):
     user_id: int
 
@@ -73,6 +78,22 @@ def create_workspace(request: Request, response: Response, db: DbSession) -> Dem
             id=created.workspace.id, expires_at=created.workspace.expires_at
         ),
         accounts=[DemoAccount(user_id=a.id, name=a.name, email=a.email) for a in created.accounts],
+    )
+
+
+@router.get(
+    "/workspaces/current",
+    response_model=CurrentWorkspaceResponse,
+    responses={404: {"description": "Not a demo account"}},
+)
+def current_workspace(user: CurrentUser, db: DbSession) -> CurrentWorkspaceResponse:
+    """The signed-in demo account's workspace and its people, so the app can offer the switch."""
+    current = demo_service.current_workspace(db, user)
+    return CurrentWorkspaceResponse(
+        workspace=DemoWorkspaceInfo(
+            id=current.workspace.id, expires_at=current.workspace.expires_at
+        ),
+        accounts=[DemoAccount(user_id=a.id, name=a.name, email=a.email) for a in current.accounts],
     )
 
 

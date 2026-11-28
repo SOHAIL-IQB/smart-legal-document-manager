@@ -194,6 +194,55 @@ def test_accounts_in_one_workspace_can_share_with_each_other(client, signup):
     assert 201 in results
 
 
+# --- the current workspace -----------------------------------------------------------------
+
+CURRENT = "/api/demo/workspaces/current"
+
+
+def test_a_demo_account_can_read_its_workspace_and_its_people(client):
+    """The app header needs the other accounts after a reload, to offer the switch (Phase 9 F6)."""
+    body = create(client)
+    response = client.get(CURRENT, headers=bearer(body))
+    assert response.status_code == 200
+    current = response.json()
+    assert current["workspace"] == body["workspace"]
+    assert current["accounts"] == body["accounts"]
+    assert [a["name"] for a in current["accounts"]] == ["Asha Rao", "Ben Carter", "Chloe Martin"]
+
+
+def test_each_workspace_sees_only_its_own_people(client):
+    first, second = create(client), create(client)
+    theirs = {a["user_id"] for a in second["accounts"]}
+    mine = client.get(CURRENT, headers=bearer(first)).json()["accounts"]
+    assert not theirs & {a["user_id"] for a in mine}
+
+
+def test_a_deleted_account_is_not_offered(client):
+    body = create(client)
+    ben = body["accounts"][1]["user_id"]
+    with SessionLocal() as db:
+        db.get(User, ben).deleted_at = utcnow()
+        db.commit()
+    names = [a["name"] for a in client.get(CURRENT, headers=bearer(body)).json()["accounts"]]
+    assert names == ["Asha Rao", "Chloe Martin"]
+
+
+def test_a_real_account_has_no_demo_workspace(client, alice):
+    response = client.get(CURRENT, headers=alice.headers)
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "not_found"
+
+
+def test_reading_the_workspace_needs_a_session(client):
+    assert client.get(CURRENT).status_code == 401
+
+
+def test_an_expired_workspace_cannot_be_read(client):
+    body = create(client)
+    expire(body["workspace"]["id"])
+    assert client.get(CURRENT, headers=bearer(body)).status_code == 401
+
+
 # --- switching accounts --------------------------------------------------------------------
 
 

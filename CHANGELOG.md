@@ -64,6 +64,11 @@ The rebuild of the original submission (2026-11-22 to 2026-11-24). The API repor
   the turned-back corner opens a private demo workspace.
   - Sign in and sign up. The API's own messages are shown, with field errors on their fields. After
     signing in, the visitor returns to where they were going. The demo is offered on both pages.
+  - The documents index: a numbered register with search, role filter, sort and pages kept in the
+    address; a gold dot on documents changed in the last day; ⌘K to jump to any document; and "New
+    document" from an uploaded PDF, Word or text file, or from pasted text.
+  - The app header: navigation, the account menu with Sign out, and, for a demo visitor, a switch to
+    the workspace's other people (`GET /demo/workspaces/current` lists them).
 - **CI:**
   - lint and a coverage floor (97.5%);
   - a PostgreSQL job that round-trips the migrations and runs the full suite;

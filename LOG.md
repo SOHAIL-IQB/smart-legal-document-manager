@@ -1658,3 +1658,143 @@ real page's heading "Sign in." instead of the placeholder's.
 - React Router `lazy`: https://reactrouter.com/start/data/route-object#lazy
 - WAI-ARIA forms (error identification): https://www.w3.org/WAI/tutorials/forms/notifications/
 
+## 034 — 2026-11-28 — Phase 9 F6: the documents index and the app header
+
+**Owner's answers:**
+- "Register under a sheet edge", chosen over "Sheet in the margin".
+- "Upload or paste", one dialog with both.
+- "Yes, in the header now" for the demo switch.
+
+The direction is recorded as a pinned contract in
+`.impeccable/surfaces/frontend-src-pages-documents-tsx.md` (related target `AppHeader.tsx`).
+
+**Backend (test-first):**
+- `GET /api/demo/workspaces/current` (`app/api/routes/demo.py`,
+  `demo_service.current_workspace`) returns a demo account's workspace (id, expiry) and its live
+  people, in order. A real account gets 404; signed out or expired gets 401.
+- 6 new tests in `tests/test_demo_workspace.py`, 5 of them red before the route existed. They cover
+  its own people, no leak between workspaces, deleted accounts left out, 404 for a real account,
+  401 signed out and 401 expired.
+- The OpenAPI snapshot and types are regenerated, and the README endpoint table has the row.
+
+**Frontend:**
+- **`pages/Documents.tsx` and `documents/{NewDocumentDialog.tsx, documents.css}`:**
+  - The band continues the header, with "Documents." large and "New document" as a washi tag; the
+    band casts a soft shade onto the register.
+  - The register is a captioned table with `aria-sort`, explicit table roles, and a polite count.
+  - Each row: a 24px vermilion number that continues across pages, the title linking to the
+    document, "by …", the role, "vN" plus the gold dot (changed in the last day, with a visible key),
+    the word count, and the time as `<time>`.
+  - On phones each row restacks into an entry.
+  - The URL holds q, role, sort, order and page. Search is debounced (300ms) through
+    `useEffectEvent`, and the field follows Back and Clear by adjusting state during render: no
+    effect suppressions.
+  - Empty, no-match, role-without-documents, loading and error states, the error with its reference
+    and "Try again".
+- **New document:** a Radix modal with tabs.
+  - Upload: a washi-slip dropzone; type and 10 MB are checked first; multipart is sent with the
+    CSRF header; refusals show inline.
+  - Paste: a title and a lined-paper textarea.
+  - Either opens the new document.
+- **`app/{AppLayout, AppHeader, AccountMenu, Palette, paletteContext}.tsx`, `app.css`:**
+  - The header band: wordmark, navigation as washi tags (`aria-current`), "Jump to…" (⌘K or Ctrl+K
+    anywhere), and the account menu.
+  - The menu has Sign out, Account, and for a demo visitor "Switch to …", which refreshes every
+    query.
+  - The palette is a combobox over a listbox with `aria-activedescendant`; matched letters are
+    underlined.
+- **`components/Field.tsx`, `fields.css`:** the ruled field, moved out of the account pages and
+  shared, now with a select, a lined textarea, and no native search glyphs.
+- **Small additions:** `lib/time.ts`, `lib/useDebounced.ts`, `api/documents.ts`, and the
+  demo-workspace calls in `api/demo.ts`.
+- **Toasts:** themed as washi slips (Sonner variables plus `toastOptions.style`, no `!important`).
+- **Dependency:** `radix-ui` 1.8.1, the "Radix primitives via shadcn" approved in the Phase 9 spec,
+  styled in the world's own CSS; `npm audit` reports 0 vulnerabilities.
+- **Code splitting:** the signed-in layout and the index load lazily (main chunk 409.4 KB).
+- **Test setup (`src/test/setup.ts`):**
+  - Testing Library cleanup is registered once for every file.
+  - Stand-ins for the browser APIs jsdom lacks and Radix needs (`ResizeObserver`, `scrollIntoView`,
+    pointer capture), guarded for the files that run under Node.
+
+**Tests first:** `src/pages/Documents.test.tsx` (12 tests) failed before the page existed. It
+covers:
+- the table and its numbering; the URL as state; going back to page 1 on any change; pages and the
+  range;
+- the empty and no-match states; the error with its reference and retry;
+- paste and upload (client checks, multipart, server refusal);
+- the palette by keyboard; the header with Sign out; the demo switch.
+
+**impeccable steps:**
+- `context` and the brief, as above. The first-viewport tool can't sign in, so captures were taken
+  with Playwright's CLI and a script driving a saved demo session.
+- **`detect --json`:** `[]`, run once.
+- **Finish review**, four rounds:
+  - Round 1, fix. Eight material fixes:
+    - phone rows reflowed into entries;
+    - a shorter phone band;
+    - a visible key to the gold dot, plus the stale token comment;
+    - the dropzone as a washi slip;
+    - resting affordance for the text buttons, and a 4px misalignment;
+    - control labels on one line;
+    - WebKit's search glyph;
+    - desktop column rhythm.
+  - Round 2: six resolved. The dropzone had no capture, and a stray interpunct sat beside the gold
+    dot.
+  - Round 3: the dropzone partial. The reviewer found the cause: `--crease-ground` was declared on
+    `.app`, but Radix portals dialogs, menus and the palette to `<body>`, so the dropzone edge, the
+    tab rule and the menu separators never painted. The token now lives once on `:root`; the three
+    local copies are removed.
+  - Round 4, ship. Scope: the scored fixes, not a fresh full review.
+
+**My own slips, caught before commit:**
+- An `eslint-disable` I first wrote for the debounced search was replaced before it ran (AGENTS.md
+  forbids untracked suppressions).
+- A grep that read only the "Tests" line hid a file that failed to load (the setup file touched
+  `Element` under Node). Checks now read the file summary too.
+- A `palette.ts` / `Palette.tsx` case clash on macOS; renamed to `paletteContext.ts`.
+- On phones, a CSS rule I added overrode the rule hiding two columns; fixed after the capture
+  showed it.
+- **Deliberate breaks:** the paging test only checked that a row *contained* "21", and the title
+  "Contract 21" contained it too, so the break "numbering restarts each page" survived. The test now
+  checks the number cell itself.
+
+**Deliberate breaks** (throwaway copies, real files hashed before and after):
+- Backend: 3 of 3 caught. The list leaks other workspaces' people; a deleted account is still
+  offered; a real account gets an error, not a 404.
+- Frontend: 18 F6 breaks plus the 46 before, **64 of 64 caught** after the test fix (63 of 64
+  before it). The F6 breaks:
+  - a new search keeps the old page; paging ignored; numbering restarts each page; Previous enabled
+    on page 1;
+  - Clear the search does nothing; typing never searches; sort from the address ignored;
+  - the gold dot never shows;
+  - an oversized file is sent; a wrong file type is sent; an untitled paste is sent;
+  - the new document doesn't open;
+  - palette arrows don't move; the palette opens nothing; Ctrl+K doesn't open the palette;
+  - switching doesn't change who you are; sign out keeps the session; offered a switch to yourself.
+  The runner's `Field.tsx` path was updated for its move.
+
+**Verification:**
+- `ruff check .`, `ruff format --check .`: clean.
+- `pytest --cov`: 505 passed, 1 skipped; coverage 98%.
+- Postgres suite: 506 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- `npm run typecheck`, `npm run lint`: clean. `vitest run`: 63 passed (11 files). `npm run build`:
+  clean.
+- **Live** (Vite and the rebuilt Docker API):
+  - Opened a demo workspace from the landing page into the register.
+  - The menu shows "Demo workspace, deleted in 24 hours" and offers Ben and Chloe. Switching to Ben
+    showed only his two documents, with his roles.
+  - ⌘K found "Commercial Lease" with the match underlined.
+  - Pasted text created document 57, which opened; the register showed it as v1, with a toast.
+  - A fresh tab's console had no errors. Signed out afterwards.
+  - Moving the crease token was checked on the landing and sign-in pages; their creases are intact.
+
+**Docs followed:**
+- Radix Dialog, Tabs, DropdownMenu: https://www.radix-ui.com/primitives/docs/components/dialog
+- WAI-ARIA combobox (list autocomplete): https://www.w3.org/WAI/ARIA/apg/patterns/combobox/
+- WAI-ARIA sortable table: https://www.w3.org/WAI/ARIA/apg/patterns/table/examples/sortable-table/
+- React `useEffectEvent`: https://react.dev/reference/react/useEffectEvent
+- React Router `useSearchParams`: https://reactrouter.com/api/hooks/useSearchParams
+- Tables restyled with CSS keep their semantics with explicit roles:
+  https://adrianroselli.com/2018/02/tables-css-display-properties-and-aria.html
+

@@ -1,0 +1,150 @@
+/* Fields are ruled lines on paper, not boxes (the Folding Sequence world). Shared by every form. */
+
+.field__group {
+  display: grid;
+  gap: 22px;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+/* A ruled line, not a box: sumi at rest, thicker vermilion-ink while you write on it. */
+.field__line {
+  display: flex;
+  align-items: center;
+  border-bottom: 1.5px solid var(--color-sumi);
+  transition:
+    border-color 200ms var(--ease-paper),
+    box-shadow 200ms var(--ease-paper),
+    background-color 200ms var(--ease-paper);
+}
+
+.field__line:focus-within {
+  border-bottom-color: var(--color-vermilion-ink);
+  background-color: rgb(246 241 233 / 0.6);
+  box-shadow: 0 1.5px 0 var(--color-vermilion-ink);
+}
+
+.field[data-invalid] .field__line {
+  border-bottom-color: var(--color-vermilion-ink);
+}
+
+.field__input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 2px 7px;
+  border: 0;
+  background: transparent;
+  color: var(--color-sumi);
+  font: inherit;
+  font-size: 1.125rem;
+}
+
+/* Browser autofill would paint a pale box over the washi; keep the ruled line and sumi ink. */
+.field__input:-webkit-autofill,
+.field__input:autofill {
+  -webkit-box-shadow: 0 0 0 100px var(--color-washi) inset;
+  box-shadow: 0 0 0 100px var(--color-washi) inset;
+  -webkit-text-fill-color: var(--color-sumi);
+  caret-color: var(--color-vermilion);
+}
+
+.field__input:focus-visible {
+  outline: none; /* the line itself shows focus: colour, weight and a lighter ground */
+}
+
+.field__toggle {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--color-vermilion-ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* An error is written beside a short struck rule: the world's mark for something rejected. */
+.field__error {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 7px 0 0;
+  color: var(--color-vermilion-ink);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+
+.field__error::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  border-top: 2px solid var(--color-vermilion-ink);
+  transform: translateY(-0.3em);
+}
+
+.field__hint {
+  margin: 6px 0 0;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+.field__textarea {
+  width: 100%;
+  min-height: 12rem;
+  padding: 4px 2px;
+  border: 0;
+  resize: vertical;
+  /* lined paper: a faint rule under every line of text */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.6em - 1px),
+    rgb(26 26 26 / 0.14) calc(1.6em - 1px),
+    rgb(26 26 26 / 0.14) 1.6em
+  );
+  background-attachment: local;
+  color: var(--color-sumi);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.field__textarea:focus-visible {
+  outline: none;
+}
+
+/* A select drawn as a ruled line with a small sumi chevron. */
+.field__select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 26px 7px 2px;
+  border: 0;
+  border-bottom: 1.5px solid var(--color-sumi);
+  appearance: none;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231a1a1a' stroke-width='1.6'/%3E%3C/svg%3E")
+    no-repeat right 4px center;
+  color: var(--color-sumi);
+  font: inherit;
+  font-size: 1.125rem; /* as the inputs, so ruled lines side by side end level */
+  cursor: pointer;
+}
+
+/* WebKit's own search glyphs ship unstyled; the field has its own Clear. */
+.field__input::-webkit-search-cancel-button,
+.field__input::-webkit-search-decoration {
+  appearance: none;
+}
+
+.field__select:focus-visible {
+  outline: none;
+  border-bottom-color: var(--color-vermilion-ink);
+  box-shadow: 0 1.5px 0 var(--color-vermilion-ink);
+}

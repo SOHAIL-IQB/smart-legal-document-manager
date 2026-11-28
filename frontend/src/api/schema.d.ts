@@ -131,6 +131,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/demo/workspaces/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current Workspace
+         * @description The signed-in demo account's workspace and its people, so the app can offer the switch.
+         */
+        get: operations["current_workspace_api_demo_workspaces_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/demo/workspaces/current/switch": {
         parameters: {
             query?: never;
@@ -632,6 +652,12 @@ export interface components {
             /** Version 2 */
             version_2: number;
             version_2_meta: components["schemas"]["DocumentVersionSummary"];
+        };
+        /** CurrentWorkspaceResponse */
+        CurrentWorkspaceResponse: {
+            /** Accounts */
+            accounts: components["schemas"]["DemoAccount"][];
+            workspace: components["schemas"]["DemoWorkspaceInfo"];
         };
         /** DeleteAccountRequest */
         DeleteAccountRequest: {
@@ -1400,6 +1426,33 @@ export interface operations {
             };
             /** @description Too many new workspaces from this address */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    current_workspace_api_demo_workspaces_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentWorkspaceResponse"];
+                };
+            };
+            /** @description Not a demo account */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

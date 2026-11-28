@@ -15,10 +15,19 @@ export const routes: RouteObject[] = [
   {
     element: <RequireAuth />,
     children: [
-      { path: '/documents', element: <Placeholder title="Documents" task="F6" /> },
-      { path: '/documents/:documentId', element: <Placeholder title="Document" task="F7" /> },
-      { path: '/notifications', element: <Placeholder title="Notifications" task="F8" /> },
-      { path: '/account', element: <Placeholder title="Account" task="F8" /> },
+      {
+        // The signed-in app (header, palette, dialogs) loads once someone is signed in.
+        lazy: async () => ({ Component: (await import('@/app/AppLayout')).AppLayout }),
+        children: [
+          {
+            path: '/documents',
+            lazy: async () => ({ Component: (await import('@/pages/Documents')).Documents }),
+          },
+          { path: '/documents/:documentId', element: <Placeholder title="Document" task="F7" /> },
+          { path: '/notifications', element: <Placeholder title="Notifications" task="F8" /> },
+          { path: '/account', element: <Placeholder title="Account" task="F8" /> },
+        ],
+      },
     ],
   },
   { path: '*', element: <NotFound /> },

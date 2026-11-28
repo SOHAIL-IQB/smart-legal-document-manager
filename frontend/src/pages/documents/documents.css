@@ -1,0 +1,297 @@
+/* The documents index: a register of sheets under the band's edge. */
+
+/* The band continues the header: the page title large in fold-white, New document at its foot. */
+.page-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  min-height: clamp(150px, 24svh, 260px);
+  padding: clamp(20px, 5svh, 56px) var(--pad) clamp(18px, 3svh, 28px);
+  position: relative;
+  z-index: 1;
+  background-color: var(--color-vermilion);
+  background-image: var(--grain-sheet);
+  color: var(--color-fold);
+  /* the sheet's edge lies on the register: a soft shade below it */
+  box-shadow: 0 12px 20px -14px rgb(70 16 8 / 0.45);
+}
+
+.page-band__title {
+  margin: 0;
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+}
+
+.register {
+  padding: clamp(20px, 4vh, 36px) var(--pad) 64px;
+}
+
+.register__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px 16px;
+  margin-bottom: 24px;
+}
+
+/* Phones: the search takes the line; role and sort share the next one. */
+.register__search {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 760px) {
+  .register__controls {
+    grid-template-columns: minmax(0, 28rem) minmax(0, 11rem) minmax(0, 15rem);
+    align-items: start; /* the labels share one line */
+    gap: 28px;
+  }
+
+  .register__search {
+    grid-column: auto;
+  }
+}
+
+/* The key to the gold dot, above the register. */
+.register__key {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 0 6px;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+.register__state {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 28px 0;
+  border-top: 1px solid var(--crease-ground);
+}
+
+.register__state p {
+  margin: 0;
+  max-width: 52ch;
+}
+
+.register__empty {
+  font-size: 1.375rem;
+  font-weight: 300;
+}
+
+.register__state--error {
+  color: var(--color-vermilion-ink);
+}
+
+.register__state--error .register__reference {
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+/* ---- The table ------------------------------------------------------------------------------------ */
+
+.register__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.register__table[aria-busy] tbody {
+  opacity: 0.6;
+  transition: opacity 200ms var(--ease-paper);
+}
+
+.register__table th {
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--color-sumi);
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.register__table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--crease-ground);
+  vertical-align: baseline;
+}
+
+.register__table tbody tr {
+  transition: background-color 160ms var(--ease-paper);
+}
+
+.register__table tbody tr:hover {
+  background: rgb(237 227 209 / 0.55);
+}
+
+/* The strict numbered column: vermilion figures at 24px, large enough for vermilion on the ground. */
+.register__table .register__no {
+  width: 3.5rem;
+  padding-left: 0;
+}
+
+.register__table td.register__no {
+  color: var(--color-vermilion);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.register__title {
+  color: var(--color-sumi);
+  font-size: 1.125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.register__title:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--color-vermilion-ink);
+  text-underline-offset: 0.2em;
+}
+
+.register__meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+.register__versions {
+  white-space: nowrap;
+}
+
+.register__versions > span:first-child {
+  color: var(--color-vermilion-ink);
+  font-weight: 500;
+}
+
+.register__versions .gold-dot {
+  margin-left: 8px;
+  vertical-align: 0.05em;
+}
+
+/* Column rhythm: the free width goes to the title; numbers keep clear of the date beside them. */
+.register__table .register__role {
+  width: 8rem;
+}
+
+.register__table .register__versions {
+  width: 7rem;
+}
+
+.register__table .register__number {
+  width: 5.5rem;
+  padding-right: 2.5rem;
+  text-align: right;
+}
+
+.register__table .register__last {
+  width: 9rem;
+}
+
+.register__when {
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+
+.register__narrow {
+  display: none;
+}
+
+/* Phones: each row restacks into an entry: number beside the title, then one line of what it is.
+   The column heads stay for screen readers. */
+@media (max-width: 640px) {
+  .page-band {
+    min-height: 0;
+    padding-top: 18px;
+  }
+
+  .register__wide,
+  .register__table td.register__wide {
+    display: none;
+  }
+
+  .register__narrow {
+    display: inline;
+  }
+
+  .register__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .register__table,
+  .register__table tbody {
+    display: block;
+  }
+
+  .register__table tbody tr {
+    display: grid;
+    grid-template-columns: 2.75rem max-content 1fr; /* the versions sit snug against the date */
+    grid-template-areas:
+      'no doc doc'
+      'no versions last';
+    column-gap: 10px;
+    row-gap: 4px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--crease-ground);
+  }
+
+  .register__table td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .register__table td.register__no {
+    grid-area: no;
+    width: auto;
+  }
+
+  .register__table td.register__doc {
+    grid-area: doc;
+  }
+
+  .register__table td.register__versions {
+    grid-area: versions;
+    width: auto;
+  }
+
+  .register__table td.register__last {
+    grid-area: last;
+    width: auto;
+  }
+
+}
+
+.register__pages {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.register__range {
+  color: var(--color-sumi-soft);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.gold-dot {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-gold);
+  box-shadow: inset 0 0 0 1px var(--color-gold-edge);
+}
