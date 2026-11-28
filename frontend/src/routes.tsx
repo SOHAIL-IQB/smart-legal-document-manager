@@ -23,7 +23,10 @@ export const routes: RouteObject[] = [
             path: '/documents',
             lazy: async () => ({ Component: (await import('@/pages/Documents')).Documents }),
           },
-          { path: '/documents/:documentId', element: <Placeholder title="Document" task="F7" /> },
+          {
+            path: '/documents/:documentId',
+            lazy: async () => ({ Component: (await import('@/pages/DocumentPage')).DocumentPage }),
+          },
           { path: '/notifications', element: <Placeholder title="Notifications" task="F8" /> },
           { path: '/account', element: <Placeholder title="Account" task="F8" /> },
         ],

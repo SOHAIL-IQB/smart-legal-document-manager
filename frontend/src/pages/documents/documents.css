@@ -1,31 +1,5 @@
 /* The documents index: a register of sheets under the band's edge. */
 
-/* The band continues the header: the page title large in fold-white, New document at its foot. */
-.page-band {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 24px;
-  min-height: clamp(150px, 24svh, 260px);
-  padding: clamp(20px, 5svh, 56px) var(--pad) clamp(18px, 3svh, 28px);
-  position: relative;
-  z-index: 1;
-  background-color: var(--color-vermilion);
-  background-image: var(--grain-sheet);
-  color: var(--color-fold);
-  /* the sheet's edge lies on the register: a soft shade below it */
-  box-shadow: 0 12px 20px -14px rgb(var(--paper-shadow) / 0.45);
-}
-
-.page-band__title {
-  margin: 0;
-  font-size: clamp(2.75rem, 7vw, 5.5rem);
-  font-weight: 300;
-  line-height: 0.95;
-  letter-spacing: -0.015em;
-}
-
 .register {
   padding: clamp(20px, 4vh, 36px) var(--pad) 64px;
 }
@@ -206,11 +180,6 @@
 /* Phones: each row restacks into an entry: number beside the title, then one line of what it is.
    The column heads stay for screen readers. */
 @media (max-width: 640px) {
-  .page-band {
-    min-height: 0;
-    padding-top: 18px;
-  }
-
   .register__wide,
   .register__table td.register__wide {
     display: none;

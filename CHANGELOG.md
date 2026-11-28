@@ -69,6 +69,19 @@ The rebuild of the original submission (2026-11-22 to 2026-11-24). The API repor
     document" from an uploaded PDF, Word or text file, or from pasted text.
   - The app header: navigation, the account menu with Sign out, and, for a demo visitor, a switch to
     the workspace's other people (`GET /demo/workspaces/current` lists them).
+  - The document workspace:
+    - every version in a margin column, with withdrawn and restored versions drawn by their line
+      form;
+    - reading any version, and writing the next one in place;
+    - a side-by-side, word-by-word comparison that opens on the last real change;
+    - restoring, and for owners withdrawing, a version;
+    - the activity log as sentences; sharing by email with roles; renaming; uploading a file as a
+      new version.
+
+### Changed (Phase 9)
+
+- A collapsed comparison (`context=N`) never returns a `skip` row for a single line; the line is
+  returned instead.
 - **CI:**
   - lint and a coverage floor (97.5%);
   - a PostgreSQL job that round-trips the migrations and runs the full suite;

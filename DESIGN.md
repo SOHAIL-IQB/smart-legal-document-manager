@@ -264,6 +264,16 @@ Washi slips with ground grain and the menu shadow, sumi text at 0.9375rem, squar
 ### The Register (signature)
 The documents index is a ruled register under the page band: a real table whose rows are ruled by crease lines, a sumi rule under the column heads, a strict number column in vermilion lining figures (1.5rem), the title at 1.125rem 500 underlined in Ink Vermilion on hover, the version label in Ink Vermilion with the gold dot beside documents changed in the last day, and a key to the dot above the table. Rows tint toward washi on hover over 160ms. While loading, the body fades to 60%.
 
+### The Workspace Margin (signature)
+The document workspace keeps every version in a margin column beside the text: newest first, each a 1.5rem vermilion numeral with its line form (solid live, dashed withdrawn, doubled restored), the author, when, "restores 02" or the file it came from, and the change note. The current version carries the gold dot and the word "current"; the version being read sits on a small vermilion square with a fold-white numeral. A withdrawn version keeps full contrast: the dashed rule and its words carry the state. Comparing, each live version offers From and To toggles. On phones the column becomes a horizontal strip of numerals, rules and the dot, with each version's words kept for screen readers.
+
+### Reading, Writing and Comparing
+- **Reading:** the version's heading in 300 at 1.75rem, a sumi-wash line of facts, the note in quotes, then the text at 1.125rem on a 72ch measure. A withdrawn version shows its record under a dashed Ink Vermilion rule instead of its text.
+- **Writing:** in place, on lined paper, from the current text, with an optional change note; "Save version N" names the number the version will take.
+- **Comparing:** two ruled columns with sumi-wash line numbers; changed lines lie on a faint washi tint, removed words are struck and added words underlined in Ink Vermilion; long unchanged stretches fold into an underlined "N unchanged lines" control. On phones each change stacks the earlier version over the later, each labelled.
+- **Numbers:** padded figures (04) in figure positions (the margin, the selects); plain numerals in sentences and headings ("Version 4", "restores version 2").
+- **Labels on the band:** a state, such as the reader's role, is a washi tag with no lift and a crease edge; an action is a washi tag with the tag shadow.
+
 ### The Sheet and its Folds (signature)
 The landing's square vermilion sheet carries its crease lines in fold white at 40% (dashed for a withdrawn version, doubled for a restored one). The margin column lists fold numbers 01–04 as a slider; the shown fold fills its number with vermilion. Its lower-right corner is the next action: a washi flap turned back over a cream ground, lifting 16° on its crease on hover or focus and 26° while pending. Changed words keep a short afterglow (1.9s) after each fold.
 

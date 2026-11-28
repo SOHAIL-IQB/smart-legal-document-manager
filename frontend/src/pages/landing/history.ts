@@ -43,7 +43,7 @@ export function focusClause(fold: Fold): number {
   return changed === -1 ? 0 : changed
 }
 
-export const pad = (n: number) => String(n).padStart(2, '0')
+export { pad } from '@/lib/format'
 
 /** What a fold is, in words: for the slider's value text and the live status. */
 export function describeFold(fold: Fold): string {

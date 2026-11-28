@@ -194,7 +194,8 @@ The response contains:
   (`{"op": "equal" | "delete" | "insert", "text": ...}`) that rebuild each line exactly, and a
   `whitespace_only` flag.
 - `stats`: lines added / removed / changed and words added / removed.
-- `context=N` keeps N unchanged lines around each change and collapses the rest into `skip` rows.
+- `context=N` keeps N unchanged lines around each change and collapses the rest into `skip` rows. A
+  `skip` never stands for a single line; that line is returned instead.
 - `has_meaningful_changes`, `approximate`, plus `before`, `after` and a unified diff in `changes`.
 
 ## Searching and Listing

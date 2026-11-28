@@ -168,6 +168,11 @@ errors tied by `aria-describedby`. Rate-limit (429) and wrong-password messages 
 - Side-by-side comparison from the API's rows, with `context` collapsing and an "approximate" notice.
 - Rename, activity log, and the share dialog (rebuilt on Radix).
 - Upload a new version.
+- **Done 2026-11-28 (LOG 037):** the owner chose "Text with the margin column", "In place" editing
+  and "From the margin column" comparing.
+  - The finish review went fix, then ship.
+  - One small backend change came from the review: a collapsed comparison never hides a single line.
+  - Deliberate breaks: 82 of 82 frontend, 1 of 1 backend.
 
 **F8. Notifications, account and 404**
 - The inbox popover with unread count, mark one read and mark all read.

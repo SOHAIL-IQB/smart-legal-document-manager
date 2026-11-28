@@ -158,6 +158,14 @@ def test_context_keeps_short_runs():
     assert [r.type for r in result.rows] == ["equal", "replace", "equal"]
 
 
+def test_context_never_hides_a_single_line():
+    # Two leading unchanged lines with context=1 would leave exactly one line to skip. A marker for
+    # one unchanged line takes as much room as the line itself, so the line is shown (F7 review).
+    result = diff_documents("a\nb\nc", "a\nb\nC", context=1)
+    assert [r.type for r in result.rows] == ["equal", "equal", "replace"]
+    assert all(r.type != "skip" for r in result.rows)
+
+
 def test_context_on_identical_documents_collapses_everything():
     result = diff_documents("a\nb\nc\nd", "a\nb\nc\nd", context=1)
     assert [(r.type, r.skipped) for r in result.rows] == [("skip", 4)]

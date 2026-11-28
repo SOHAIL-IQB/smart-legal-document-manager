@@ -215,7 +215,10 @@ def _word_diff(old: str, new: str, budget: _Budget) -> tuple[list[Segment], list
 
 
 def _collapse(rows: list[DiffRow], context: int) -> list[DiffRow]:
-    """Replace unchanged runs longer than 2*context with a single "skip" row."""
+    """Replace long unchanged runs with a single "skip" row, keeping `context` lines beside changes.
+
+    A skip never stands for a single line: that line takes no more room than its marker would.
+    """
     result: list[DiffRow] = []
     i = 0
     while i < len(rows):
@@ -229,7 +232,7 @@ def _collapse(rows: list[DiffRow], context: int) -> list[DiffRow]:
         run = rows[i:j]
         keep_before = context if i > 0 else 0  # context after a preceding change
         keep_after = context if j < len(rows) else 0  # context before a following change
-        if len(run) > keep_before + keep_after:
+        if len(run) > keep_before + keep_after + 1:
             result.extend(run[:keep_before])
             result.append(DiffRow(type="skip", skipped=len(run) - keep_before - keep_after))
             result.extend(run[len(run) - keep_after :] if keep_after else [])

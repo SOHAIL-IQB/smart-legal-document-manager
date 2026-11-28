@@ -1923,3 +1923,129 @@ All as intended.
 - No deliberate breaks this time: the changes are CSS and class names, which jsdom doesn't render;
   they were checked in the browser instead, as above.
 
+## 037 — 2026-11-28 — Phase 9 F7: the document workspace
+
+**Owner's answers:**
+- "Text with the margin column", chosen over three columns.
+- "In place" editing, chosen over a dialog.
+- "From the margin column" comparing, plus labelled selects.
+
+The direction is recorded as a pinned contract in
+`.impeccable/surfaces/frontend-src-pages-documentpage-tsx.md`.
+
+**What was built** (`pages/DocumentPage.tsx` and `pages/document/`):
+- **The band:** the document's title in fold-white. The role is a washi label (no lift, crease
+  edge). Share, Rename, Upload version and New version are washi tags, shown as the role allows.
+- **The margin column** (`VersionColumn`): every version, withdrawn ones included, newest first.
+  - Each version: a vermilion numeral and a line form (solid live, dashed withdrawn, doubled
+    restored), with the state named in words.
+  - The gold dot marks the current version; the version being read sits on a vermilion square
+    (`aria-current`).
+  - Under it are "Restore as version N" (editors) and "Withdraw version N" (owners, through a Radix
+    AlertDialog).
+  - On phones it is a strip of numerals, with the words kept for screen readers.
+- **Read:** the version's facts, its note, then its text. A withdrawn version shows its record and
+  says its text can no longer be read, compared or restored (the API returns 410).
+- **New version:** written in place on lined paper, from the current text, with an optional note.
+  Saving identical text says "Nothing changed, so no version was saved."
+- **Compare:** From and To come from the margin column or labelled selects.
+  - It opens on the current version against the nearest earlier live version *whose text differs*
+    (by `content_hash`). A restore repeats an older text, so the sample opens on 01 against 04,
+    not on the identical 02 and 04.
+  - A captioned table with explicit roles: struck and underlined words, and "N unchanged lines"
+    to expand.
+  - "Show every line"; "The two texts are identical."; the approximate notice as `role="note"`.
+  - On phones each change stacks the earlier version over the later.
+- **Activity:** each event as a sentence (`sentences.ts`), with "Show earlier activity".
+- **Dialogs:**
+  - Share (Radix): owners add people by email and role, with API errors on the email field, change
+    roles and remove people; others see who has access and can leave.
+  - Rename.
+  - Upload version: the dropzone is now one shared `components/FileDrop.tsx`, also used by New
+    document.
+- **URL state:** tab, version read, the compared pair and every-line mode. The page loads lazily
+  (31 KB).
+- **`.page-band` moved** into `app/app.css`. Opened directly by URL, the workspace had no band:
+  the index's stylesheet, where the band lived, hadn't loaded. Found by looking at fresh-load
+  captures.
+
+**Backend, from the review (test-first):** `_collapse` in `app/utils/diff.py` never turns a single
+line into a `skip` row; a marker for one line takes as much room as the line. The new test
+`test_context_never_hides_a_single_line` failed first. The README notes the rule.
+
+**Tests first:** `src/pages/DocumentPage.test.tsx` (17 tests) failed before the page existed. Its
+fake API holds the sample's real history: 04 restores 02 and carries 02's hash. The tests cover:
+- reading, the column's states, choosing a version, and the withdrawn record;
+- writing, identical text, what a viewer can't do, restoring and withdrawing;
+- uploading;
+- the default comparison, collapsing and expanding, the margin and select pickers, identical
+  texts, and approximate results;
+- activity sentences, sharing as owner and as viewer, renaming, and an unavailable document.
+
+**impeccable steps:**
+- The brief and the owner's answers.
+- Captures with Playwright and a saved demo session, every view loaded fresh by URL; no console
+  errors at 1440 or 390.
+- **`detect --json`:** `[]`, run once.
+- **Finish review:**
+  - Round 1, fix. Eight items:
+    - the brief's FORM line must quote the world pin;
+    - the phone strip hid each state from screen readers (`display: none`);
+    - withdrawn numerals at 2.77:1;
+    - blank rows drawing doubled rules on phones;
+    - "1 unchanged line" markers;
+    - inconsistent number voice;
+    - the role tag looking like a button;
+    - the activity's measure.
+  - Round 2, ship. Scope: the eight scored fixes. The reviewer's ceiling notes (creases on the
+    reading sheet, a changed-word afterglow, folding motion between versions) stay open as craft
+    headroom.
+- **`DESIGN.md`:** two sections added by hand, "The Workspace Margin" and "Reading, Writing and
+  Comparing", covering the number voice and labels against actions on the band.
+
+**My own slips, caught before commit:**
+- My brief's story said Compare would show changes between 02 and 04, but 04 restores 02, so they
+  are identical. That led to the hash-aware default; the brief is corrected.
+- A `cd ../..` put me in the repository root, where `npx tsc` fetched npm's placeholder `tsc`
+  package into the npx cache. That package only prints a notice; nothing changed in the project
+  (checked with `git status`).
+- A cleanup command with an unguarded `rm -f $R/*.png` was refused by the safety check before
+  running; it reran with `"${R:?}"`. The images I first looked at after it were the old captures,
+  so I judged nothing from them.
+- Two test assertions of mine were wrong (an unchanged line correctly appears on both sides; the
+  share test read the first POST, not the last); both were fixed in the tests.
+
+**Deliberate breaks** (throwaway copies, real files hashed before and after):
+- Backend: "a skip stands for a single line", **1 of 1 caught**.
+- Frontend: 18 F7 breaks plus the 64 before, **82 of 82 caught**. The F7 breaks:
+  - the restored version not drawn doubled; the version read not marked current;
+  - a withdrawn version offered for comparing; a withdrawn version read as text;
+  - an identical save passing silently; the saved version not opened;
+  - version numbers reused; editors able to withdraw;
+  - compare opening on an identical pair; a missing document showing a raw error;
+  - the comparison never collapsing; an approximate result not said; identical texts counted as
+    nothing;
+  - inserted words drawn as removed;
+  - a role change naming the old role; a share error not on the email field; viewers able to change
+    roles;
+  - the tab ignored in the address.
+
+  The first run showed 80 of 82 only because two F6 breaks no longer applied after the dropzone
+  moved into `FileDrop.tsx`; retargeted, both are caught.
+
+**Verification:**
+- `ruff check .`, `ruff format --check .`: clean.
+- `pytest --cov`: 506 passed, 1 skipped; coverage 98%.
+- Postgres suite: 507 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- `npm run typecheck`, `npm run lint`: clean. `vitest run`: 80 passed (12 files). `npm run build`:
+  clean. `npm audit --omit=dev`: 0 vulnerabilities.
+- **Live**, on the sample agreement in a demo workspace (dev API rebuilt for the diff change):
+  read, compare, activity, the withdrawn record, the editor, share, the withdraw confirmation and
+  the upload dialog at 1440 and 390, with no console errors.
+
+**Docs followed:**
+- Radix AlertDialog: https://www.radix-ui.com/primitives/docs/components/alert-dialog
+- TanStack Query infinite queries: https://tanstack.com/query/v5/docs/framework/react/guides/infinite-queries
+- Visually hidden content: https://www.a11yproject.com/posts/how-to-hide-content/
+

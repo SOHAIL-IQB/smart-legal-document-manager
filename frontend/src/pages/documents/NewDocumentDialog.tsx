@@ -1,18 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileUp, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { Dialog, Tabs } from 'radix-ui'
-import { useId, useRef, useState, type DragEvent, type FormEvent } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { createDocument, uploadDocument, type DocumentCreated } from '@/api/documents'
 import { Field } from '@/components/Field'
+import { FileDrop } from '@/components/FileDrop'
 import { describeError } from '@/lib/errors'
 
-// The API's own limits (app/core/config.py, app/schemas/common.py).
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+// The API's own limit for pasted text (app/schemas/common.py).
 const MAX_CONTENT_CHARS = 2_000_000
-const ACCEPTED = ['.pdf', '.docx', '.txt']
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void }
 
@@ -66,41 +65,15 @@ export function NewDocumentDialog({ open, onOpenChange }: Props) {
   )
 }
 
-function checkFile(file: File): string | null {
-  const name = file.name.toLowerCase()
-  if (!ACCEPTED.some((ext) => name.endsWith(ext))) return 'Choose a PDF, Word (.docx) or text (.txt) file.'
-  if (file.size > MAX_UPLOAD_BYTES) return 'This file is larger than 10 MB.'
-  return null
-}
-
-const kb = (bytes: number) =>
-  bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`
-
 function UploadForm({ onCreated }: { onCreated: (created: DocumentCreated) => void }) {
-  const id = useId()
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [fileError, setFileError] = useState<string | null>(null)
-  const [dragging, setDragging] = useState(false)
   const upload = useMutation({
     mutationFn: () => uploadDocument(file as File, title.trim() || undefined),
     onSuccess: onCreated,
     meta: { silent: true }, // the reason is shown in the dialog
   })
-
-  function choose(next: File | undefined) {
-    if (!next) return
-    upload.reset()
-    const problem = checkFile(next)
-    setFileError(problem)
-    setFile(problem ? null : next)
-  }
-
-  function onDrop(event: DragEvent) {
-    event.preventDefault()
-    setDragging(false)
-    choose(event.dataTransfer.files[0])
-  }
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -115,44 +88,15 @@ function UploadForm({ onCreated }: { onCreated: (created: DocumentCreated) => vo
 
   return (
     <form noValidate onSubmit={submit} className="field__group">
-      <label
-        htmlFor={`${id}-file`}
-        className="dropzone"
-        data-dragging={dragging || undefined}
-        data-invalid={fileError ? true : undefined}
-        onDragOver={(event) => {
-          event.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <FileUp aria-hidden size={22} />
-        <span className="dropzone__label">Choose a file, or drop it here</span>
-        <span className="dropzone__hint">PDF, Word (.docx) or text (.txt), up to 10 MB</span>
-        {file && (
-          <span className="dropzone__file">
-            <span>{file.name}</span> <span className="dropzone__size">{kb(file.size)}</span>
-          </span>
-        )}
-      </label>
-      <input
-        id={`${id}-file`}
-        type="file"
-        className="sr-only"
-        accept={ACCEPTED.join(',')}
-        aria-describedby={fileError ? `${id}-file-error` : undefined}
-        aria-invalid={fileError ? true : undefined}
-        onChange={(event) => {
-          choose(event.target.files?.[0])
-          event.target.value = '' // the same file can be chosen again after a fix
+      <FileDrop
+        file={file}
+        error={fileError}
+        onChoose={(next, problem) => {
+          upload.reset()
+          setFile(next)
+          setFileError(problem)
         }}
       />
-      {fileError && (
-        <p id={`${id}-file-error`} className="field__error">
-          {fileError}
-        </p>
-      )}
       <Field
         label="Title (optional)"
         hint="The file name if left blank."
