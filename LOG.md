@@ -1550,3 +1550,111 @@ after):
 - CSS container queries: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries
 - SVG `feTurbulence` `stitchTiles`: https://developer.mozilla.org/en-US/docs/Web/SVG/Element/feTurbulence
 
+## 033 — 2026-11-28 — Phase 9 F5: sign in, sign up and the demo entry
+
+**Direction:** the owner chose "Form on the underside" over "Quiet form on cream". It is recorded as
+a pinned direction contract in `.impeccable/surfaces/frontend-src-pages-signin-tsx.md` (related
+target `SignUp.tsx`). The surface inherits the Folding Sequence world from the landing page:
+- **Face:** a vermilion face with the title in large fold-white, and the wordmark at 24px, the floor
+  for text on vermilion.
+- **Underside:** the form on the washi underside. Fields are ruled sumi lines that turn thicker and
+  vermilion-ink on focus.
+- **Errors:** written in vermilion-ink beside a short struck rule.
+- **Demo:** a strip below a crease, its top-right corner folded down to show the vermilion face.
+
+**What was built:**
+- **Pages:** `SignIn.tsx`, `SignUp.tsx`, and `account/{AccountPage, Field, serverErrors, account.css}`.
+- **Helpers:** `auth/{forms, returnTo, useOpenDemo}.ts` and `api/auth.ts`.
+- **Forms:** react-hook-form and Zod, with the API's own limits (name 1–255; password 8–128 on sign
+  up). Client errors show before any request, and focus goes to the first invalid field.
+- **API errors are placed where they belong:**
+  - a 422 field detail goes on its field;
+  - a 409 (taken email) goes on the email field;
+  - anything else is a form-level alert with its request reference;
+  - a 401 or 429 on sign-in shows the API's message as-is; the password is cleared and focused again.
+- **Where the visitor lands:** a successful sign-in or sign-up returns to the guarded page they came
+  from. `returnPath` accepts only our own paths: not `//host`, not the account pages. Otherwise it
+  goes to `/documents`, and a signed-in visitor who opens these pages is sent on the same way.
+- **One redirect:** a deliberate break showed the page's own `navigate` duplicated the account
+  page's redirect, so either could fail unnoticed. The redirect is now the only mechanism.
+- **The demo:** shared with the landing page through `useOpenDemo` (moved out of `CornerFold`).
+- **Page titles:** every route sets its own `<title>` (React 19 hoists it), and the static title
+  was removed from `index.html`. Before this, `/sign-in` kept the landing page's title.
+- **Code splitting:** the account pages load on demand through React Router's `lazy`, because the
+  form libraries took the bundle from 405 to 529 KB and Vite warned about a 500 KB chunk. Now the
+  main chunk is 407.6 KB and the account chunk 120.8 KB, loaded only on those pages.
+- **Vite config:** `vite.config.ts` uses `import.meta.dirname` instead of `__dirname`, which
+  clears Vite's config-loader warning (it predated F5).
+
+**Tests first:** `src/pages/auth.test.tsx` failed before the pages existed. It now has 14 tests:
+- labels, `aria-invalid`, errors tied by `aria-describedby`, and focus;
+- the return path; the API messages for 401 and 429; the show/hide toggle;
+- the signed-in redirect and the demo;
+- sign-up validation, the 409 on email, 422 field errors, and the form-level reference;
+- added during review: an API field error keeps its focus.
+
+Also `src/auth/returnTo.test.ts` (2 tests, the redirect guard). The routes test now looks for the
+real page's heading "Sign in." instead of the placeholder's.
+
+**impeccable steps:**
+- `context --target frontend/src/pages/SignIn.tsx` (no brief yet; the world comes from the landing
+  page, since `DESIGN.md` is written at F9).
+- **first-viewport** (`--thesis .account --action .account__submit`): every check ok at 1440x900 and
+  390x844.
+- **`detect --json`:** `[]`, run once.
+- **Finish review**, three rounds:
+  - Round 1, fix. Four material fixes:
+    - the fold wasn't drawn, so it read as a split-screen login;
+    - autofill would paint a blue box over the washi;
+    - the demo was an 18px bullet, not a turned corner;
+    - after a 422 field error, focus was pulled back to Password. That one was a real bug; its test
+      failed first.
+  - Round 2: three resolved. The crease stopped at the form, outlining an invisible card (partial),
+    and "24 hours" broke across lines (regression).
+  - Round 3, ship: both resolved. Scope: the listed fixes, not a fresh full review.
+
+**My own slips, caught before commit:**
+- I first wrote the non-breaking space as `\u00a0` in JSX text, which would have printed
+  literally. It is now `&nbsp;`.
+- I claimed "the full suite passes" to the reviewer before running it. I ran it straight after
+  (51 of 51).
+
+**Deliberate breaks** (throwaway copy, real files hashed before and after):
+- 15 F5 breaks plus the earlier 31, **46 of 46 caught**. The F5 breaks:
+  - errors not tied to fields; invalid fields not marked; the password can't be shown;
+  - short passwords accepted; malformed email accepted;
+  - a wrong password left in the field; the return path ignored;
+  - sign-in doesn't record the session; API field errors not placed; the taken email not on its field;
+  - a protocol-relative redirect allowed; a return to the sign-in page itself;
+  - a signed-in visitor shown the form; no page title;
+  - an API field error loses its focus.
+- **The first run caught 42 of 46.**
+  - "Return path ignored" survived because of the duplicate redirect, now removed.
+  - Three F4 breaks no longer applied, because their code had moved to `useOpenDemo`. They were
+    retargeted, and all three are caught.
+
+**Verification:**
+- `ruff check .`, `ruff format --check .`: clean.
+- `pytest --cov`: 499 passed, 1 skipped; coverage 98%.
+- Postgres suite: 500 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- `npm run typecheck`, `npm run lint`: clean. `npm test`: 51 passed (10 files). `npm run build`:
+  clean, no warnings.
+- **Live** (Vite and the Docker API; the dev database was seeded with `scripts.seed`):
+  - Empty submit shows both field errors, with focus on Email.
+  - A wrong password shows "Incorrect email or password." with its reference; the password is
+    cleared and focused.
+  - Signing in as a seed account from a guarded `/account` or `/notifications` returned there.
+  - `/sign-in` while signed in goes to the documents, and Back doesn't strand the visitor on the form.
+  - Titles follow navigation, with one `<title>` in the head. Signed out afterwards.
+  - The console's only error is the browser's log of that deliberate wrong-password 401: the API
+    refusing bad credentials, not a page fault.
+
+**Docs followed:**
+- React Hook Form `setError` and `setFocus`: https://react-hook-form.com/docs/useform/seterror
+- `@hookform/resolvers` (Zod): https://github.com/react-hook-form/resolvers#zod
+- Zod 4 string formats: https://zod.dev/api#string-formats
+- React `<title>`: https://react.dev/reference/react-dom/components/title
+- React Router `lazy`: https://reactrouter.com/start/data/route-object#lazy
+- WAI-ARIA forms (error identification): https://www.w3.org/WAI/tutorials/forms/notifications/
+

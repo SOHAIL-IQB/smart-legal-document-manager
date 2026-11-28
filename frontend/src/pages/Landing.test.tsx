@@ -91,6 +91,7 @@ test('the first viewport says what it is and offers the demo', async () => {
   stubApi()
   renderLanding()
   expect(screen.getByRole('heading', { level: 1, name: 'One sheet. Every fold kept.' })).toBeTruthy()
+  expect(document.title).toBe('Inkstep: every version of a contract, kept')
   // The corner of the sheet, and again at the close.
   expect(screen.getAllByRole('button', { name: /open your demo workspace/i })).toHaveLength(2)
   expect(screen.getByRole('link', { name: 'Sign in' }).getAttribute('href')).toBe('/sign-in')

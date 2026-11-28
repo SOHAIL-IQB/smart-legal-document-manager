@@ -137,6 +137,13 @@ Acceptance:
 
 **F5. Sign in, sign up and demo entry.** Our own forms (react-hook-form + Zod), labelled, with inline
 errors tied by `aria-describedby`. Rate-limit (429) and wrong-password messages come from the API.
+- **Done 2026-11-28 (LOG 033):** the owner chose "Form on the underside". The direction is recorded
+  in `.impeccable/surfaces/frontend-src-pages-signin-tsx.md`.
+  - The first-viewport checks pass at 1440x900 and 390x844, and the detector found nothing.
+  - The finish review went fix, fix, then ship.
+  - 46 of 46 frontend deliberate breaks caught.
+  - After sign-in the visitor returns to the guarded page they came from, or else the documents.
+  - Every route now sets its own page title. The account pages load on demand.
 
 **F6. Documents index**
 - Dense numbered rows (adapted Data Table #27049).

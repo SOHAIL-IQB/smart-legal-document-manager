@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 export function Placeholder({ title, task }: { title: string; task: string }) {
   return (
     <main>
+      <title>{`${title} · Inkstep`}</title>
       <h1>{title}</h1>
       <p>Built in Phase 9 {task}.</p>
       <Link to="/">Back to the start</Link>

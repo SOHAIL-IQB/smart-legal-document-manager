@@ -26,6 +26,7 @@ export function Landing() {
 
   return (
     <div className="landing">
+      <title>Inkstep: every version of a contract, kept</title>
       <section className="hero" aria-labelledby="hero-title">
         <header className="masthead">
           <Link to="/" className="wordmark" aria-label="Inkstep, home">

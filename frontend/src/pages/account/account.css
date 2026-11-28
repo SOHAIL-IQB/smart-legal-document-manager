@@ -1,0 +1,375 @@
+/* The account pages: the sheet turned over. Title on the vermilion face (large text only), the
+   form on the washi underside, a crease between them. */
+
+.account {
+  --crease-ground: rgb(216 58 46 / 0.32);
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+/* ---- The face ------------------------------------------------------------------------------ */
+
+.account__face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px 20px 26px;
+  background-color: var(--color-vermilion);
+  background-image: var(--grain-sheet);
+  color: var(--color-fold);
+}
+
+.account__wordmark {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--color-fold);
+  font-size: 1.5rem; /* 24px: large text, the floor for anything on vermilion */
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.account__wordmark:focus-visible {
+  outline-color: var(--color-fold);
+}
+
+.account__mark {
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-washi);
+  background-image: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 0.75px),
+    rgb(216 58 46 / 0.7) calc(50% - 0.75px) calc(50% + 0.75px),
+    transparent calc(50% + 0.75px)
+  );
+}
+
+.account__title {
+  margin: 0;
+  font-size: clamp(2.75rem, 10vw, 6rem);
+  font-weight: 300;
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+}
+
+/* ---- The underside ------------------------------------------------------------------------- */
+
+.account__underside {
+  flex: 1;
+  padding: 28px 20px 48px;
+  background-color: var(--color-washi);
+  background-image: var(--grain-ground);
+}
+
+.account__body {
+  width: 100%;
+  max-width: 400px;
+}
+
+.account__form {
+  display: grid;
+  gap: 22px;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+/* A ruled line, not a box: sumi at rest, thicker vermilion-ink while you write on it. */
+.field__line {
+  display: flex;
+  align-items: center;
+  border-bottom: 1.5px solid var(--color-sumi);
+  transition:
+    border-color 200ms var(--ease-paper),
+    box-shadow 200ms var(--ease-paper),
+    background-color 200ms var(--ease-paper);
+}
+
+.field__line:focus-within {
+  border-bottom-color: var(--color-vermilion-ink);
+  background-color: rgb(246 241 233 / 0.6);
+  box-shadow: 0 1.5px 0 var(--color-vermilion-ink);
+}
+
+.field[data-invalid] .field__line {
+  border-bottom-color: var(--color-vermilion-ink);
+}
+
+.field__input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 2px 7px;
+  border: 0;
+  background: transparent;
+  color: var(--color-sumi);
+  font: inherit;
+  font-size: 1.125rem;
+}
+
+/* Browser autofill would paint a pale box over the washi; keep the ruled line and sumi ink. */
+.field__input:-webkit-autofill,
+.field__input:autofill {
+  -webkit-box-shadow: 0 0 0 100px var(--color-washi) inset;
+  box-shadow: 0 0 0 100px var(--color-washi) inset;
+  -webkit-text-fill-color: var(--color-sumi);
+  caret-color: var(--color-vermilion);
+}
+
+.field__input:focus-visible {
+  outline: none; /* the line itself shows focus: colour, weight and a lighter ground */
+}
+
+.field__toggle {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--color-vermilion-ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* An error is written beside a short struck rule: the world's mark for something rejected. */
+.field__error {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 7px 0 0;
+  color: var(--color-vermilion-ink);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+
+.field__error::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  border-top: 2px solid var(--color-vermilion-ink);
+  transform: translateY(-0.3em);
+}
+
+.field__hint {
+  margin: 6px 0 0;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+.account__alert {
+  padding-top: 10px;
+  border-top: 2px solid var(--color-vermilion-ink);
+  color: var(--color-vermilion-ink);
+}
+
+.account__alert p {
+  margin: 0;
+}
+
+.account__alert .account__reference {
+  margin-top: 2px;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+.account__submit {
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 12px 22px;
+  border: 0;
+  background: var(--color-vermilion-ink);
+  color: var(--color-fold);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease-paper);
+}
+
+.account__submit:hover {
+  background: #96251b;
+}
+
+.account__submit:disabled {
+  cursor: progress;
+}
+
+.account__switch {
+  margin: 22px 0 0;
+  color: var(--color-sumi-soft);
+}
+
+.account__switch a {
+  color: var(--color-sumi);
+  font-weight: 500;
+}
+
+/* The next fold: the demo, a strip of the underside below a crease, its corner turned back. */
+.account__demo {
+  margin-top: 30px;
+  border-top: 1px solid var(--crease-ground);
+}
+
+.account__demo-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+  width: 100%;
+  min-height: 88px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-sumi);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.account__demo-button[aria-disabled] {
+  cursor: progress;
+}
+
+.account__demo-text {
+  display: grid;
+  gap: 4px;
+  padding-top: 18px;
+}
+
+.account__demo-label {
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+
+.account__demo-button:hover .account__demo-label {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.account__demo-note {
+  color: var(--color-sumi-soft);
+  text-wrap: pretty;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+/* The strip's top-right corner, folded down from the crease above it. */
+.account__demo-corner {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-top: -1px; /* sits on the crease line */
+  perspective: 600px;
+}
+
+/* What lies behind the sheet where the corner has lifted away. */
+.account__demo-ground {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-fold);
+  background-image: var(--grain-ground);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.account__demo-lift {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(-3px 5px 6px rgb(70 16 8 / 0.32));
+  transform-origin: 50% 50%;
+  transition: transform var(--duration-fold) var(--ease-paper);
+}
+
+/* The turned corner shows the sheet's other side: its vermilion face. */
+.account__demo-flap {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-vermilion);
+  background-image: var(--grain-sheet);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.account__demo-button:hover .account__demo-lift,
+.account__demo-button:focus-visible .account__demo-lift {
+  transform: rotate3d(1, 1, 0, 18deg);
+}
+
+.account__demo-button[data-pending] .account__demo-lift {
+  transform: rotate3d(1, 1, 0, 30deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account__demo-lift {
+    transition: none;
+  }
+}
+
+/* ---- Wide screens: the sheet on the left, the underside on the right ------------------------- */
+
+@media (min-width: 900px) {
+  .account {
+    flex-direction: row;
+  }
+
+  .account__face {
+    flex: 0 0 44%;
+    justify-content: space-between;
+    padding: clamp(24px, 4vh, 44px) clamp(28px, 4vw, 56px) clamp(40px, 9vh, 96px);
+    /* the crease: the turned-back half casts a soft shade onto the underside */
+    box-shadow: 14px 0 26px -16px rgb(70 16 8 / 0.5);
+    z-index: 1;
+  }
+
+  /* The sheet's own horizontal crease. */
+  .account__face::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgb(246 241 233 / 0.4);
+  }
+
+  /* The fold between the face and its turned-back half. */
+  .account__face::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgb(246 241 233 / 0.6);
+  }
+
+  .account__underside {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: clamp(32px, 6vh, 72px) clamp(32px, 7vw, 112px);
+  }
+
+  /* The face's horizontal crease runs on across the underside; the writing sits on it, as ink would. */
+  .account__underside::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--crease-ground);
+  }
+
+  .account__body {
+    position: relative; /* above the crease line */
+  }
+}

@@ -62,6 +62,8 @@ The rebuild of the original submission (2026-11-22 to 2026-11-24). The API repor
 - **Frontend (Inkstep, in progress):** the landing page. Its sheet shows the sample agreement's real
   history; the margin column folds through the versions with the keyboard, a drag or Replay; and
   the turned-back corner opens a private demo workspace.
+  - Sign in and sign up. The API's own messages are shown, with field errors on their fields. After
+    signing in, the visitor returns to where they were going. The demo is offered on both pages.
 - **CI:**
   - lint and a coverage floor (97.5%);
   - a PostgreSQL job that round-trips the migrations and runs the full suite;

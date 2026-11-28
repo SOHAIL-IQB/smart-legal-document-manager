@@ -28,5 +28,5 @@ test('the signed-in area is behind the guard', async () => {
     vi.fn(async () => new Response(JSON.stringify({ user: null }), { status: 200 })),
   )
   renderAt('/account')
-  expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { level: 1, name: 'Sign in.' })).toBeTruthy()
 })

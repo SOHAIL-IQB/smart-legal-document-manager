@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 export function NotFound() {
   return (
     <main>
+      <title>Page not found · Inkstep</title>
       <h1>This page doesn't exist</h1>
       <Link to="/">Go to the start</Link>
     </main>

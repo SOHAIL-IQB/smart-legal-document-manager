@@ -8,8 +8,10 @@ import { Placeholder } from '@/pages/Placeholder'
 // Data-mode routes: https://reactrouter.com/start/data/routing
 export const routes: RouteObject[] = [
   { path: '/', element: <Landing /> },
-  { path: '/sign-in', element: <Placeholder title="Sign in" task="F5" /> },
-  { path: '/sign-up', element: <Placeholder title="Create an account" task="F5" /> },
+  // The account pages carry the form libraries, so they load when visited, not with the landing page:
+  // https://reactrouter.com/start/data/route-object#lazy
+  { path: '/sign-in', lazy: async () => ({ Component: (await import('@/pages/SignIn')).SignIn }) },
+  { path: '/sign-up', lazy: async () => ({ Component: (await import('@/pages/SignUp')).SignUp }) },
   {
     element: <RequireAuth />,
     children: [

@@ -1,24 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 
-import { openDemoWorkspace } from '@/api/demo'
-import { sessionKey, useSession } from '@/auth/session'
+import { useSession } from '@/auth/session'
+import { useOpenDemo } from '@/auth/useOpenDemo'
 
 /** Opens the visitor's own demo workspace, or, when already signed in, their documents. */
 export function useWorkspaceEntry() {
   const session = useSession()
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const open = useMutation({
-    mutationFn: openDemoWorkspace,
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(sessionKey, workspace.user)
-      navigate('/documents')
-    },
-  })
-  return { signedIn: Boolean(session.data), open }
+  return { signedIn: Boolean(session.data), open: useOpenDemo() }
 }
 
 /** The sheet's next fold: its lower corner turned back to show the cream underside. */
