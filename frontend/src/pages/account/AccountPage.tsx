@@ -75,9 +75,9 @@ export function AccountPage({ title, children }: Props) {
 export function FormAlert({ problem }: { problem: FormProblem | null }) {
   if (!problem) return null
   return (
-    <div role="alert" className="account__alert">
+    <div role="alert" className="form-alert">
       <p>{problem.message}</p>
-      {problem.requestId && <p className="account__reference">Reference: {problem.requestId}</p>}
+      {problem.requestId && <p className="form-alert__reference">Reference: {problem.requestId}</p>}
     </div>
   )
 }

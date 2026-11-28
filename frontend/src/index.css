@@ -1,8 +1,7 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "./components/controls.css";
 
-/* Alegreya Sans, self-hosted (SIL Open Font License 1.1: src/assets/fonts/OFL.txt). */
+/* Alegreya Sans at 300, 400 and 500, self-hosted (SIL Open Font License 1.1: src/assets/fonts/OFL.txt). */
 @font-face {
   font-family: "Alegreya Sans";
   font-style: normal;
@@ -24,21 +23,16 @@
   font-display: swap;
   src: url("./assets/fonts/alegreya-sans-500-latin.woff2") format("woff2");
 }
-@font-face {
-  font-family: "Alegreya Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("./assets/fonts/alegreya-sans-700-latin.woff2") format("woff2");
-}
 
 /* The Folding Sequence. Vermilion owns the sheet and large type only: small text never sits on
    it (fold-white on vermilion is 4.1:1). Small vermilion text on the ground uses vermilion-ink. */
 @theme {
   --color-fold: #f6f1e9; /* the ground, and the crease lines on the sheet */
   --color-washi: #ede3d1; /* the underside of the sheet, seen where a corner turns back */
+  --color-washi-fold: #d9ccb4; /* washi folded over itself: a turned corner's back */
   --color-vermilion: #d83a2e;
   --color-vermilion-ink: #b42d22; /* 5.4:1 on the ground */
+  --color-vermilion-ink-deep: #96251b; /* a primary button pressed in (hover) */
   --color-sumi: #1a1a1a;
   --color-sumi-soft: #4a4540; /* 8.4:1 on the ground */
   --color-gold: #d4af37; /* one dot for what's current: the current version, a document changed today */
@@ -59,6 +53,11 @@
    menus and the palette in a portal on <body>, outside any page wrapper. */
 :root {
   --crease-ground: rgb(216 58 46 / 0.32);
+  /* Fold-white lines on the sheet: a crease, and the stronger edge where the sheet turns over. */
+  --crease-sheet: rgb(246 241 233 / 0.4);
+  --fold-edge: rgb(246 241 233 / 0.6);
+  /* Every shadow is this warm paper brown, never grey: rgb(var(--paper-shadow) / alpha). */
+  --paper-shadow: 70 20 12;
 }
 
 @layer base {
@@ -80,9 +79,16 @@
     caret-color: var(--color-vermilion);
   }
 
+  /* Selected text is small text too: vermilion-ink under fold-white (5.4:1), not the sheet red. */
   ::selection {
-    background: var(--color-vermilion);
+    background: var(--color-vermilion-ink);
     color: var(--color-fold);
+  }
+
+  /* Nothing is set heavier than 500 (DESIGN.md, The Light Display Rule): no faux bold either. */
+  strong,
+  b {
+    font-weight: 500;
   }
 
   :focus-visible {
@@ -115,4 +121,26 @@
   --error-border: transparent;
   --border-radius: 0;
   font-family: var(--font-sans);
+}
+
+/* Toasts appear and leave in place, fading: nothing slides (DESIGN.md, Motion). Sonner moves a
+   toast through `--y`; these hold it where it rests while it is entering or being removed.
+   A swipe by the visitor still moves it: that is their gesture, not ours. */
+[data-sonner-toaster] [data-sonner-toast][data-y-position][data-mounted='false'],
+[data-sonner-toaster] [data-sonner-toast][data-removed='true'][data-front='true'][data-swipe-out='false'] {
+  --y: translateY(0);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'][data-expanded='true'] {
+  --y: translateY(calc(var(--lift) * var(--offset)));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'][data-expanded='false'] {
+  --y: translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(calc(-1 * var(--scale)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] {
+    transition: none;
+  }
 }

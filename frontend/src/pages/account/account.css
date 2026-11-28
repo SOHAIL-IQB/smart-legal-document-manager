@@ -75,44 +75,6 @@
   gap: 22px;
 }
 
-.account__alert {
-  padding-top: 10px;
-  border-top: 2px solid var(--color-vermilion-ink);
-  color: var(--color-vermilion-ink);
-}
-
-.account__alert p {
-  margin: 0;
-}
-
-.account__alert .account__reference {
-  margin-top: 2px;
-  color: var(--color-sumi-soft);
-  font-size: 0.875rem;
-}
-
-.account__submit {
-  min-height: 48px;
-  margin-top: 4px;
-  padding: 12px 22px;
-  border: 0;
-  background: var(--color-vermilion-ink);
-  color: var(--color-fold);
-  font: inherit;
-  font-size: 1.0625rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-paper);
-}
-
-.account__submit:hover {
-  background: #96251b;
-}
-
-.account__submit:disabled {
-  cursor: progress;
-}
-
 .account__switch {
   margin: 22px 0 0;
   color: var(--color-sumi-soft);
@@ -193,7 +155,7 @@
 .account__demo-lift {
   position: absolute;
   inset: 0;
-  filter: drop-shadow(-3px 5px 6px rgb(70 16 8 / 0.32));
+  filter: drop-shadow(-3px 5px 6px rgb(var(--paper-shadow) / 0.32));
   transform-origin: 50% 50%;
   transition: transform var(--duration-fold) var(--ease-paper);
 }
@@ -234,7 +196,7 @@
     justify-content: space-between;
     padding: clamp(24px, 4vh, 44px) clamp(28px, 4vw, 56px) clamp(40px, 9vh, 96px);
     /* the crease: the turned-back half casts a soft shade onto the underside */
-    box-shadow: 14px 0 26px -16px rgb(70 16 8 / 0.5);
+    box-shadow: 14px 0 26px -16px rgb(var(--paper-shadow) / 0.5);
     z-index: 1;
   }
 
@@ -246,7 +208,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: rgb(246 241 233 / 0.4);
+    background: var(--crease-sheet);
   }
 
   /* The fold between the face and its turned-back half. */
@@ -257,7 +219,7 @@
     right: 0;
     bottom: 0;
     width: 1px;
-    background: rgb(246 241 233 / 0.6);
+    background: var(--fold-edge);
   }
 
   .account__underside {

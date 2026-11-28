@@ -4,7 +4,7 @@
 > `LOG.md` records **what actually happened**. Every claim in LOG.md must point to evidence
 > (a command run, a test result, a file path). If PLAN and code disagree, stop and reconcile.
 
-> **Resume point (2026-11-27):** Phase 8 (design direction) done and approved: product named Inkstep, visual world the Folding Sequence. **Phase 9 Slice A done (F0–F3) and `GET /auth/session`; Slice B F4 landing, F5 sign in/up, F6 documents index and F9 `DESIGN.md` done; next: F7 document workspace (the 11 code inconsistencies in LOG 035 are open).** Details: LOG.md entries 019–035; `docs/specs/phase-9-frontend-build.md`.
+> **Resume point (2026-11-27):** Phase 8 (design direction) done and approved: product named Inkstep, visual world the Folding Sequence. **Phase 9 Slice A done (F0–F3) and `GET /auth/session`; Slice B F4 landing, F5 sign in/up, F6 documents index and F9 `DESIGN.md` done; the 11 inconsistencies `DESIGN.md` surfaced are settled (LOG 036); next: F7 document workspace.** Details: LOG.md entries 019–036; `docs/specs/phase-9-frontend-build.md`.
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done and verified · `[!]` blocked
 

@@ -96,8 +96,8 @@
   background-image: var(--grain-sheet);
   color: var(--color-fold);
   box-shadow:
-    0 1px 2px rgb(70 20 12 / 0.14),
-    0 22px 44px -26px rgb(70 20 12 / 0.45);
+    0 1px 2px rgb(var(--paper-shadow) / 0.14),
+    0 22px 44px -26px rgb(var(--paper-shadow) / 0.45);
 }
 
 .sheet__creases {
@@ -189,7 +189,7 @@
   line-height: 1.3;
   letter-spacing: 0.01em;
   text-shadow: none;
-  box-shadow: 0 1px 2px rgb(70 20 12 / 0.25);
+  box-shadow: 0 1px 2px rgb(var(--paper-shadow) / 0.25);
 }
 
 .clause ins,
@@ -223,7 +223,7 @@
 .clause--sheet {
   --glow: rgb(246 241 233 / 0.34);
   font-size: clamp(24px, 3.1cqw, 34px);
-  text-shadow: 0 1px 2px rgb(110 20 12 / 0.45); /* ink sits on the paper, above its creases */
+  text-shadow: 0 1px 2px rgb(var(--paper-shadow) / 0.45); /* ink sits on the paper, above its creases */
   line-height: 1.28;
 }
 
@@ -302,7 +302,7 @@
 .corner__lift {
   position: absolute;
   inset: 0;
-  filter: drop-shadow(5px 8px 9px rgb(80 16 8 / 0.34));
+  filter: drop-shadow(5px 8px 9px rgb(var(--paper-shadow) / 0.34));
 }
 
 .corner__flap {
@@ -344,7 +344,6 @@
   height: 0.85em;
   margin-left: 0.25em;
   vertical-align: -0.08em;
-  transition: transform var(--duration-fold) var(--ease-paper);
 }
 
 .corner__note {
@@ -366,11 +365,6 @@
 .corner:focus-visible .corner__lift,
 .corner:focus-visible .corner__face {
   transform: rotate3d(1, -1, 0, -16deg);
-}
-
-.corner:hover .corner__arrow,
-.corner:focus-visible .corner__arrow {
-  transform: translateX(0.15em);
 }
 
 .corner[data-pending] {
@@ -526,16 +520,6 @@
 
 .folds__replay:hover {
   background-color: rgb(180 45 34 / 0.08);
-}
-
-.gold-dot {
-  display: inline-block;
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--color-gold);
-  box-shadow: inset 0 0 0 1px var(--color-gold-edge);
 }
 
 .gold-dot--large {
@@ -807,7 +791,7 @@ del.legend__word {
   right: 0;
   width: 44px;
   height: 44px;
-  background: #d9ccb4;
+  background: var(--color-washi-fold);
   clip-path: polygon(0 0, 0 100%, 100% 100%);
 }
 
@@ -822,30 +806,6 @@ del.legend__word {
   flex-wrap: wrap;
   align-items: center;
   gap: 14px 28px;
-}
-
-.button-fold {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 12px 22px;
-  border: 0;
-  background: var(--color-vermilion-ink);
-  color: var(--color-fold);
-  font: inherit;
-  font-size: 1.0625rem;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-paper);
-}
-
-.button-fold:hover {
-  background: #96251b;
-}
-
-.button-fold[aria-disabled] {
-  cursor: progress;
 }
 
 .close__link {
@@ -885,7 +845,6 @@ del.legend__word {
   .crease,
   .corner__lift,
   .corner__face,
-  .corner__arrow,
   .folds__number {
     transition: none;
   }

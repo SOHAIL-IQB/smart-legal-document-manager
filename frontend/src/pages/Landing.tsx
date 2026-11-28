@@ -161,13 +161,13 @@ function Close() {
         </p>
         <div className="close__actions">
           {signedIn ? (
-            <Link to="/documents" className="button-fold">
+            <Link to="/documents" className="button-primary">
               Go to your documents
             </Link>
           ) : (
             <button
               type="button"
-              className="button-fold"
+              className="button-primary"
               aria-disabled={open.isPending || undefined}
               onClick={() => {
                 if (!open.isPending) open.mutate()

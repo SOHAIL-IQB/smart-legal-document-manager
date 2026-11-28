@@ -11,6 +11,7 @@ colors:
   sumi-soft: "#4a4540"
   gold: "#d4af37"
   gold-edge: "#9c7e1e"
+  washi-fold: "#d9ccb4"
   crease-ground: "rgb(216 58 46 / 0.32)"
 typography:
   display:
@@ -153,15 +154,16 @@ Motion is folding. One fold at a time, rotating on its crease with paper weight;
 A warm paper palette: one saturated red sheet on a cream ground, black ink, and a single gold accent.
 
 ### Primary
-- **Sheet Vermilion** (#d83a2e): the sheet itself. Fills the landing square, the account face, the app header band and the page band under it, the landing's closing panel, the favicon, the wordmark mark and the text selection. On the ground it may also set large figures: register numbers and fold numbers (24px and up), and record titles on the landing. Carries the sheet grain (`--grain-sheet`) whenever it fills an area.
-- **Ink Vermilion** (#b42d22): the red for anything small or interactive. Primary buttons, field focus lines, error text and its struck rule, the resting underline under controls in words, version labels ("v4"), active-tab rule, form alerts. 5.4:1 on the ground.
+- **Sheet Vermilion** (#d83a2e): the sheet itself. Fills the landing square, the account face, the app header band and the page band under it, the landing's closing panel, the favicon and the wordmark mark. On the ground it may also set large figures: register numbers and fold numbers (24px and up), and record titles on the landing. Carries the sheet grain (`--grain-sheet`) whenever it fills an area.
+- **Ink Vermilion** (#b42d22): the red for anything small or interactive. Primary buttons, field focus lines, error text and its struck rule, the resting underline under controls in words, selected text (under fold white), version labels ("v4"), active-tab rule, form alerts. 5.4:1 on the ground.
 - **Deep Ink Vermilion** (#96251b): the pressed-in hover state of a primary button, nothing else.
 
 ### Tertiary
 - **Current Gold** (#d4af37) with **Gold Edge** (#9c7e1e) as its 1px inner ring: the gold dot only. It means "current": the current version on the landing, a document changed in the last day on the index.
 
 ### Neutral
-- **Fold White** (#f6f1e9): the ground every page rests on (with `--grain-ground` flecks), the text colour on vermilion, and the crease lines drawn on the sheet.
+- **Fold White** (#f6f1e9): the ground every page rests on (with `--grain-ground` flecks), the text colour on vermilion, and the crease lines drawn on the sheet: `--crease-sheet` at 40% for a crease, `--fold-edge` at 60% where the sheet turns over.
+- **Folded Washi** (#d9ccb4): washi folded over itself, the back of a turned corner on a washi panel (the landing's close, the sign-in demo strip).
 - **Washi Underside** (#ede3d1): the back of the sheet. The account form's half, dialogs, the account menu, the palette, the dropzone, toasts, header tags and the landing's "Sample text" label.
 - **Sumi Ink** (#1a1a1a): body text, field lines at rest, the table's head rule, the default focus outline.
 - **Sumi Wash** (#4a4540): secondary text: notes, hints, metadata, dates, struck words, inactive tabs. 8.4:1 on the ground.
@@ -179,7 +181,7 @@ A warm paper palette: one saturated red sheet on a cream ground, black ink, and 
 **Display Font:** Alegreya Sans, self-hosted at 300, 400 and 500 (with Gill Sans, Segoe UI, system-ui)
 **Body Font:** Alegreya Sans (same stack)
 
-**Character:** one humanist sans across the whole system, with calligraphic warmth at light weights. Large type goes light (300) and tight; labels and controls go to 500; nothing is set heavier.
+**Character:** one humanist sans across the whole system, with calligraphic warmth at light weights. Large type goes light (300) and tight; labels and controls go to 500; nothing is set heavier, `<strong>` and `<b>` included.
 
 ### Hierarchy
 - **Display** (300, clamp(2.75rem, 7vw, 6rem), 0.98): page titles on vermilion ("Documents.", "Sign in."), the landing's closing title. The landing headline scales the same way inside the sheet (9.6cqw, 1.02). Titles end with a full stop.
@@ -205,14 +207,14 @@ Horizontal padding is `{spacing.page}` in the app, 20px on phones, and up to 112
 
 ## Elevation & Depth
 
-Depth is paper lying on paper. Surfaces are flat colour with grain; shadow appears only where one sheet lies over another, always tinted warm brown (rgb(70 20 12)) rather than grey, with a tight contact shadow plus a long soft fall. There are no raised cards and no glows.
+Depth is paper lying on paper. Surfaces are flat colour with grain; shadow appears only where one sheet lies over another, always tinted warm brown (`--paper-shadow`, rgb(70 20 12)) rather than grey, with a tight contact shadow plus a long soft fall. There are no raised cards and no glows.
 
 ### Shadow Vocabulary
 - **Sheet** (`box-shadow: 0 1px 2px rgb(70 20 12 / 0.14), 0 22px 44px -26px rgb(70 20 12 / 0.45)`): the landing sheet on the ground.
-- **Band edge** (`box-shadow: 0 12px 20px -14px rgb(70 16 8 / 0.45)`): the page band's edge lying on the register.
+- **Band edge** (`box-shadow: 0 12px 20px -14px rgb(70 20 12 / 0.45)`): the page band's edge lying on the register.
 - **Slip** (`box-shadow: 0 2px 6px rgb(70 20 12 / 0.2), 0 24px 48px -16px rgb(70 20 12 / 0.5)`): dialogs and the palette. The menu and toasts use a slightly shorter fall (`0 2px 4px … / 0.18, 0 14px 30px -10px … / 0.4`).
 - **Tag** (`box-shadow: 0 1px 2px rgb(70 20 12 / 0.3)`; hover `0 3px 6px rgb(70 20 12 / 0.35)`): washi tags and the dropzone; hovering lifts the slip slightly.
-- **Turned corner** (`filter: drop-shadow(5px 8px 9px rgb(80 16 8 / 0.34))`): a lifted corner flap casting onto what lies under it.
+- **Turned corner** (`filter: drop-shadow(5px 8px 9px rgb(70 20 12 / 0.34))`): a lifted corner flap casting onto what lies under it.
 
 ### Named Rules
 **The Washi Slip Rule.** Anything laid on top of a page (dialog, menu, palette, dropzone, toast, tag) is a square slip of washi with grain and a warm paper shadow. There are no cards.
@@ -245,7 +247,7 @@ Few and square; most actions are words or tags.
 ### Inputs / Fields
 - **Style:** a ruled line, not a box: 1.5px sumi underline, transparent ground, 1.125rem input text, label above at 0.9375rem 500. Selects use the same line with a small sumi chevron; the textarea is lined paper, a faint rule under every 1.6em line.
 - **Focus:** the line turns Ink Vermilion and doubles to 3px (border plus a 1.5px shadow), and the ground lightens to fold white at 60%. The browser outline is removed because the line carries focus.
-- **Error:** the line turns Ink Vermilion; the message is written below in Ink Vermilion beside a 14px struck rule. Autofill keeps the washi ground and sumi ink.
+- **Error:** the line turns Ink Vermilion; the message is written below in Ink Vermilion beside a 14px struck rule. A problem with the whole form is written the same way, with its request reference beneath. Autofill keeps the washi ground and sumi ink.
 
 ### Navigation
 - **Header band:** a vermilion band with the 24px wordmark at left and washi tags at right, ended by a fold-white crease (35% opacity). On phones the navigation wraps onto its own line.
@@ -257,7 +259,7 @@ Few and square; most actions are words or tags.
 - **Dropzone:** a washi slip edged in Ground Crease; hover or drag turns the edge Ink Vermilion and the ground fold white.
 
 ### Toasts
-Washi slips with ground grain and the menu shadow, sumi text at 0.9375rem, square; error toasts set their text in Ink Vermilion.
+Washi slips with ground grain and the menu shadow, sumi text at 0.9375rem, square; error toasts set their text in Ink Vermilion. They fade in and out where they rest; they never slide.
 
 ### The Register (signature)
 The documents index is a ruled register under the page band: a real table whose rows are ruled by crease lines, a sumi rule under the column heads, a strict number column in vermilion lining figures (1.5rem), the title at 1.125rem 500 underlined in Ink Vermilion on hover, the version label in Ink Vermilion with the gold dot beside documents changed in the last day, and a key to the dot above the table. Rows tint toward washi on hover over 160ms. While loading, the body fades to 60%.

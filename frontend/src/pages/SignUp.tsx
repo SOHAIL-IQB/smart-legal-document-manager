@@ -65,7 +65,7 @@ export function SignUp() {
         <FormAlert problem={problem} />
         <button
           type="submit"
-          className="account__submit"
+          className="button-primary"
           aria-disabled={submit.isPending || undefined}
           disabled={submit.isPending}
         >

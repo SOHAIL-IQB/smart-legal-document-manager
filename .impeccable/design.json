@@ -153,6 +153,21 @@
           "rgb(216 58 46 / 0.45)",
           "rgb(216 58 46 / 0.6)"
         ]
+      },
+      "washi-fold": {
+        "role": "neutral",
+        "displayName": "Folded Washi",
+        "canonical": "oklch(84.9% 0.035 82.9)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#29241d",
+          "#474137",
+          "#686053",
+          "#8a8171",
+          "#aca496",
+          "#cfc8bc",
+          "#f3eee4"
+        ]
       }
     },
     "typographyMeta": {
@@ -201,7 +216,7 @@
       },
       {
         "name": "band-edge",
-        "value": "0 12px 20px -14px rgb(70 16 8 / 0.45)",
+        "value": "0 12px 20px -14px rgb(70 20 12 / 0.45)",
         "purpose": "The page band's edge lying on the register."
       },
       {
@@ -226,12 +241,12 @@
       },
       {
         "name": "turned-corner",
-        "value": "drop-shadow(5px 8px 9px rgb(80 16 8 / 0.34))",
+        "value": "drop-shadow(5px 8px 9px rgb(70 20 12 / 0.34))",
         "purpose": "A lifted corner flap casting onto the ground beneath (a filter, not a box-shadow)."
       },
       {
         "name": "face-crease",
-        "value": "14px 0 26px -16px rgb(70 16 8 / 0.5)",
+        "value": "14px 0 26px -16px rgb(70 20 12 / 0.5)",
         "purpose": "The account face's turned-back half shading the underside, from 900px."
       }
     ],

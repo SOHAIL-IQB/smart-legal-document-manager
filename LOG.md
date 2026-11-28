@@ -1852,3 +1852,74 @@ existed, so there was no refresh, overwrite or merge choice to make.
 10. The landing corner's arrow nudges 0.15em on hover, a small slide.
 11. `shadcn/tailwind.css` and `tw-animate-css` are imported but unused.
 
+## 036 — 2026-11-28 — Consistency pass: the 11 places the code disagreed with itself
+
+The owner chose to settle LOG 035's list before F7. Each item, and what was done:
+
+1. **Toasts slid in.** Sonner moves a toast through `--y`. Overrides in `index.css`, scoped under the
+   toaster so they win without `!important`, hold it in place while it enters and while it is
+   removed, so it fades.
+   - Measured with Playwright: the toast's top edge stayed at y=820 in all 14 samples over 560ms.
+   - Reduced motion turns the transition off.
+   - A swipe by the visitor still moves it, because that is their gesture.
+2. **The gold dot on every row changed today.** No code change. `DESIGN.md` records the rule as one
+   meaning (what is current), not one instance; the index has a visible key.
+3. **Hover red hard-coded.** `--color-vermilion-ink-deep: #96251b` is now in `@theme`, and the
+   three stylesheets use it.
+4. **Duplicated code.** One `src/components/controls.css`, loaded with the app, now holds
+   `.button-primary`, `.text-button`, `.form-alert` and `.gold-dot`. It replaces:
+   - `.button-fold` (landing) and `.account__submit` (account pages);
+   - `.account__alert` and `.account__reference`;
+   - the two `.gold-dot` copies.
+5. **Shadow and crease values varied.**
+   - Every shadow is now `rgb(var(--paper-shadow) / α)`, with `--paper-shadow: 70 20 12`,
+     replacing four close tints. That includes the clause's text shadow and the toast's, which now
+     uses the menu's shorter fall, as `DESIGN.md` says.
+   - The fold-white lines on vermilion are two named tokens: `--crease-sheet` at 40% for a crease
+     and `--fold-edge` at 60% where the sheet turns over. They were 0.35, 0.4 and 0.6 before.
+6. **Selected text broke the small-text rule.** `::selection` is now vermilion-ink under fold white
+   (5.4:1).
+7. **The 700 face was unused.** In fact `<strong>` in the account menu used it, which is heavier
+   than the design allows. `strong` and `b` are now set at 500, and the 700 `@font-face` and its
+   file are removed; three faces ship.
+8. **The one-off `#d9ccb4`.** It is now `--color-washi-fold` ("Folded Washi"), the back of a turned
+   corner on washi, and is in `DESIGN.md` and the sidecar.
+9. **Two error forms.** `.form-alert` is now written like a field error, beside a short struck
+   rule, with its reference beneath.
+10. **The arrow nudge.** The landing corner's arrow no longer moves on hover; the flap's lift is the
+    motion.
+11. **Unused imports.** `tw-animate-css` and `shadcn/tailwind.css` are no longer imported, and the
+    `tw-animate-css` package is uninstalled. `shadcn` stays, because `components.json` and the
+    spec's shadcn setup use it. CSS went from 30.5 KB to 26.0 KB.
+
+**`DESIGN.md` and `.impeccable/design.json`** were updated by hand to match. These were small,
+factual edits, so I didn't regenerate the files:
+- the Folded Washi token;
+- selection in Ink Vermilion;
+- the two sheet-crease tokens and `--paper-shadow`;
+- nothing heavier than 500, `<strong>` included;
+- form-level errors written like field errors;
+- toasts that fade and never slide;
+- shadow values unified.
+
+The sidecar's diff is only those values plus the new colour entry; the JSON is valid.
+
+**Looked at** (Playwright, with the saved demo session and signed out):
+- The toast's position while it appears (above).
+- The sign-in error in its new form, with its reference.
+- The landing close's button and folded corner.
+- Selected text on the landing intro.
+- The index after a switch to Ben Carter.
+
+All as intended.
+
+**Verification:**
+- `ruff check .`, `ruff format --check .`: clean.
+- `pytest`: 505 passed, 1 skipped. Postgres: 506 passed.
+- `python scripts/floor_guard.py --base origin/main`: clean.
+- `npm run typecheck`, `npm run lint`: clean. `vitest run`: 63 passed (11 files). `npm run build`:
+  clean, three font files. `npm audit --omit=dev`: 0 vulnerabilities.
+- `impeccable detect --json` on the changed stylesheets: `[]`.
+- No deliberate breaks this time: the changes are CSS and class names, which jsdom doesn't render;
+  they were checked in the browser instead, as above.
+

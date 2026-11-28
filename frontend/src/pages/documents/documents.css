@@ -15,7 +15,7 @@
   background-image: var(--grain-sheet);
   color: var(--color-fold);
   /* the sheet's edge lies on the register: a soft shade below it */
-  box-shadow: 0 12px 20px -14px rgb(70 16 8 / 0.45);
+  box-shadow: 0 12px 20px -14px rgb(var(--paper-shadow) / 0.45);
 }
 
 .page-band__title {
@@ -284,14 +284,4 @@
 .register__range {
   color: var(--color-sumi-soft);
   font-variant-numeric: lining-nums tabular-nums;
-}
-
-.gold-dot {
-  display: inline-block;
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--color-gold);
-  box-shadow: inset 0 0 0 1px var(--color-gold-edge);
 }

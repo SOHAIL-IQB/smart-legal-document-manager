@@ -17,7 +17,7 @@
   background-color: var(--color-vermilion);
   background-image: var(--grain-sheet);
   color: var(--color-fold);
-  border-bottom: 1px solid rgb(246 241 233 / 0.35); /* a crease between the header and the page */
+  border-bottom: 1px solid var(--crease-sheet); /* a crease between the header and the page */
 }
 
 .app-header__wordmark {
@@ -77,7 +77,7 @@
   border: 0;
   background-color: var(--color-washi);
   background-image: var(--grain-ground);
-  box-shadow: 0 1px 2px rgb(70 20 12 / 0.3);
+  box-shadow: 0 1px 2px rgb(var(--paper-shadow) / 0.3);
   color: var(--color-sumi);
   font: inherit;
   font-size: 0.9375rem;
@@ -88,7 +88,7 @@
 }
 
 .tag:hover {
-  box-shadow: 0 3px 6px rgb(70 20 12 / 0.35);
+  box-shadow: 0 3px 6px rgb(var(--paper-shadow) / 0.35);
 }
 
 .tag:focus-visible {
@@ -117,79 +117,6 @@
   font-size: 0.8125rem;
 }
 
-/* ---- Buttons on the ground ------------------------------------------------------------------------ */
-
-.button-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 12px 22px;
-  border: 0;
-  background: var(--color-vermilion-ink);
-  color: var(--color-fold);
-  font: inherit;
-  font-size: 1.0625rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 200ms var(--ease-paper);
-}
-
-.button-primary:hover {
-  background: #96251b;
-}
-
-.button-primary:disabled {
-  cursor: progress;
-}
-
-/* A control in words: always underlined in vermilion-ink, so it reads as one at rest. */
-.text-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  margin-inline: -4px; /* the padding is for the target; the words line up with the text above */
-  padding: 0 4px;
-  border: 0;
-  background: none;
-  color: var(--color-sumi);
-  font: inherit;
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-color: var(--color-vermilion-ink);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.25em;
-  cursor: pointer;
-}
-
-.text-button:hover:not(:disabled) {
-  text-decoration-thickness: 2px;
-}
-
-.text-button:disabled {
-  color: var(--color-sumi-soft);
-  opacity: 0.55;
-  cursor: default;
-}
-
-.form-alert {
-  padding-top: 10px;
-  border-top: 2px solid var(--color-vermilion-ink);
-  color: var(--color-vermilion-ink);
-}
-
-.form-alert p {
-  margin: 0;
-}
-
-.form-alert .form-alert__reference {
-  margin-top: 2px;
-  color: var(--color-sumi-soft);
-  font-size: 0.875rem;
-}
-
 /* ---- The account menu --------------------------------------------------------------------------- */
 
 .menu {
@@ -199,8 +126,8 @@
   background-color: var(--color-washi);
   background-image: var(--grain-ground);
   box-shadow:
-    0 2px 4px rgb(70 20 12 / 0.18),
-    0 14px 30px -10px rgb(70 20 12 / 0.4);
+    0 2px 4px rgb(var(--paper-shadow) / 0.18),
+    0 14px 30px -10px rgb(var(--paper-shadow) / 0.4);
   color: var(--color-sumi);
 }
 
@@ -265,8 +192,8 @@
   background-color: var(--color-washi);
   background-image: var(--grain-ground);
   box-shadow:
-    0 2px 6px rgb(70 20 12 / 0.2),
-    0 24px 48px -16px rgb(70 20 12 / 0.5);
+    0 2px 6px rgb(var(--paper-shadow) / 0.2),
+    0 24px 48px -16px rgb(var(--paper-shadow) / 0.5);
   color: var(--color-sumi);
 }
 
@@ -333,7 +260,7 @@
   border: 1px solid var(--crease-ground);
   background-color: var(--color-washi);
   background-image: var(--grain-ground);
-  box-shadow: 0 1px 2px rgb(70 20 12 / 0.25);
+  box-shadow: 0 1px 2px rgb(var(--paper-shadow) / 0.25);
   cursor: pointer;
   transition:
     background-color 200ms var(--ease-paper),
@@ -344,7 +271,7 @@
 .dropzone[data-dragging] {
   border-color: var(--color-vermilion-ink);
   background-color: var(--color-fold);
-  box-shadow: 0 3px 6px rgb(70 20 12 / 0.3);
+  box-shadow: 0 3px 6px rgb(var(--paper-shadow) / 0.3);
 }
 
 .dropzone[data-invalid] {

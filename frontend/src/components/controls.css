@@ -1,0 +1,102 @@
+/* Controls every page shares (DESIGN.md: Buttons, Controls in words, the gold dot).
+   Loaded with the app shell, so the landing, account and signed-in pages draw them the same. */
+
+/* The one primary button: vermilion-ink, fold-white words, square. A link or a button. */
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 0;
+  background: var(--color-vermilion-ink);
+  color: var(--color-fold);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease-paper);
+}
+
+.button-primary:hover {
+  background: var(--color-vermilion-ink-deep);
+}
+
+.button-primary:disabled,
+.button-primary[aria-disabled] {
+  cursor: progress;
+}
+
+/* A control in words: always underlined in vermilion-ink, so it reads as one at rest. */
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  margin-inline: -4px; /* the padding is for the target; the words line up with the text above */
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--color-sumi);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--color-vermilion-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+}
+
+.text-button:hover:not(:disabled) {
+  text-decoration-thickness: 2px;
+}
+
+.text-button:disabled {
+  color: var(--color-sumi-soft);
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* A problem with the whole form: written like a field's error, beside a short struck rule. */
+.form-alert {
+  display: grid;
+  gap: 2px;
+  color: var(--color-vermilion-ink);
+}
+
+.form-alert p {
+  margin: 0;
+}
+
+.form-alert p:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.form-alert p:first-child::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  border-top: 2px solid var(--color-vermilion-ink);
+  transform: translateY(-0.3em);
+}
+
+.form-alert .form-alert__reference {
+  padding-left: 22px;
+  color: var(--color-sumi-soft);
+  font-size: 0.875rem;
+}
+
+/* The one gold dot: what is current. */
+.gold-dot {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-gold);
+  box-shadow: inset 0 0 0 1px var(--color-gold-edge);
+}
