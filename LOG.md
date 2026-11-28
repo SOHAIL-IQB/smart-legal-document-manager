@@ -1798,3 +1798,57 @@ covers:
 - Tables restyled with CSS keep their semantics with explicit roles:
   https://adrianroselli.com/2018/02/tables-css-display-properties-and-aria.html
 
+## 035 — 2026-11-28 — Phase 9 F9: `DESIGN.md` from the built world
+
+**Why now:** the Phase 9 spec runs the documenter after F4 and one app screen. F6 was that screen.
+
+**What ran:** impeccable's shipped documenter, in a fresh context, in Scan mode. No `DESIGN.md`
+existed, so there was no refresh, overwrite or merge choice to make.
+- **Write boundary:** exactly `DESIGN.md` and `.impeccable/design.json`.
+- **Input:** the three direction contracts, `PRODUCT.md`, and the shipped code as the source of
+  truth.
+
+**What it wrote:**
+- **`DESIGN.md`** (292 lines): frontmatter tokens, then the eight canonical sections (overview,
+  colors, typography, layout, elevation, shapes, components, do's and don'ts). The tokens:
+  - 10 colours: fold, washi, vermilion, vermilion-ink, vermilion-ink-deep, sumi, sumi-soft, gold,
+    gold-edge, crease-ground;
+  - 9 type roles, all Alegreya Sans: 300 for large type, 500 for controls;
+  - 2 corner values (none, and the dot's 50%);
+  - 7 spacing values;
+  - 11 components.
+
+  Named rules:
+  - Colours: The Large-Type-Only Rule, The Ink Red Rule, The One Gold Dot Rule.
+  - Type: The Light Display Rule, The Lining Figures Rule.
+  - Depth: The Washi Slip Rule, The Crease Rule.
+- **`.impeccable/design.json`** (schema version 2): colour ramps, 8 shadows, 9 motion tokens, 5
+  breakpoints, 8 component snippets, and the narrative.
+
+**Verified:**
+- `git status` showed only the two new files.
+- Each colour in the frontmatter matches `@theme` in `frontend/src/index.css`, except
+  `vermilion-ink-deep` (#96251b). That one is hard-coded in three stylesheets, which the documenter
+  flagged itself.
+- The sidecar is valid JSON.
+- I read the prose against the code; it describes what ships.
+- The repository's attribution checks are clean (below).
+
+**Disagreements the documenter found in the code** (reported, not fixed; open for a separate pass):
+1. Sonner's own enter and exit animation still slides toasts in, against "nothing slides".
+2. The gold dot means one thing (current) but appears on every row changed today. It is recorded
+   as one meaning, not one instance.
+3. The primary button's hover red `#96251b` is hard-coded in three stylesheets, not a token.
+4. Duplicated code:
+   - three identical primary-button classes (`.button-fold`, `.account__submit`, `.button-primary`);
+   - `.account__alert` repeats `.form-alert`;
+   - `.gold-dot` is defined twice.
+5. Shadow tints vary across four close values, and the fold-white crease opacity across three.
+6. `::selection` puts selected small text in fold-white on vermilion, which is below the
+   small-text rule.
+7. The Alegreya Sans 700 face is declared and self-hosted but unused.
+8. `#d9ccb4` on the landing close's corner is a one-off colour.
+9. Two error forms: field errors have a struck rule, form-level alerts a top rule.
+10. The landing corner's arrow nudges 0.15em on hover, a small slide.
+11. `shadcn/tailwind.css` and `tw-animate-css` are imported but unused.
+

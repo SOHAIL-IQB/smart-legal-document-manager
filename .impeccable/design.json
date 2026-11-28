@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-28T12:07:33+00:00",
+  "title": "Design System: Inkstep",
+  "extensions": {
+    "colorMeta": {
+      "fold": {
+        "role": "neutral",
+        "displayName": "Fold White",
+        "canonical": "oklch(96.0% 0.012 79.8)",
+        "tonalRamp": [
+          "#0e0b06",
+          "#28241f",
+          "#45413b",
+          "#65615a",
+          "#86827a",
+          "#a9a49d",
+          "#cdc8c1",
+          "#f3eee6"
+        ]
+      },
+      "washi": {
+        "role": "neutral",
+        "displayName": "Washi Underside",
+        "canonical": "oklch(91.9% 0.026 82.4)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#29241d",
+          "#474137",
+          "#686053",
+          "#8a8171",
+          "#aca496",
+          "#cfc8bc",
+          "#f3eee4"
+        ]
+      },
+      "vermilion": {
+        "role": "primary",
+        "displayName": "Sheet Vermilion",
+        "canonical": "oklch(58.6% 0.197 28.9)",
+        "tonalRamp": [
+          "#230000",
+          "#4d0000",
+          "#7b140e",
+          "#ac2a21",
+          "#df4336",
+          "#fb7767",
+          "#ffa696",
+          "#ffd4c6"
+        ]
+      },
+      "vermilion-ink": {
+        "role": "primary",
+        "displayName": "Ink Vermilion",
+        "canonical": "oklch(50.9% 0.173 29.2)",
+        "tonalRamp": [
+          "#210000",
+          "#490805",
+          "#751f17",
+          "#a5362a",
+          "#d64f41",
+          "#f27e6e",
+          "#ffab9c",
+          "#ffd8cb"
+        ]
+      },
+      "vermilion-ink-deep": {
+        "role": "primary",
+        "displayName": "Deep Ink Vermilion",
+        "canonical": "oklch(44.7% 0.151 29.4)",
+        "tonalRamp": [
+          "#1f0000",
+          "#450f0a",
+          "#70261e",
+          "#9d3e33",
+          "#cc594b",
+          "#e98576",
+          "#ffb0a2",
+          "#ffdbcf"
+        ]
+      },
+      "sumi": {
+        "role": "neutral",
+        "displayName": "Sumi Ink",
+        "canonical": "oklch(21.8% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "sumi-soft": {
+        "role": "neutral",
+        "displayName": "Sumi Wash",
+        "canonical": "oklch(39.4% 0.011 67.5)",
+        "tonalRamp": [
+          "#0e0a07",
+          "#292420",
+          "#46413c",
+          "#65605b",
+          "#87817c",
+          "#aaa49e",
+          "#cec8c2",
+          "#f3ede7"
+        ]
+      },
+      "gold": {
+        "role": "tertiary",
+        "displayName": "Current Gold",
+        "canonical": "oklch(76.7% 0.139 91.1)",
+        "tonalRamp": [
+          "#140900",
+          "#332200",
+          "#553e00",
+          "#7a5d00",
+          "#a17d00",
+          "#c0a246",
+          "#e0c780",
+          "#ffeeb6"
+        ]
+      },
+      "gold-edge": {
+        "role": "tertiary",
+        "displayName": "Gold Edge",
+        "canonical": "oklch(60.5% 0.114 90.2)",
+        "tonalRamp": [
+          "#120900",
+          "#312300",
+          "#523f00",
+          "#775e09",
+          "#9c7f21",
+          "#bca35c",
+          "#ddc88e",
+          "#feeec1"
+        ]
+      },
+      "crease-ground": {
+        "role": "neutral",
+        "displayName": "Ground Crease",
+        "canonical": "rgb(216 58 46 / 0.32)",
+        "tonalRamp": [
+          "rgb(216 58 46 / 0.08)",
+          "rgb(216 58 46 / 0.12)",
+          "rgb(216 58 46 / 0.16)",
+          "rgb(216 58 46 / 0.2)",
+          "rgb(216 58 46 / 0.24)",
+          "rgb(216 58 46 / 0.32)",
+          "rgb(216 58 46 / 0.45)",
+          "rgb(216 58 46 / 0.6)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles on vermilion and the landing's closing title; weight 300, titles end with a full stop."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Landing section titles on the ground, at most 18ch wide."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dialog titles on washi."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The wordmark beside its folded mark; 24px on vermilion, the floor for text on the sheet."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Register and fold numbers in vermilion lining tabular figures."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Field input text, intros and register document titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text and primary-button text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, tags and column heads."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Hints, metadata, references and the gold-dot key."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet",
+        "value": "0 1px 2px rgb(70 20 12 / 0.14), 0 22px 44px -26px rgb(70 20 12 / 0.45)",
+        "purpose": "The landing sheet lying on the ground."
+      },
+      {
+        "name": "band-edge",
+        "value": "0 12px 20px -14px rgb(70 16 8 / 0.45)",
+        "purpose": "The page band's edge lying on the register."
+      },
+      {
+        "name": "slip",
+        "value": "0 2px 6px rgb(70 20 12 / 0.2), 0 24px 48px -16px rgb(70 20 12 / 0.5)",
+        "purpose": "Dialogs and the palette."
+      },
+      {
+        "name": "slip-short",
+        "value": "0 2px 4px rgb(70 20 12 / 0.18), 0 14px 30px -10px rgb(70 20 12 / 0.4)",
+        "purpose": "The account menu and toasts."
+      },
+      {
+        "name": "tag",
+        "value": "0 1px 2px rgb(70 20 12 / 0.3)",
+        "purpose": "Washi tags at rest; the dropzone and sample label use 0.25 alpha."
+      },
+      {
+        "name": "tag-hover",
+        "value": "0 3px 6px rgb(70 20 12 / 0.35)",
+        "purpose": "Tags on hover; the dropzone on hover uses 0.3 alpha."
+      },
+      {
+        "name": "turned-corner",
+        "value": "drop-shadow(5px 8px 9px rgb(80 16 8 / 0.34))",
+        "purpose": "A lifted corner flap casting onto the ground beneath (a filter, not a box-shadow)."
+      },
+      {
+        "name": "face-crease",
+        "value": "14px 0 26px -16px rgb(70 16 8 / 0.5)",
+        "purpose": "The account face's turned-back half shading the underside, from 900px."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-paper",
+        "value": "cubic-bezier(0.45, 0, 0.25, 1)",
+        "purpose": "Every transition: folds, corner lifts, colour and shadow changes."
+      },
+      {
+        "name": "duration-fold",
+        "value": "420ms",
+        "purpose": "One fold or corner lift on its crease."
+      },
+      {
+        "name": "fold-lift",
+        "value": "210ms cubic-bezier(0.55, 0, 0.8, 0.4)",
+        "purpose": "First half of a landing fold: the panel rotates to 90deg on its crease, darkening to brightness 0.82."
+      },
+      {
+        "name": "fold-lay",
+        "value": "210ms cubic-bezier(0.2, 0.6, 0.45, 1)",
+        "purpose": "Second half: the panel lays back flat showing the next version."
+      },
+      {
+        "name": "state",
+        "value": "200ms",
+        "purpose": "Button fills, field lines, tag shadows, dropzone edges."
+      },
+      {
+        "name": "row",
+        "value": "160ms",
+        "purpose": "Register row hover tint."
+      },
+      {
+        "name": "afterglow",
+        "value": "1.9s",
+        "purpose": "A changed word's fading highlight after a fold."
+      },
+      {
+        "name": "replay-dwell",
+        "value": "1500ms",
+        "purpose": "Time to read each fold during Replay (900ms on the first draft)."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "none",
+        "purpose": "Under prefers-reduced-motion: reduce, transitions and the afterglow are removed and states swap directly."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "640px"
+      },
+      {
+        "name": "register-controls",
+        "value": "760px"
+      },
+      {
+        "name": "split",
+        "value": "900px"
+      },
+      {
+        "name": "close",
+        "value": "1000px"
+      },
+      {
+        "name": "hero-wide",
+        "value": "1100px (and min-height 600px)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action per view, in Ink Vermilion.",
+      "html": "<button class=\"ds-btn-primary\">Create document</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border:0;border-radius:0;background:var(--color-vermilion-ink,#b42d22);color:var(--color-fold,#f6f1e9);font-family:'Alegreya Sans','Gill Sans','Segoe UI',system-ui,sans-serif;font-size:1.0625rem;font-weight:500;cursor:pointer;transition:background-color 200ms cubic-bezier(0.45,0,0.25,1)}.ds-btn-primary:hover{background:#96251b}.ds-btn-primary:focus-visible{outline:2px solid #1a1a1a;outline-offset:3px}"
+    },
+    {
+      "name": "Control in Words",
+      "kind": "button",
+      "refersTo": "text-button",
+      "description": "A secondary action written as words with a resting Ink Vermilion underline.",
+      "html": "<button class=\"ds-text-button\">Clear search</button>",
+      "css": ".ds-text-button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 4px;border:0;background:none;color:#1a1a1a;font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif;font-size:1.0625rem;font-weight:500;text-decoration:underline;text-decoration-color:#b42d22;text-decoration-thickness:1px;text-underline-offset:0.25em;cursor:pointer}.ds-text-button:hover{text-decoration-thickness:2px}.ds-text-button:focus-visible{outline:2px solid #1a1a1a;outline-offset:3px}"
+    },
+    {
+      "name": "Washi Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "A small paper label: how small text and controls sit on the vermilion band.",
+      "html": "<div class=\"ds-band\"><a class=\"ds-tag ds-tag--current\" href=\"#\">Documents</a><a class=\"ds-tag\" href=\"#\">Notifications</a></div>",
+      "css": ".ds-band{display:flex;gap:8px;padding:12px;background:#d83a2e}.ds-tag{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:6px 12px;background-color:#ede3d1;box-shadow:0 1px 2px rgb(70 20 12 / 0.3);color:#1a1a1a;font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif;font-size:0.9375rem;font-weight:500;text-decoration:none;transition:box-shadow 200ms cubic-bezier(0.45,0,0.25,1)}.ds-tag:hover{box-shadow:0 3px 6px rgb(70 20 12 / 0.35)}.ds-tag:focus-visible{outline:2px solid #f6f1e9;outline-offset:2px}.ds-tag--current{text-decoration:underline;text-decoration-color:#b42d22;text-decoration-thickness:2px;text-underline-offset:0.3em}"
+    },
+    {
+      "name": "Ruled Field",
+      "kind": "input",
+      "refersTo": "field-line",
+      "description": "A field drawn as a ruled line; focus thickens it to Ink Vermilion on a lighter ground; errors beside a short struck rule.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field__label\" for=\"ds-email\">Email</label><div class=\"ds-field__line\"><input id=\"ds-email\" class=\"ds-field__input\" value=\"asha@demo.example\"></div><p class=\"ds-field__error\">Enter a valid email address.</p></div>",
+      "css": ".ds-field{font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif;color:#1a1a1a;max-width:360px}.ds-field__label{display:block;margin-bottom:2px;font-size:0.9375rem;font-weight:500}.ds-field__line{display:flex;border-bottom:1.5px solid #1a1a1a;transition:border-color 200ms cubic-bezier(0.45,0,0.25,1),box-shadow 200ms cubic-bezier(0.45,0,0.25,1),background-color 200ms cubic-bezier(0.45,0,0.25,1)}.ds-field__line:focus-within{border-bottom-color:#b42d22;background-color:rgb(246 241 233 / 0.6);box-shadow:0 1.5px 0 #b42d22}.ds-field__input{flex:1;min-width:0;padding:9px 2px 7px;border:0;background:transparent;color:#1a1a1a;font:inherit;font-size:1.125rem}.ds-field__input:focus-visible{outline:none}.ds-field__error{display:flex;align-items:baseline;gap:8px;margin:7px 0 0;color:#b42d22;font-size:0.9375rem;line-height:1.35}.ds-field__error::before{content:'';flex:none;width:14px;border-top:2px solid #b42d22;transform:translateY(-0.3em)}"
+    },
+    {
+      "name": "Header Band",
+      "kind": "nav",
+      "refersTo": "vermilion-band",
+      "description": "The sheet's top edge: 24px wordmark on vermilion, navigation in washi tags.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-header__wordmark\" href=\"#\"><span class=\"ds-header__mark\"></span>Inkstep</a><nav class=\"ds-header__nav\"><a class=\"ds-tag ds-tag--current\" href=\"#\">Documents</a><a class=\"ds-tag\" href=\"#\">Notifications</a></nav></header>",
+      "css": ".ds-header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 24px;background-color:#d83a2e;color:#f6f1e9;border-bottom:1px solid rgb(246 241 233 / 0.35);font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif}.ds-header__wordmark{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin-right:auto;color:#f6f1e9;font-size:1.5rem;font-weight:500;text-decoration:none}.ds-header__wordmark:focus-visible{outline:2px solid #f6f1e9;outline-offset:3px}.ds-header__mark{width:20px;height:20px;background-color:#ede3d1;background-image:linear-gradient(to bottom right,transparent calc(50% - 0.75px),rgb(216 58 46 / 0.7) calc(50% - 0.75px) calc(50% + 0.75px),transparent calc(50% + 0.75px))}.ds-header__nav{display:flex;gap:8px}.ds-header .ds-tag{display:inline-flex;align-items:center;min-height:36px;padding:6px 12px;background:#ede3d1;box-shadow:0 1px 2px rgb(70 20 12 / 0.3);color:#1a1a1a;font-size:0.9375rem;font-weight:500;text-decoration:none}.ds-header .ds-tag:hover{box-shadow:0 3px 6px rgb(70 20 12 / 0.35)}.ds-header .ds-tag:focus-visible{outline:2px solid #f6f1e9;outline-offset:2px}.ds-header .ds-tag--current{text-decoration:underline;text-decoration-color:#b42d22;text-decoration-thickness:2px;text-underline-offset:0.3em}"
+    },
+    {
+      "name": "Washi Slip Dialog",
+      "kind": "card",
+      "refersTo": "washi-slip",
+      "description": "A square washi slip laid over the page; there are no cards.",
+      "html": "<div class=\"ds-slip\"><h2 class=\"ds-slip__title\">New document</h2><p class=\"ds-slip__text\">Upload a PDF, DOCX or TXT file, or paste the text.</p></div>",
+      "css": ".ds-slip{max-width:560px;padding:32px;background-color:#ede3d1;box-shadow:0 2px 6px rgb(70 20 12 / 0.2),0 24px 48px -16px rgb(70 20 12 / 0.5);color:#1a1a1a;font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif}.ds-slip__title{margin:0;font-size:2rem;font-weight:300;line-height:1.1}.ds-slip__text{max-width:46ch;margin:8px 0 0;color:#4a4540;font-size:1.0625rem;line-height:1.55}"
+    },
+    {
+      "name": "Register Row",
+      "kind": "custom",
+      "refersTo": "register-number",
+      "description": "A ruled register line: vermilion lining number, title, Ink Vermilion version label, gold dot for changed in the last day.",
+      "html": "<table class=\"ds-register\"><tbody><tr><td class=\"ds-register__no\">02</td><td><a class=\"ds-register__title\" href=\"#\">Master Services Agreement</a><span class=\"ds-register__meta\">by Asha Rao</span></td><td class=\"ds-register__v\"><span>v4</span><span class=\"ds-gold-dot\"></span></td></tr></tbody></table>",
+      "css": ".ds-register{width:100%;border-collapse:collapse;font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif;font-variant-numeric:lining-nums tabular-nums;color:#1a1a1a}.ds-register td{padding:14px 12px;border-bottom:1px solid rgb(216 58 46 / 0.32);vertical-align:baseline}.ds-register tr{transition:background-color 160ms cubic-bezier(0.45,0,0.25,1)}.ds-register tr:hover{background:rgb(237 227 209 / 0.55)}.ds-register__no{width:3.5rem;padding-left:0;color:#d83a2e;font-size:1.5rem;line-height:1}.ds-register__title{color:#1a1a1a;font-size:1.125rem;font-weight:500;text-decoration:none}.ds-register__title:hover{text-decoration:underline;text-decoration-color:#b42d22;text-underline-offset:0.2em}.ds-register__title:focus-visible{outline:2px solid #1a1a1a;outline-offset:3px}.ds-register__meta{display:block;margin-top:2px;color:#4a4540;font-size:0.875rem}.ds-register__v{white-space:nowrap}.ds-register__v span:first-child{color:#b42d22;font-weight:500}.ds-gold-dot{display:inline-block;width:12px;height:12px;margin-left:8px;border-radius:50%;background:#d4af37;box-shadow:inset 0 0 0 1px #9c7e1e}"
+    },
+    {
+      "name": "Version Line Forms",
+      "kind": "custom",
+      "refersTo": "vermilion",
+      "description": "State by line form: solid live, dashed withdrawn but kept, double restored; inserted underlined, removed struck.",
+      "html": "<dl class=\"ds-legend\"><div><span class=\"ds-rule\"></span><dd>A live version.</dd></div><div><span class=\"ds-rule ds-rule--withdrawn\"></span><dd>Withdrawn, kept on the record.</dd></div><div><span class=\"ds-rule ds-rule--restored\"></span><dd>Restored.</dd></div><div><ins class=\"ds-word\">99.9%</ins><dd>Inserted words.</dd></div><div><del class=\"ds-word\">99.5%</del><dd>Removed words.</dd></div></dl>",
+      "css": ".ds-legend{margin:0;font-family:'Alegreya Sans','Gill Sans',system-ui,sans-serif;color:#1a1a1a}.ds-legend>div{display:grid;grid-template-columns:6.5rem 1fr;align-items:center;gap:20px;padding:14px 0;border-top:1px solid rgb(216 58 46 / 0.32)}.ds-legend dd{margin:0}.ds-rule{display:block;width:5rem;border-top:2px solid #d83a2e}.ds-rule--withdrawn{border-top-style:dashed}.ds-rule--restored{border-top:6px double #d83a2e}.ds-word{font-size:1.25rem;text-decoration-color:#b42d22;text-decoration-thickness:2px;text-underline-offset:0.18em}del.ds-word{color:#4a4540}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Folding Sequence",
+    "overview": "A contract is one uncut sheet of paper. Every version is a numbered fold, and the current draft still carries every earlier crease. The whole interface is built from that one sheet: a vermilion face with fibrous grain, a cream ground it lies on, and a washi underside that shows wherever the sheet is turned over. Pages are composed from the sheet's geometry. The landing page is the sheet seen flat from above; the account pages are the sheet turned over, title on the face and form on the underside; the signed-in screens sit under the sheet's top edge, a vermilion band whose shade falls on a ruled register.\n\nThe material is paper and ink, never screen chrome. Divisions are crease lines, not boxes or gaps. Overlays are slips of washi laid on the page, square-cornered with a warm paper shadow. Type is a quiet humanist sans, light and large on the sheet, plain and readable on the ground. Colour is spent with discipline: vermilion owns the sheet and large type, a deeper ink red carries every small red mark, and one gold dot marks what is current.\n\nMotion is folding. One fold at a time, rotating on its crease with paper weight; nothing slides into place. Under reduced motion every state swaps directly.",
+    "keyCharacteristics": [
+      "One sheet, three faces: vermilion face, cream ground, washi underside, each with its own grain.",
+      "Ruled lines for fields, crease lines for divisions, washi slips for anything laid on top.",
+      "State shown by the form of a line, never by colour alone.",
+      "Square paper corners everywhere; the gold dot is the only round thing.",
+      "Light 300-weight display type; strict lining tabular figures for every number."
+    ],
+    "rules": [
+      {
+        "name": "The Large-Type-Only Rule",
+        "body": "Small text never sits on vermilion: fold white on Sheet Vermilion is about 4.1:1, so only text of 24px or more goes on the sheet (the wordmark on a band is set at exactly 24px for this reason). Anything smaller that must sit on the sheet goes on a washi tag.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Red Rule",
+        "body": "Small red text, red controls and red rules use Ink Vermilion (#b42d22), never Sheet Vermilion. Sheet Vermilion is for areas and for figures of 24px or more.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Gold Dot Rule",
+        "body": "Gold has one meaning: what is current. It appears only as the 12px gold dot (18px in the landing legend) and never as a fill, border or text colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Light Display Rule",
+        "body": "Display, headline and title sizes are always weight 300 with slight negative tracking. Emphasis comes from size and placement on the sheet, never from bold.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lining Figures Rule",
+        "body": "Every number that is compared or scanned (fold numbers, register numbers, version counts, word counts, page ranges) is set in lining tabular figures.",
+        "section": "typography"
+      },
+      {
+        "name": "The Washi Slip Rule",
+        "body": "Anything laid on top of a page (dialog, menu, palette, dropzone, toast, tag) is a square slip of washi with grain and a warm paper shadow. There are no cards.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Crease Rule",
+        "body": "Regions on the ground are divided by 1px Ground Crease lines, never by boxed panels or background tints. The register is ruled, the menu is separated, the tab rail is drawn, all with the same line.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** put only text of 24px or more on Sheet Vermilion; set anything smaller on a washi tag.",
+      "**Do** use Ink Vermilion (#b42d22) for small red text, focus lines, error text and primary buttons.",
+      "**Do** show state by line form: solid for live, dashed for withdrawn but kept, double for restored; underline inserted words and strike removed ones.",
+      "**Do** draw fields as a single 1.5px underline that turns Ink Vermilion and thickens on focus, with errors written beside a short struck rule.",
+      "**Do** divide regions on the ground with 1px Ground Crease lines.",
+      "**Do** lay dialogs, menus, palettes, dropzones, toasts and tags on the page as square washi slips with grain and a warm brown shadow.",
+      "**Do** underline every control in words in Ink Vermilion at rest.",
+      "**Do** set compared numbers in lining tabular figures.",
+      "**Do** move by folding on a crease, one fold at a time (about 420ms, `--ease-paper`), and swap states directly under reduced motion."
+    ],
+    "donts": [
+      "**Don't** set text under 24px on Sheet Vermilion, or use Sheet Vermilion for small red text.",
+      "**Don't** use colour alone to show a version's state.",
+      "**Don't** use the gold dot for anything but \"current\", or use gold as a fill, border or text colour.",
+      "**Don't** draw fields as boxes or use cards for content; use ruled lines and washi slips.",
+      "**Don't** round corners; the gold dot is the only circle.",
+      "**Don't** use grey or black shadows; paper shadows are warm brown (rgb(70 20 12)).",
+      "**Don't** slide panels or content into place; things fold.",
+      "**Don't** set display type bold; large type is weight 300."
+    ]
+  }
+}

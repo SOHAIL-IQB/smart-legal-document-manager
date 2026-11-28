@@ -178,6 +178,10 @@ errors tied by `aria-describedby`. Rate-limit (429) and wrong-password messages 
 **F9. `DESIGN.md`**
 - After F4 and one app screen are built, impeccable's documenter writes `DESIGN.md` and
   `.impeccable/design.json` from the built world (see open question 2).
+- **Done 2026-11-28 (LOG 035):** impeccable's documenter wrote `DESIGN.md` and
+  `.impeccable/design.json` from the landing page, the account pages and the documents index. It
+  reported 11 places where the code disagrees with itself; they are listed in LOG 035 and left for a
+  separate pass.
 
 ### Slice C — Quality and delivery
 
